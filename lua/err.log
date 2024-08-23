@@ -1,0 +1,6 @@
+lua: ./timer_server.lua:58: attempt to index field '?' (a nil value)
+stack traceback:
+	./timer_server.lua:58: in function 'func_handle_args'
+	./class.lua:10: in function 'Server'
+	launch_tserver.lua:14: in main chunk
+	[C]: ?
