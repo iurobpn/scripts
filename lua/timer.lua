@@ -1,6 +1,7 @@
 local M = {}
 -- local uv = require("luv")
 local inspect = require("inspect")
+require("class")
 
 local luasocket = require('socket')
 local Socket = require('socket')
@@ -25,7 +26,7 @@ local Timer = {
 --     return self
 -- end
 
-Timer = require('class').class(Timer, function(self, ip, port, name)
+Timer = class(Timer, function(self, ip, port, name)
     local mod_color = require('gruvbox-term').bright_blue
     self.name = name or Timer.name
     self.ip = ip or Timer.ip

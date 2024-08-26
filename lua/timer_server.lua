@@ -1,9 +1,11 @@
 -- local inspect = require("inspect")
 require('time')
 require('utils')
+local json = require('dkjson')
+require'class'
 
 local luasocket = require('socket')
-local Log = require('log')
+local Log = require('dev.lua.log')
 
 -- server communication:
 -- kill() -- stop the server
@@ -28,6 +30,16 @@ local Log = require('log')
 --   id:get:total_time
 --   }
 
+local message = {
+    client_id = 0,
+    task_id = 0,
+    timer_id = 0,
+    msg = {
+        cmd = nil, -- timers: start, pause, resume, stop, restart, get and set (vars not only timers)
+        cmd_args = nil, -- timer_id, start_time, elapsed_time, remaining_time, total_time
+    },
+}
+
 local Server = {
     name = "server",
     id = 0,
@@ -42,7 +54,7 @@ local Server = {
     unit = "s"
 }
 
-Server = require('class').class(Server, function(self, ip, port, time_start, name)
+Server = class(Server, function(self, ip, port, time_start, name, log_file)
     local mod_color = require('gruvbox-term').bright_orange
 
     if ip then
@@ -52,38 +64,57 @@ Server = require('class').class(Server, function(self, ip, port, time_start, nam
         self.port = port
     end
 
-    local id = 1
-
-    if time_start then
-        self.timer[id].start_time = time_start
-        self.timer[id].elapsed_time = 0
-    end
-    self.name = name or self.name
-
-    self.timer[id].running = false
-    self.timer[id].paused = false
     self.log = Log("tserver")
+    self.log:set_file(log_file)
     self.log.module_color = mod_color
-    self.log:log("server created.")
+    self.log:info("server created.")
+    if time_start then
+        if not self.timer then
+            self.log:debug("timer not initialized")
+            self.timer = {}
+        end
+        self.timer[1] = TimerData({start_time = time_start, elapsed_time = 0, running = false, paused = false, unit = "s"})
+        self.log:debug("self.timer: " .. require('inspect')(self.timer))
+    end
+
+    self.name = name or self.name
 
     return self
 end)
 
-local TimerData = {
+TimerData = {
+    id = 0,
+    client_id = 0,
+    task_id = 0,
+    mode = "countup",
     start_time = 0,
     elapsed_time = 0,
     remaining_time = 0,
+    stop_time = 0,
     paused = false,
     running = false,
     unit = "s"
 }
+-- mode, start_time, elapsed_time, duration, paused, running, unit)
+TimerData = class(TimerData, function(self, ...)
+    if not arg then
+        arg = {}
+        return
+    end
+    local targs = arg
+    if targs.timer then
+        targs = targs.timer
+    end
+    for k, v in pairs(targs) do
+        self[k] = v or self[k]
+    end
+    self.client_id = arg.client_id or 0
+    self.task_id = arg.task_id or 0
+    self.remaining_time = targs.duration
+    if not self.start_time or self.start_time <=0 then
+        self.start_time = clock.now()
+    end
 
-TimerData = require('class').class(TimerData, function(self, mode, start_time, elapsed_time, duration, paused, running, unit)
-    self.mode = mode or self.mode
-    self.start_time = start_time or self.start_time
-    self.paused = false
-    self.running = false
-    self.unit = unit or self.unit
     return self
 end)
 
@@ -92,54 +123,87 @@ function Server:get_id()
     return self.id
 end
 
-function Server:decode_message(client,data)
+function Server:parse(client,data)
     -- local client, data = unpack(message)
-    self.log:debug("decoding message." .. data)
     if data then
-        local msg = data:match("^%s*(.-)%s*$")
-        msg = split(msg,":")
-        local id = tonumber(msg[1])
-        local message
-        if not id then
-            message = msg[1]
-            id = self.get_id();
-            self.timer[id] = TimerData()
-        else
-            self.log:debug("received message from client for timer id: " .. id)
-            message = msg[2]
+        self.log:debug("decoding message: " .. data)
+        -- local msg = data:match("^%s*(.-)%s*$")
+        -- msg = split(msg,":")
+
+        local msg = ''
+        local data2 = data
+        if data ~= nil and data ~= '' then
+            msg = json.decode(data2)
+            self.log:debug(string.format("raw data2 msg str: %s", data2))
+            self.log:debug(string.format("raw data msg str: %s", data))
+            self.log:debug(string.format("msg converted to json: %s", require('inspect').inspect(msg)))
         end
-        
-        self.log:debug("received message: " .. message)
-        if message == "pause" then
-            self:pause()
-        elseif message == "kill" then
-            self.timer[id].running = false
-        elseif message == "get" then
-            local req_var = msg[2]
-            if req_var == "elapsed_time" then
-                self:send(client, tostring(self.timer[id].elapsed_time))
-            elseif req_var == "start_time" then
-                self:send(client, tostring(self.timer[id].start_time))
-            elseif req_var == "remaining_time" then
-                self:send(client, tostring(self.timer[id].remaining_time))
+        local id
+        if msg.timer then
+            if msg.timer.start then
+                msg.timer.id = self.get_id();
+                id = msg.timer.id
+                self.timer[id] = TimerData(msg)
+                self.timer[id].running = true
+
+                msg = {
+                    client_id = self.timer[id].client_id,
+                    timer = {
+                        id = id,
+                        start_time = self.timer[id].start_time
+                    }
+                }
+                self.send(client, json.encode(msg) .. '\n')
+                -- self:add_timer(id)
             end
-        elseif message == "restart" or message == "start" then
-            if #msg > 1 then
-                self.timer[id].start_time = tonumber(msg[2])
+            if msg.get then
+                id = msg.timer.id
+
+                out = {}
+                out.timer = {}
+                for k, v in pairs(msg.get) do
+                    out[k] = self.timer[id][k]
+                end
+
+                self.send(client, out)
+            elseif msg.set then
+                id = msg.timer.id
+                for k, v in pairs(msg.set) do
+                    self.timer[id][k] = v
+                end
+            elseif msg.pause then
+                self:pause(msg.timer.id)
+            elseif msg.restart then
+                if #msg > 1 then
+                    self.timer[id].start_time = tonumber(msg[2])
+                else
+                    self.timer[id].start_time = clock.now()
+                    self.log:warn("start time is more accurate if provided by client")
+                end
+                self:restart(msg.timer.id,client)
+            elseif msg.resume then
+                self:resume(msg.timer.id)
+            elseif msg.stop then
+                self:stop(msg.timer.id,client)
             else
-                self.timer[id].start_time = clock.now()
-                self.log:warn("start time is more accurate if provided by client")
+                self.log:warn("received invalid message: " .. data)
             end
-            self:restart(id,client)
-        elseif message == "resume" then
-            self:resume(id)
-        elseif message == "stop" then
-            self:stop(id,client)
-        else
-            self.log:warn("received invalid message: " .. message)
         end
+        if msg.task then
+            if msg.task.start then
+                msg.task.id = self.get_id();
+                id = msg.task.id
+                self.taks[id] = TaksData(msg)
+                self:add_taks(id)
+            end
+        end
+        if msg.kill then
+            self.log:info("server received kill message.")
+            self.running = false
+        end
+
     else
-        self.log:log("server received empty message.")
+        self.log:trace("server received empty message.")
     end
 end
 
@@ -164,9 +228,10 @@ function Server:start(ip, port, mode, time_start, duration, func, ...)
         id = self:new_timer( mode, time_start, duration, func, ...)
     end
     if self.running then
-        self.log:log("server is already running.")
+        self.log:trace("server is already running.")
         return
     end
+    self.running = true
 
     if self.timer[id].paused then
         self.log:info(string.format("timer %d paused.", id))
@@ -175,26 +240,37 @@ function Server:start(ip, port, mode, time_start, duration, func, ...)
     self.timer[id].running = true
     self.ip = ip or self.ip
     self.port = port or self.port
-    self.log:debug("server started at " .. clock.now() .. " with client time start at " .. time_start .. " seconds")
-    if time_start == 0 and self.timer[1].start_time == 0 then
-        self.log:error('Start time is zero, please set a start time.') -- if not time_start then
-        time_start = clock.now()
-        self.log:warn('setting start time to now: ' .. time_start) -- if not time_start then
-    else
-        if self.timer[1].start_time ~= 0 then
-            time_start = self.timer[1].start_time
+    if not time_start or time_start == 0 then
+        if not self.start_time then 
+            if not self.timer[id].start_time then
+                self.log:warn('Start time is zero, please set a start time.') -- if not time_start then
+                time_start = clock.now()
+                self.log:warn('setting start time to now: ' .. time_start) -- if not time_start then
+            else
+                time_start = self.timer[id].start_time
+            end
+        else
+            time_start = self.start_time
         end
+        self.log:error('Start time is nill or zero, please set a start time.') -- if not time_start then
     end
+    self.start_time = time_start
+    if not self.timer and not self.timer[1] then
+        self.timer = {}
+        self.timer[1] = TimerData()
+    end
+    self.timer[1].start_time = self.start_time
+    self.log:debug("server started at " .. clock.now() .. " with client time start at " .. (time_start or self.start_time) .. " seconds")
 
     self.timer[id].start_time = time_start
 
     -- local inspect = require('inspect')
     require'utils'
-    -- self.log:log(time_start)
+    -- self.log:trace(time_start)
     self:config(id)
     self.socket = assert(luasocket.bind(ip, port))
     self.socket:settimeout(0)
-    self.log:info('Server started at ' .. clock.now() .. ' with client time start at ' .. time_start .. ' seconds')
+    self.log:info('Server started at ' .. clock.now() .. ' with client time start at ' .. (time_start or self.start_time) .. ' seconds')
     self.log:info('Server listening to ' .. self.ip .. ':' .. self.port)
     -- if not self.socket then
     --     self.socket = Socket(self.ip, self.port)
@@ -205,7 +281,7 @@ function Server:start(ip, port, mode, time_start, duration, func, ...)
     local i = 0
     self.log:debug("starting loop\n")
     while self.running do
-        self.log:debug(self.name .. " iter " .. i)
+        self.log:trace(self.name .. " iter " .. i)
         local readable = self:select() -- select readable clients using socket:select
         self:listen(readable) -- listen and process client messages
 
@@ -220,15 +296,16 @@ function Server:start(ip, port, mode, time_start, duration, func, ...)
     self.log:info('server stopped')
 end
 
+
 function Server:select()
     local new_client = self.socket:accept()
     if new_client then
         -- new_client.settimeout(0)
         table.insert(self.clients, new_client)
-        self.log:log('new client connected')
+        self.log:trace('new client connected')
         -- clock.sleep(0.1)
     else
-        self.log:log('no new clients connected')
+        self.log:trace('no new clients connected')
     end
 
     local ready_to_read = {self.socket}
@@ -292,9 +369,9 @@ function Server:listen(readable)
                     -- print(' a' .. self.err)
                 end
             elseif message then
-                self.log:debug("received new message from client " .. require'inspect'.inspect(client) .. ": " .. message)
+                self.log:debug("received new message from client " .. require('inspect').inspect(client) .. ": " .. message)
                 -- table.insert(messages, {client, message})
-                self:decode_message(client,message)
+                self:parse(client,message)
                 messages = messages + 1
 
                 -- print(' an' .. self.ok)
@@ -398,7 +475,14 @@ function Server:stop(id,client)
     if self.timer[id].start_time == 0 then
         self.log:info(string.format("timer %d is already stopped", id))
         self.timer[id].elapsed_time = 0
-        if self:send(client, tostring(self.timer[id].elapsed_time)) then
+        local msg = {
+            client_id = self.timer[id].client_id,
+            timer = {
+                id = id,
+                elapsed_time = self.timer[id].elapsed_time
+            }
+        }
+        if self:send(client, json.encode(msg) .. '\n') then
             self.log:debug(string.format("timer id: elapsed time successully sent to client: %s seconds", id, self.timer[id].elapsed_time or 0))
         end
         return
@@ -415,7 +499,14 @@ function Server:stop(id,client)
 
     if client then
         -- client:settimeout(-1)
-        if self:send(client, tostring(self.timer[id].elapsed_time)) then
+        local msg = {
+            client_id = self.timer[id].client_id,
+            timer = {
+                id = id,
+                elapsed_time = self.timer[id].elapsed_time
+            }
+        }
+        if self:send(client, json.encode(msg) .. '\n') then
             self.log:info(string.format('timer %d stopping, elapsed time sent to client: %s seconds', id, self.timer[id].elapsed_time))
         end
     else
@@ -426,6 +517,7 @@ function Server:stop(id,client)
 
     -- Stop the Server by killing the thread
 end
+Server.TimerData = TimerData
 
 return Server
 

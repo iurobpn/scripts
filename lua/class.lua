@@ -1,7 +1,6 @@
-local M = {}
 
 -- TODO create a private members table to be automatically detected by the __index metamethod
-function M.class(type, func_handle_args)
+function class(type, func_handle_args)
     local mt = {}
     mt.__call = function(Type, ...)
         local obj = {}
@@ -15,5 +14,5 @@ function M.class(type, func_handle_args)
     return type
 end
 
-return M
+return true
 

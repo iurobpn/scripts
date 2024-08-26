@@ -1,5 +1,6 @@
 
 local uv= require('luv')
+require('class')
 -- local serpent = require('serpent')
 -- local inspect = require('inspect')
 
@@ -33,7 +34,7 @@ function Thread.join(self)
     -- print("Thread joined.")
 end
 
-Thread = require('class').class(Thread, function(obj, func)
+Thread = class(Thread, function(obj, func)
     if func then
         obj.func = func
     end
