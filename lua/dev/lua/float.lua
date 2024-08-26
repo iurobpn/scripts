@@ -252,4 +252,4 @@ end
 -- ag  '\- \[.\]' | cut -d : -f1,2 | sed 's/:/ /g'                                                                                                                   22.3.0 󰌠 3.12.4 (python3.12)
 
 --setup the buffer with links and test
-setup_buffer_with_links()
+-- setup_buffer_with_links()

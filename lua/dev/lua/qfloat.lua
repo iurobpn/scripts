@@ -1,3 +1,4 @@
+require'dev.lua.float'
 require('dev.lua.utils')
 require('utils')
 local json = require('cjson')
@@ -157,7 +158,7 @@ function qrun_lua(filename)
         print('No output')
         return
     end
-    set_quickfix_list(lines_str)
+    set_quickfix(lines_str)
 
     io.open(qfloat.settings_file, 'w'):write(json.encode({package = "qfloat", last_file = filename}))
     qopen();
