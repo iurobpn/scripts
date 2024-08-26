@@ -1,5 +1,6 @@
 
 local uv = require('luv')
+require('class')
 local serpent = require('serpent')
 
 local Timer = {
@@ -10,7 +11,7 @@ local Timer = {
     timers = {},
     timer_id = 0,
 }
-Timer = require('class').class(Timer)
+Timer = class(Timer)
 
 if not Timer then
     print('Timer is nil')

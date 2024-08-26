@@ -1,6 +1,6 @@
 
 local luasocket = require'socket'
-
+local json = require'cjson'
 
 -- a client creates its socket
 
@@ -15,7 +15,7 @@ else
 end
 
 -- send a message to the server
-local msgs = "resume\n"
+local msgs = json.encode({client_id = 1, timer = {id=1}, pause = true}) .. '\n'
 local _, errs = client:send(msgs)
 if errs then
     print("Error sending message: ", errs)

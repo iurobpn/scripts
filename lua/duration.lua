@@ -1,4 +1,5 @@
 local apr = require 'apr'
+require 'class'
 local Timer = {
     t_start = 0,
     t_lap = 0,
@@ -80,7 +81,7 @@ function Duration.to_string(self)
     return s
 end
 
-Duration = require('class').class(Duration, function(obj, type, tf, ti, unit)
+Duration = class(Duration, function(obj, type, tf, ti, unit)
     obj = obj or {}
     obj.unit = unit
     if ti and tf then

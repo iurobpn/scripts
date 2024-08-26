@@ -1,6 +1,8 @@
 
+local json = require'dkjson'
 local luasocket = require'socket'
-require'time'
+Log = require'dev.lua.log'
+log_level = Log.Level.debug
 
 
 -- a client creates its socket
@@ -14,10 +16,9 @@ if client then
 else
     print("Failed to connect to server.")
 end
-local ts = clock.now()
 
 -- send a message to the server
-local msgs = string.format("restart:%f\n", ts)
+local msgs = json.encode({stop=true, timer = {id = 1}}) .. "\n"
 local _, errs = client:send(msgs)
 if errs then
     print("Error sending message: ", errs)

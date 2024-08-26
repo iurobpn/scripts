@@ -1,4 +1,5 @@
 local apr = require 'apr'
+require 'class'
 local Duration = require 'duration'
 local timer = {};
 local Timer = {
@@ -303,7 +304,7 @@ call setpos("'a", save_a_mark)
 --
 --os.difftime
 
-timer.Timer = require('class').class(Timer)
+timer.Timer = class(Timer)
 
 function timer.test()
     local t = Timer()

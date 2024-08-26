@@ -45,7 +45,7 @@ M.Thread = {
     thread = M.ffi.new("pthread_t[1]")
     -- pipe = pipe
 }
-require('class').class(M.Thread, function(obj,func)
+Thread =class(M.Thread, function(obj,func)
     obj.func = func
     return obj
 end)

@@ -1,5 +1,6 @@
 local luasocket = require('socket')
 local Log = require('log')
+require'class'
 
 local Socket = {
     socket = nil,
@@ -18,7 +19,7 @@ function Socket:bind(ip, port)
     self.log:log("Binding to " .. self.ip .. ":" .. self.port)
 end
 
-Socket = require('class').class(Socket, function(self, ip, port, timeout, color)
+Socket = class(Socket, function(self, ip, port, timeout, color)
 
     self.ip = ip or Socket.ip
     self.port = port or Socket.port

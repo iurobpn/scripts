@@ -3,7 +3,7 @@ local Log = require'log'
 
 local log = Log('main')
 
-log.log_level = Log.Level.FATAL
+log.log_level = Log.Level.fatal
 
 
 log:info('test log')

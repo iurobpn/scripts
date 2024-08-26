@@ -30,7 +30,7 @@ function M.Thread.join(self)
     -- print("Thread joined.")
 end
 
-require('class').class(M.Thread, function(obj,func)
+Threads = class(M.Thread, function(obj,func)
     obj.func = func
     return obj
 end)
