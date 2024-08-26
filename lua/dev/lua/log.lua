@@ -1,5 +1,7 @@
 require'time'
 local gruvbox = require'gruvbox-term'
+require'debug'
+require'class'
 
 local Level = {
     trace = 1,
@@ -10,7 +12,7 @@ local Level = {
     fatal = 50,
 }
 
-Log = {
+local Log = {
     log_level = "info",
     level = "info", -- module level
     module = nil,
@@ -28,9 +30,13 @@ Log = {
         fatal = gruvbox.bright_red,
     },
 }
+log_level = "info"
 
-function Log.write(self, msg, level)
-    self:print(self:format(msg, level, self.colors[level]))
+function Log:write(msg, level)
+    -- if self.filename and self.filename ~= '' then
+        msg = msg .. '\n'
+    -- end
+    self:print(self:format(msg, level, self.colors[level]), level)
 end
 
 function Log:fatal(msg)
@@ -58,7 +64,7 @@ function Log:trace(msg)
 end
 
 -- format: [time] [level] [file:line] [message]
-function Log:format (message, level, color)
+function Log:format(message, level, color)
     local fmt = string.format
     local reset = gruvbox.light0
     if not color then
@@ -78,26 +84,36 @@ function Log:format (message, level, color)
     end
     local log_mod = fmt(" %s%-10s%s%s", self.module_color, log_module, gruvbox.reset, self.color)
     local log_suffix = fmt(" %s%s", message, gruvbox.reset)
+    local info = debug.getinfo(3)
+    filename = split(info.short_src, '/')
+    filename = filename[#filename]
+    local log_debug = fmt(' %s[%s:%d] %s', self.colors["debug"], filename , info.currentline, gruvbox.reset)
+
     if self.module then
-        return log_preffix .. log_mod .. log_suffix
+        logout = log_preffix .. log_mod
+        logout = logout .. log_debug .. log_suffix
+        return logout
         -- return string.format(log_preffix .. log_mod .. log_suffix
     else
         return log_preffix .. log_suffix
     end
     -- return string.format("[%s] [%s] [%s:%d] %s", self.time.now(), level, self.dbg.getinfo(2).short_src, self.dbg.getinfo(2).currentline, message)
 end
-
+local insp = require'inspect'
 function Log:print(msg,level)
     level = level or self.level
-    if Level[level] >= Level[self.log_level] then
-         local fd = self.fd or io.stdout
-        fd:write(msg)
+    if Level[level] >= Level[log_level] then
+        self.fd:write(msg)
     end
 end
 
+function Log:set_file(filename)
+    self.filename = filename
+    self.fd = io.open(filename, "w")
+end
 Log.Level = Level
 
-Log = require('class').class(Log, function(obj, module, filename)
+Log = class(Log, function(obj, module, filename)
     if module then
         obj.module = module
     end
