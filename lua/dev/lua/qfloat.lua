@@ -50,6 +50,7 @@ mt.__call = function(self)
 
     return qfloat.root_dir
 end
+
 setmetatable(find_root, mt)
 
 function find_root.main_root(main_root)
@@ -260,15 +261,16 @@ end
 -- Function to move to the next item in quickfix list
 function qnext()
     local is_qf = is_quickfix()
-
-    if vim.fn.getqflist({idx = 0}).idx == vim.fn.getqflist({size = 1}).size then
-        vim.cmd("cfirst")
-    else
-        vim.cmd("cnext")
-    end
-    vim.cmd("normal! zt") -- Center the cursor
-
     if is_qf then
+
+        if vim.fn.getqflist({idx = 0}).idx == vim.fn.getqflist({size = 1}).size then
+            vim.cmd("cfirst")
+        else
+            vim.cmd("cnext")
+        end
+        vim.cmd("normal! zt") -- Center the cursor
+
+    else
         vim.cmd.wincmd('p')
     end
 end
@@ -281,13 +283,14 @@ end
 function qprev()
     local is_qf = is_quickfix()
 
-    if vim.fn.getqflist({idx = 0}).idx == 1 then
-        vim.cmd("clast")
-    else
-        vim.cmd("cprevious")
-    end
-    vim.cmd("normal! zt") -- Center the cursor
     if is_qf then
+        if vim.fn.getqflist({idx = 0}).idx == 1 then
+            vim.cmd("clast")
+        else
+            vim.cmd("cprevious")
+        end
+        vim.cmd("normal! zt") -- Center the cursor
+    else
         vim.cmd.wincmd('p')
     end
 end

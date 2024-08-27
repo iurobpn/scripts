@@ -4,6 +4,7 @@ function set_message_errors()
 -- Function to get the messages and errors from the quickfix list
     -- Capture the output of `:messages`
     local messages = vim.api.nvim_exec('messages', true)
+    print('msg: ' .. messages)
 
     -- Split the messages into lines
     set_quickfix(messages)
@@ -29,6 +30,7 @@ function parse_errors(lines_list)
     local errors = {}
     for _, line in ipairs(lines_list) do
         error = parse_error(line)
+        print('error: ' .. vim.inspect(error))
         if error then
             table.insert(errors, error)
         end
@@ -50,4 +52,5 @@ function parse_error(line)
     end
 end
 
+vim.api.nvim_create_user_command("Qmsg", "lua set_message_errors()", {})
 -- require'dev.lua.qfloat'
