@@ -1,4 +1,5 @@
 require'dev.lua.float'
+require('dev.lua.fs')
 require('dev.lua.utils')
 require('utils')
 local json = require('cjson')
@@ -29,55 +30,6 @@ function read_output(cmd)
     return s
 end
 
-find_root = {
-}
-
-local mt = {}
-mt.__call = function(self)
-    if vim.g.qfloat_roots then
-        qfloat.roots = vim.g.qfloat_roots
-    end
-    if vim.g.qfloat_root_priority then
-        qfloat.root_priority = vim.g.qfloat_root_priority
-    end
-    for _, root in ipairs(qfloat.root_priority) do
-        qfloat.root_dir = find_root[root](qfloat[root])
-        if qfloat.root_dir then
-            qfloat.root_dir = qfloat.root_dir:gsub('/$', '')
-            break
-        end
-    end
-
-    return qfloat.root_dir
-end
-
-setmetatable(find_root, mt)
-
-function find_root.main_root(main_root)
-    if main_root then
-        main_root = main_root:gsub('\n', '')
-        return find_root.root_files({main_root})
-    else
-        return nil
-    end
-end
-
-function find_root.git()
-    local cmd = 'git rev-parse --show-toplevel'
-    local fd = io.popen(cmd)
-    if not fd then
-        return nil
-    end
-    local s = fd:read('*a')
-    fd:close()
-
-    if string.match(s, 'fatal') then
-        return nil
-    else
-        return s:gsub('\n', '')
-    end
-end
-
 function init()
     qfloat.root_dir = find_root()
     if not qfloat.root_dir then
@@ -104,41 +56,6 @@ function init()
     end
 end
 
-function find_root.root_files(file_list)
-    local lfs = require("lfs")
-    local home_dir = os.getenv("HOME")
-    local current_dir = lfs.currentdir()
-    local cdir = current_dir
-
-    while current_dir ~= home_dir and current_dir ~= '/' do
-        for _, file in ipairs(file_list) do
-            local root_path = current_dir .. '/' .. file
-
-            if file_exists(root_path) then
-                lfs.chdir(cdir)
-                return root_path:gsub('\n', '')
-            end
-        end
-        -- Move to the parent directory
-        lfs.chdir("..")
-        current_dir = lfs.currentdir()
-    end
-    lfs.chdir(cdir)
-
-    return nil
-end
-
--- Helper function to check if a file exists
-function file_exists(filename)
-    local file = io.open(filename, "r")
-    if file then
-        file:close()
-        return true
-    else
-        return false
-    end
-end
-
 
 
 -- local log_file = '/tmp/error_lua.log'
@@ -149,20 +66,21 @@ end
 
 function qrun_lua(filename)
     if not filename or filename == '' then
-        filename = vim.fn.expand('%:p')
+        filename = get_current_file()
     end
     qfloat.last_file = filename
 
     -- qrun(fmt('lua.fish %s', filename))
-    lines_str = read_output(fmt('lua %s', filename))
-    if not lines_str then
-        print('No output')
-        return
-    end
-    set_quickfix(lines_str)
+    vim.cmd.cexpr(fmt('system("lua.fish %s")', filename))
 
-    io.open(qfloat.settings_file, 'w'):write(json.encode({package = "qfloat", last_file = filename}))
-    qopen();
+    f = io.open(qfloat.settings_file, 'w')
+    f:write(json.encode(qfloat))
+    f:close()
+    vim.cmd('copen')
+    qopen()
+
+    -- print('Quickfix list updated, entering qopen()')
+    -- qopen();
 end
 
 function qfile(filename)
@@ -173,7 +91,7 @@ end
 function fzf_run(arg)
     local source, sink, options = arg.source, arg.sink, arg.options
     if not source then
-        source = 'find . -type f'
+        source = 'fd . --type f --hidden --follow --exclude .git --exclude .gtags'
     end
 
     if not sink then
@@ -194,7 +112,6 @@ function qrun_fzf()
     local options = '--prompt="Select a file> "'
 
     fzf_run({source = source, sink = sink, options = options})
-
 end
 
 
@@ -211,26 +128,42 @@ function qopen()
     end
 
     -- Calculate window size and position
-    local opts = get_options({rel_width = 0.5, rel_height = 0.3, rel_row = 0.75, rel_col = 0.25})
+    -- local opts = get_options({rel_width = 0.5, rel_height = 0.3, rel_row = 0.75, rel_col = 0.25})
 
+    --
     -- Open the quickfix window
+    -- print('filename in qopen(): ' .. filename)
     vim.cmd('copen')
-    open_current_window_as_float(opts)
-    -- qfloat.win_id = vim.fn.win_getid()
+    win = Window({
+        width = 0.5,
+        height = 0.3,
+        row = 0.75,
+        col = 0.25,
+        current = true,
+        modifiable = false,
+    })
+    -- print('Window: ' .. inspect(win))
+    win:add_map('n', '<CR>', ':lua qclose_link()<CR>', { noremap = true, silent = true })
+    win:add_map('n', '<Space>', ':lua qlink()<CR>', { noremap = true, silent = true })
+    win:open()
+    qfloat.win_id = win.id
+
+    -- win:
+    -- open_current_window_as_float(opts)
 
     -- Convert the quickfix window into a floating window
     -- vim.api.nvim_win_set_config(qfloat.win_id, opts)
 
     -- Map 'q' to close the floating quickfix window
-    vim.api.nvim_buf_set_keymap(0, 'n', '<CR>', ':lua qclose_link()<CR>', { noremap = true, silent = true })
-    vim.api.nvim_buf_set_keymap(0, 'n', '<Space>', ':lua qlink()<CR>', { noremap = true, silent = true })
+    -- vim.api.nvim_buf_set_keymap(0, 'n', '<CR>', ':lua qclose_link()<CR>', { noremap = true, silent = true })
+    -- vim.api.nvim_buf_set_keymap(0, 'n', '<Space>', ':lua qlink()<CR>', { noremap = true, silent = true })
 
     vim.cmd('normal! zt') -- cursor at the top
 end
 -- Function to close the floating quickfix window
 function qclose()
-    log:debug('qclose')
-    if close_float(qfloat.winid) then
+
+    if Window.close(qfloat.winid) then
         qfloat.win_id = nil
     else
         print("No floating quickfix window to close.")
@@ -319,6 +252,7 @@ function qlink()
     vim.cmd('wincmd p') -- Center the cursor
 end
 
+
 -- Function to open the file at the current line and close the quickfix window
 function qclose_link()
     -- local qf_entry = vim.fn.getqflist({ idx = 0 }) -- Get the current quickfix entry
@@ -329,6 +263,23 @@ function qclose_link()
     vim.fn.cursor(line, 0) -- Move to the correct line
 end
 
+function update_time(buf)
+    local time = os.date("%H:%M:%S")
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, {time})
+end
+
+function update_window(buf, lines)
+    local win = vim.api.nvim_get_current_win()
+    local buf = vim.api.nvim_win_get_buf(win)
+    local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    local line = lines[vim.api.nvim_win_get_cursor(win)[1]]
+    print(fmt('%s: %s', time(), line))
+end
+
+function qmessage()
+    set_message_errors()
+    qopen()
+end
 
 vim.api.nvim_set_keymap('n', '<Tab>', ':lua qtoggle()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<S-Left>', ':lua qnext()<CR>', { noremap = true, silent = true })
@@ -344,3 +295,6 @@ vim.api.nvim_create_user_command("Qsearch", "lua qrun_fzf()", {})
 vim.api.nvim_create_user_command("Qrun", "lua qrun_lua()", {})
 vim.api.nvim_create_user_command("OpenFloat", "lua open_float()", {})
 vim.api.nvim_create_user_command("CloseFloat", "lua close_float()", {})
+vim.api.nvim_create_user_command("Qtime", "lua Window.open_clock()", {})
+vim.api.nvim_create_user_command("QtimeClose", "lua Window.close_clock()", {})
+vim.api.nvim_create_user_command("Qmessage", "lua qmessage()", {})

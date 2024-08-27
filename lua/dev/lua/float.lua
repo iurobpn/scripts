@@ -5,14 +5,17 @@ local log = Log('float')
 
 Window = {
     relative = 'editor',
+    position = 'center', -- wheter to calculate pos (row and col) or not
     row = 0, -- relative values
     col = 0,
     relative_sizes = true,
+    redraw = false, -- check if the window is already oppened with sizes and position
     width = 0,
     height = 0,
     style = 'minimal',
     border = 'rounded',
     modifiable = true,
+    close = false, -- close current window when it is being floated
 
     content = '',
     filename = '',
@@ -45,12 +48,63 @@ function Window:ui_rows()
     return vim.api.nvim_get_option("lines")
 end
 
+function Window.update_clock(buf, t_period)
+    if not period then
+        period = 1000
+    end
+    -- Function to update the time in the buffer
+    local function update_time()
+        -- Get the current time
+        local current_time = os.date("%H:%M:%S")
+        -- Update the buffer content
+        vim.api.nvim_buf_set_lines(buf, 0, -1, false, {current_time})
+    end
+
+    -- Run the update_time function every 60 seconds
+    vim.defer_fn(function()
+        -- Check if the window still exists
+        if vim.api.nvim_buf_is_valid(buf) then
+            update_time()
+            -- Re-run the function to continue the update loop
+            Window.update_clock(buf, t_period)
+        end
+    end, t_period) -- 60000 ms = 1 min
+end
+function Window:config(...)
+    local opts = {...}
+    opts = opts[1]
+    if opts then
+        for k, v in pairs(opts) do
+            self[k] = v
+        end
+    end
+end
+
+function Window.open_clock(t)
+    t = t or 1000
+    win = Window.popup()
+    win.relative_sizes = false
+    win.focusable = false
+    win.modifiable = true
+    win.height = 1
+    win.width = 8
+    win.border = 'rounded'
+    win.position = 'top-right'
+    win:open()
+    win.update_clock(win.buf, t)
+    print('clock win: ' .. require'inspect'.inspect(win))
+end
+function Window.close_clock()
+    win = Window.floats[win.id]
+    win:close()
+end
+
+
 function Window.popup(...)
     local win = Window()
     local args = {...}
     args = args[1]
     -- local args = {...}
-    print('popup args', require'inspect'.inspect(args))
     if args then
         for k, v in pairs(args) do
             print(k, v)
@@ -88,6 +142,11 @@ function Window:set_absolute_sizes()
     return self.width, self.height, self.col, self.row
 end
 
+function Window:add_map(mode, keys, cmd, opts)
+    table.insert(self.maps[mode], {keys = keys, cmd = cmd, opts = opts})
+end
+
+-- calculate for default centered window
 function Window:set_relative_sizes()
     local ui_width = self:ui_cols()
     local ui_height = self:ui_rows()
@@ -115,15 +174,24 @@ function Window:set_relative_sizes()
     end
     return math.floor(width), math.floor(height), math.floor(col), math.floor(row)
 end
+
+function Window:set_center()
+
+    local width, height, col, row = self:set_sizes()
+end
+
 function Window:set_sizes()
-    local width, height, col, row = 0, 0, 0, 0
-    if self.relative_sizes then
-        width, height, col, row = self:set_relative_sizes()
-    else
-        width, height, col, row = self:set_absolute_sizes()
+    -- local width, height, col, row = {0, 0, 0, 0}
+    if self.position == 'center' then
+        if self.relative_sizes then
+            width, height, col, row = self:set_relative_sizes()
+        else
+            width, height, col, row = self:set_absolute_sizes()
+        end
     end
     return width, height, col, row
 end
+
 function Window:params()
     local width, height, col, row = self:set_sizes()
     print(fmt('width: %s, height: %s, col: %s, row: %s', width, height, col, row))
@@ -148,6 +216,9 @@ end
 function Window.move(dx, dy)
     -- get the current window  win id
     local win_id = vim.fn.win_getid()
+    if not win_id or not vim.api.nvim_win_is_valid(win_id) or not Window.is_floating(win_id) then
+        return
+    end
 
 
     if not win_id or not vim.api.nvim_win_is_valid(win_id) then
@@ -163,7 +234,9 @@ function Window.close()
     local win_id = vim.fn.win_getid()
     if win_id and vim.api.nvim_win_is_valid(win_id) then
         --remove mapping
-        vim.api.nvim_buf_del_keymap(0, 'n', 'q')
+        -- get current buffer
+        local buf = vim.api.nvim_get_current_buf()
+        Buffer.unmap(buf)
         vim.api.nvim_win_close(win_id, true)
     else
         print("No floating window to close.")
@@ -171,14 +244,16 @@ function Window.close()
     Window.floats[win_id] = nil -- morre disgrama!!!
 end
 function Window:open()
-    local width, height, col, row = self:set_sizes()
+    if not self.redraw then
+        self:set_position()
+    end
 
     local opts = {
         relative = self.relative,
-        row = row,
-        col = col,
-        width = width,
-        height = height,
+        row = self.row,
+        col = self.col,
+        width = self.width,
+        height = self.height,
         title = self.title,
         style = self.style,
         border = self.border,
@@ -194,12 +269,13 @@ function Window:open()
         vim.cmd(fmt('highlight Cursor guifg=%s guibg=%s', vim.o.background, vim.o.background))
     end
 
-
-
     -- vim.cmd([[highlight Cursor guifg=bg guibg=bg]])
 
+    local id = nil
     if self.current then
         self.id, self.buf, self.filename = Window.get_current()
+        self.close = true
+        id = self.id
     elseif self.id then
         self.buf, self.filename = Window.get_window(self.id)
     elseif self.filename ~= nil and #self.filename > 0 then
@@ -216,6 +292,11 @@ function Window:open()
     vim.api.nvim_buf_set_option(self.buf, 'modifiable', self.modifiable)
     self.id = vim.api.nvim_open_win(self.buf, true, opts)
 
+    if id ~= nil and self.close then
+        vim.api.nvim_win_close(id, false)
+    end
+
+
 
 
     -- vim.api.nvim_buf_set_keymap(0, 'n', 'q', ':lua close_float()<CR>', { noremap = true, silent = true })
@@ -228,6 +309,8 @@ function Window:open()
         end
     end
     Window.floats[self.id] = self
+
+    self.redraw = true
 end
 
 function Window:load(filename)
@@ -265,6 +348,9 @@ function Window.is_floating(id)
 end
 
 function Window:write(content, line_nr, append)
+    if line_nr == nil then
+        line_nr = 0
+    end
     if append == nil then
         append = false
     end
@@ -290,7 +376,6 @@ end
 
 function test_popup()
     local win = Window.popup({content='hello'})
-    print('popup ', require'inspect'.inspect(win))
     win:open()
     win:params()
 end
@@ -509,7 +594,7 @@ function close_float(winid)
         buf = vim.api.nvim_win_get_buf(winid)
     end
     if winid and vim.api.nvim_win_is_valid(winid) then
-        vim.api.nvim_buf_del_keymap(buf, 'n', 'q')
+        Buffer.del_keymaps(buf)
         vim.api.nvim_win_close(winid, true)
     else
         print("No floating window to close.")
@@ -602,13 +687,83 @@ end
 Window = class(
     Window,
     function(self, ...)
-        local opts = arg or {}
-        for k, v in pairs(opts) do
-            self[k] = v
+        local opts = {...}
+        opts = opts[1]
+        if opts then
+            for k, v in pairs(opts) do
+                if k ~= 'maps' then
+                    self[k] = v
+                end
+            end
         end
+
         return self
     end
 )
+function Window:set_position()
+    if self.position == 'center' then
+        self:set_center()
+    elseif self.position == 'custom' then
+        self:set_custom()
+    elseif (self.position.sub(1,3) == 'top') or (self.position.sub(1,3) == 'bot') then
+        self:set_corner(self.position)
+    end
+end
+function Window:set_corner(corner)
+    -- Define the floating window size
+    -- Get the current editor dimensions
+    corner = corner or 'ops'
+    local win_width = vim.api.nvim_get_option("columns")
+    local win_height = vim.api.nvim_get_option("lines")
+
+    -- Initialize row and col based on the corner
+    local row, col = 0, 0
+
+    -- get the width and height of the floating window
+    local float_width, float_height = self.width, self.height
+
+    if corner == "top-left" then
+        row, col = 0, 0
+    elseif corner == "top-right" then
+        print('set position to top-right: ', 0, win_width - float_width)
+        row, col = 0, win_width - float_width
+    elseif corner == "bottom-left" then
+        row, col = win_height - float_height, 0
+    elseif corner == "bottom-right" then
+        row, col = win_height - float_height, win_width - float_width
+    else
+        error("Invalid corner specified: " .. (corner or 'nil'))
+    end
+end
+
+Buffer = {}
+function Buffer.safe_unmap(bufnr, mode, lhs)
+    if buffer_mapping_exists(bufnr, mode, lhs) then
+        vim.api.nvim_buf_del_keymap(bufnr, mode, lhs)
+    end
+end
+function Buffer.mapping_exists(bufnr, mode, lhs)
+    local mappings = vim.api.nvim_buf_get_keymap(bufnr, mode)
+    for _, map in ipairs(mappings) do
+        if map.lhs == lhs then
+            return true
+        end
+    end
+    return false
+end
+
+function Buffer.unmap(bufnr)
+    local modes = {'n', 'v', 'i', 'x', 's', 'o', 'c', 't'}
+    for _,mode in ipairs(modes) do
+        local mappings = vim.api.nvim_buf_get_keymap(bufnr, mode)
+        for _, map in ipairs(mappings) do
+            vim.api.nvim_buf_del_keymap(0, mode, map.lhs)
+        end
+    end
+end
+
+
+
 -- create mappings for the move functions
 vim.api.nvim_set_keymap('n', '<C-S-Up>', ':lua Window.up()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<C-S-Down>', ':lua Window.down()<CR>', { noremap = true, silent = true })

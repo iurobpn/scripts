@@ -1,5 +1,5 @@
 -- Date: 2020/07/26
-Log = require'log'
+Log = require'dev.lua.log'
 local inspect = require'inspect'
 
 function print_table(...)
