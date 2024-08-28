@@ -34,11 +34,14 @@ function Thread.join(self)
     -- print("Thread joined.")
 end
 
-Thread = class(Thread, function(obj, func)
-    if func then
-        obj.func = func
-    end
-    return obj
-end)
+Thread = class(Thread,
+    {
+        constructor = function(obj, func)
+            if func then
+                obj.func = func
+            end
+            return obj
+        end
+    })
 
 return Thread

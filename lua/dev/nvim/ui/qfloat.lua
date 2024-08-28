@@ -1,7 +1,8 @@
-require'dev.lua.float'
+require'dev.nvim.ui.float'
 require('dev.lua.fs')
 require('dev.lua.utils')
 require('utils')
+
 local json = require('cjson')
 
 local inspect = require('inspect')
@@ -9,7 +10,7 @@ local Log = require('dev.lua.log')
 
 local fmt = string.format
 
-local log = Log('qfloat')
+local log = Log('qfloat_log')
 
 qfloat = {
     win_id = nil,
@@ -273,8 +274,8 @@ function qmessage()
 end
 
 vim.api.nvim_set_keymap('n', '<Tab>', ':lua qtoggle()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<S-Left>', ':lua qnext()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<S-Right>', ':lua qprev()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<S-Left>', ':lua qprev()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<S-Right>', ':lua qnext()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<F3>', ':lua qrun_fzf()<CR>', { noremap = true, silent = true })
 
 vim.api.nvim_create_user_command("Qtoggle", "lua qtoggle()", {})
@@ -285,6 +286,4 @@ vim.api.nvim_create_user_command("Qfile", "lua qfile()", {})
 vim.api.nvim_create_user_command("Qsearch", "lua qrun_fzf()", {})
 vim.api.nvim_create_user_command("Qrun", "lua qrun_lua()", {})
 vim.api.nvim_create_user_command("Qclose", "lua Window.close()", {})
-vim.api.nvim_create_user_command("Qtime", "lua Window.open_clock()", {})
-vim.api.nvim_create_user_command("QtimeClose", "lua Window.close_clock()", {})
 vim.api.nvim_create_user_command("Qmessage", "lua qmessage()", {})

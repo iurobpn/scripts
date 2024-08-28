@@ -26,25 +26,28 @@ local Timer = {
 --     return self
 -- end
 
-Timer = class(Timer, function(self, ip, port, name)
-    local mod_color = require('gruvbox-term').bright_blue
-    self.name = name or Timer.name
-    self.ip = ip or Timer.ip
-    self.port = port or Timer.port
+Timer = class(Timer,
+    {
+        constructor = function(self, ip, port, name)
+            local mod_color = require('gruvbox-term').bright_blue
+            self.name = name or Timer.name
+            self.ip = ip or Timer.ip
+            self.port = port or Timer.port
 
-    self.socket = Socket(self.ip, self.port, -1, mod_color)
-    self.log = Log("tclient")
-    self.log.module_color = mod_color
-    self.log:log("Client Timer created.")
+            self.socket = Socket(self.ip, self.port, -1, mod_color)
+            self.log = Log("tclient")
+            self.log.module_color = mod_color
+            self.log:log("Client Timer created.")
 
-    if not self.socket then
-        self.log:error("Error creating socket.")
-    else
-        self.log:log("Socket created.")
-    end
+            if not self.socket then
+                self.log:error("Error creating socket.")
+            else
+                self.log:log("Socket created.")
+            end
 
-    return self
-end)
+            return self
+        end
+    })
 
 function Timer:join()
     if not self.thread then

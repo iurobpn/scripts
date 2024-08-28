@@ -113,16 +113,19 @@ function Log:set_file(filename)
 end
 Log.Level = Level
 
-Log = class(Log, function(obj, module, filename)
-    if module then
-        obj.module = module
-    end
-    if filename then
-        obj.filename = filename
-        obj.fd = io.open(filename, "w")
-    end
-    return obj
-end)
+Log = class(Log,
+    {
+        constructor = function(obj, module, filename)
+            if module then
+                obj.module = module
+            end
+            if filename then
+                obj.filename = filename
+                obj.fd = io.open(filename, "w")
+            end
+            return obj
+        end, adv = 1
+    })
 -- setmetatable(Log, mt)
 
 return Log

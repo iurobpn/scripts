@@ -81,15 +81,18 @@ function Duration.to_string(self)
     return s
 end
 
-Duration = class(Duration, function(obj, type, tf, ti, unit)
-    obj = obj or {}
-    obj.unit = unit
-    if ti and tf then
-        obj.dt = tf - ti
-    end
-    obj.unit = unit
-    return obj
-end)
+Duration = class(Duration, 
+    {
+        constructor = function(obj, type, tf, ti, unit)
+            obj = obj or {}
+            obj.unit = unit
+            if ti and tf then
+                obj.dt = tf - ti
+            end
+            obj.unit = unit
+            return obj
+        end
+    })
 
 
 return Duration

@@ -19,22 +19,25 @@ function Socket:bind(ip, port)
     self.log:log("Binding to " .. self.ip .. ":" .. self.port)
 end
 
-Socket = class(Socket, function(self, ip, port, timeout, color)
+Socket = class(Socket,
+    {
+        constructor = function(self, ip, port, timeout, color)
 
-    self.ip = ip or Socket.ip
-    self.port = port or Socket.port
-    self.timeout = timeout or Socket.timeout
-    self.log = Log('socket')
-    if not color then
-        self.log.module_color = require('gruvbox-term').bright_aqua
-    else
-        self.log.module_color = color
-    end
-    self.log:log('socket created')
-    -- self.socket = assert(require('socket').bind(self.ip, self.port))
+            self.ip = ip or Socket.ip
+            self.port = port or Socket.port
+            self.timeout = timeout or Socket.timeout
+            self.log = Log('socket')
+            if not color then
+                self.log.module_color = require('gruvbox-term').bright_aqua
+            else
+                self.log.module_color = color
+            end
+            self.log:log('socket created')
+            -- self.socket = assert(require('socket').bind(self.ip, self.port))
 
-    return self
-end)
+            return self
+        end
+})
 
 function Socket:send(data)
     if self.socket then

@@ -1,12 +1,25 @@
 -- Date: 2020/07/26
 Log = require'dev.lua.log'
-local inspect = require'inspect'
+local insp = require'inspect'
+local fmt = string.format
 
 function print_table(...)
     for i,v in pairs({...}) do
-        print(inspect(v))
+        print(insp.inspect(v))
     end
     -- print(inspect(t,{depth=3}))
+end
+
+function inspect(obj,s)
+    print(fmt('%s%s', s or '', require('inspect').inspect(obj, {depth=3})))
+end
+
+function numel(t)
+    local n = 0
+    for k,v in pairs(t) do
+        n = n + 1
+    end
+    return n
 end
 
 function argparse(arg)

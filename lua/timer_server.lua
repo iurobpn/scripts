@@ -96,27 +96,30 @@ TimerData = {
     unit = "s"
 }
 -- mode, start_time, elapsed_time, duration, paused, running, unit)
-TimerData = class(TimerData, function(self, ...)
-    if not arg then
-        arg = {}
-        return
-    end
-    local targs = arg
-    if targs.timer then
-        targs = targs.timer
-    end
-    for k, v in pairs(targs) do
-        self[k] = v or self[k]
-    end
-    self.client_id = arg.client_id or 0
-    self.task_id = arg.task_id or 0
-    self.remaining_time = targs.duration
-    if not self.start_time or self.start_time <=0 then
-        self.start_time = clock.now()
-    end
+TimerData = class(TimerData, 
+    {
+        constructor = function(self, ...)
+            if not arg then
+                arg = {}
+                return
+            end
+            local targs = arg
+            if targs.timer then
+                targs = targs.timer
+            end
+            for k, v in pairs(targs) do
+                self[k] = v or self[k]
+            end
+            self.client_id = arg.client_id or 0
+            self.task_id = arg.task_id or 0
+            self.remaining_time = targs.duration
+            if not self.start_time or self.start_time <=0 then
+                self.start_time = clock.now()
+            end
 
-    return self
-end)
+            return self
+        end
+    })
 
 function Server:get_id()
     self.id = self.id + 1
