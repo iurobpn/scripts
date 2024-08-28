@@ -252,7 +252,6 @@ function qlink()
     vim.cmd('wincmd p') -- Center the cursor
 end
 
-
 -- Function to open the file at the current line and close the quickfix window
 function qclose_link()
     -- local qf_entry = vim.fn.getqflist({ idx = 0 }) -- Get the current quickfix entry
@@ -266,14 +265,6 @@ end
 function update_time(buf)
     local time = os.date("%H:%M:%S")
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, {time})
-end
-
-function update_window(buf, lines)
-    local win = vim.api.nvim_get_current_win()
-    local buf = vim.api.nvim_win_get_buf(win)
-    local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-    local line = lines[vim.api.nvim_win_get_cursor(win)[1]]
-    print(fmt('%s: %s', time(), line))
 end
 
 function qmessage()
@@ -293,8 +284,7 @@ vim.api.nvim_create_user_command("Qopen", "lua qopen()", {})
 vim.api.nvim_create_user_command("Qfile", "lua qfile()", {})
 vim.api.nvim_create_user_command("Qsearch", "lua qrun_fzf()", {})
 vim.api.nvim_create_user_command("Qrun", "lua qrun_lua()", {})
-vim.api.nvim_create_user_command("OpenFloat", "lua open_float()", {})
-vim.api.nvim_create_user_command("CloseFloat", "lua close_float()", {})
+vim.api.nvim_create_user_command("Qclose", "lua Window.close()", {})
 vim.api.nvim_create_user_command("Qtime", "lua Window.open_clock()", {})
 vim.api.nvim_create_user_command("QtimeClose", "lua Window.close_clock()", {})
 vim.api.nvim_create_user_command("Qmessage", "lua qmessage()", {})
