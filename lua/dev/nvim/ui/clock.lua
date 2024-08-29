@@ -39,7 +39,6 @@ function Clock.open(t)
     if Clock.window then
         win = Clock.window
     else
-        print('Creating new clock')
         win = Window.popup()
     end
     t = t or 1000
@@ -48,6 +47,12 @@ function Clock.open(t)
             name = 'clock',
             focusable = false,
             modifiable = true,
+            style = 'minimal',
+            -- unlisted buffer
+            buffer = {
+                listed = false,
+                scratch = true,
+            },
             size = {
                 absolute = {
                     height = 1,

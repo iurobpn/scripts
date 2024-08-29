@@ -29,7 +29,9 @@ end
 function parse_errors(lines_list)
     local errors = {}
     for _, line in ipairs(lines_list) do
+        print('line: ' .. line)
         error = parse_error(line)
+        inspect(error, 'error: ')
         if error then
             table.insert(errors, error)
         end
@@ -41,13 +43,17 @@ function parse_error(line)
     local filepath, lnum, message = line:match("^%s*(.*):(%d*):(.*)")
     -- local filepath, lnum, message = line:match("([^:]+):(%d+):?(.*)")
     if filepath == nil then
-        return nil
-    else
-        return {
-            filename = filepath,
-            lnum = tonumber(lnum),
-            text = message, -- Using 0 to refer to the current buffer
-        }
+        filepath, lnum, message = line:match("^%s*(.*):(%d+)(.*)")
+        if filepath == nil then
+            print("Error parsing line: " .. line)
+            return nil
+        else
+            return {
+                filename = filepath,
+                lnum = tonumber(lnum),
+                text = message, -- Using 0 to refer to the current buffer
+            }
+        end
     end
 end
 
