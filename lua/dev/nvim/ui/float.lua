@@ -29,7 +29,7 @@ Window = {
         --     col = 0,
         -- },
     -- },
-    style = 'minimal',
+    -- style = 'minimal',
     border = 'rounded',
     close = false, -- close current window when it is being floated
 
@@ -61,6 +61,7 @@ Window = {
         listed = true,
         scratch = false,
     },
+    fullscreem = false,
 }
 
 function Window:ui_width()
@@ -212,8 +213,8 @@ function Window:close(id)
 end
 
 function Window.set_win(id)
-    if vim.api.nvim_win_is_valid(win_id) then
-        vim.api.nvim_set_current_win(win_id)
+    if vim.api.nvim_win_is_valid(id) then
+        vim.api.nvim_set_current_win(id)
     else
         print("Invalid window ID")
     end
@@ -267,10 +268,10 @@ function Window:open()
     elseif self.filename ~= nil and #self.filename > 0 then
         self:load(self.filename)
     elseif self.content ~= nil and #self.content > 0 then
-        self.buf = vim.api.nvim_create_buf(self.buffer.listed, self.buffer,scratch)
+        self.buf = vim.api.nvim_create_buf(self.buffer.listed, self.buffer.scratch)
         self:write(self.content, 0, false)
     else
-        self.buf = vim.api.nvim_create_buf(self.buffer.listed, self.buffer,scratch)
+        self.buf = vim.api.nvim_create_buf(self.buffer.listed, self.buffer.scratch)
     end
 
 
@@ -346,7 +347,7 @@ function Window:read(filename)
 end
 
 function Window.is_floating(id)
-    return id and vim.api.nvim_win_is_valid(id) and vim.api.nvim_win_get_config(id).relative ~= ''
+    return id ~= nil and vim.api.nvim_win_is_valid(id) and vim.api.nvim_win_get_config(id).relative ~= ''
 end
 
 function Window:write(content, line_nr, append)
@@ -427,20 +428,40 @@ function test_popup()
     win:params()
 end
 
-function popup(str, ...)
+function Window.fullscreen()
+    local win_id = vim.fn.win_getid()
+    if win_id == nil or not vim.api.nvim_win_is_valid(win_id) or not Window.is_floating(win_id) then
+        print("Current window is not floating to be in fullscreen.")
+        return
+    end
+
+    local win_config = vim.api.nvim_win_get_config(win_id)
+    win_config.row = 0
+    win_config.col = 0
+    win_config.width = vim.api.nvim_get_option("columns")
+    win_config.height = vim.api.nvim_get_option("lines")-5
+    vim.api.nvim_win_set_config(win_id, win_config)
+    Window.floats[win_id].fullscreen = true
+end
+
+function popup(...)
     local buf = vim.api.nvim_create_buf(false, true)  -- false for listed, true for scratch
 
-    ui_width = vim.api.nvim_get_option("columns")
-    ui_height = vim.api.nvim_get_option("lines")
+    local ui_width = vim.api.nvim_get_option("columns")
+    local ui_height = vim.api.nvim_get_option("lines")
     local opts = {
         relative = 'editor',
         width = 8,
         height = 3,
-        row = math.floor((ui_height - rows) / 2),
-        col = math.floor((ui_width - cols) / 2),
+        row = math.floor((ui_height - 8) / 2),
+        col = math.floor((ui_width - 3) / 2),
         style = 'minimal',
         border = 'rounded',
         modifiable = false,
+        buffer = {
+            listed = false,
+            scratch = true,
+        },
     }
     for k, v in pairs(arg) do
         opts[k] = v
@@ -619,11 +640,22 @@ function Window:set_position()
 end
 
 function Window:redraw()
+    local id = nil
+    if not self then
+        id = vim.fn.win_getid()
+        self = Window.floats[id]
+        if not self then
+            print("Current window is not a float to be redrawn.")
+            return
+        end
+    end
+
     self:set_size()
     self:set_position()
     vim.api.nvim_buf_set_option(self.buf, 'modifiable', self.modifiable)
 
     vim.api.nvim_win_set_config(self.id, self:options())
+    Window.floats[id].fullscreen = false
 end
 
 Buffer = {}
@@ -637,6 +669,16 @@ function Buffer.mapping_exists(bufnr, mode, lhs)
     return false
 end
 
+function Window.toggle_fullscreen()
+    local win_id = vim.fn.win_getid()
+    -- local win_config = vim.api.nvim_win_get_config(win_id)
+    if Window.floats[win_id].fullscreen then
+        Window.redraw()
+    else
+        Window.fullscreen()
+    end
+end
+
 function Buffer.unmap(bufnr)
     local modes = {'n', 'v', 'i', 'x', 's', 'o', 'c', 't'}
     for _,mode in ipairs(modes) do
@@ -647,15 +689,18 @@ function Buffer.unmap(bufnr)
     end
 end
 
+
+
 -- create mappings for the move functions
 vim.api.nvim_set_keymap('n', '<C-S-Up>', ':lua Window.up()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<C-S-Down>', ':lua Window.down()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<C-S-Left>', ':lua Window.left()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<C-S-Right>', ':lua Window.right()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-S-k>', ':lua Window.snap_up()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-S-j>', ':lua Window.snap_down()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-S-l>', ':lua Window.snap_left()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-S-h>', ':lua Window.snap_right()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-k>', ':lua Window.snap_up()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-j>', ':lua Window.snap_down()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-l>', ':lua Window.snap_right()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-h>', ':lua Window.snap_left()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '°', ':WinToggleFullScreen<CR>', { noremap = true, silent = true })
 
 
 
@@ -667,6 +712,9 @@ vim.api.nvim_create_user_command("WinSnapUp", ':lua Window.up()', {})
 vim.api.nvim_create_user_command("WinSnapDown", ':lua Window.down()', {})
 vim.api.nvim_create_user_command("WinSnapLeft", ':lua Window.left()', {})
 vim.api.nvim_create_user_command("WinSnapRight", ':lua Window.right()', {})
+vim.api.nvim_create_user_command("WinToggleFullScreen", ':lua Window.toggle_fullscreen()', {})
+vim.api.nvim_create_user_command("WinFullScreen", ':lua Window.fullscreen()', {})
+vim.api.nvim_create_user_command("WinRedraw", ':lua Window.redraw()', {})
 
 -- handle_link()
 -- ag  '\- \[.\]' | cut -d : -f1,2 | sed 's/:/ /g'                                                                                                                   22.3.0 󰌠 3.12.4 (python3.12)

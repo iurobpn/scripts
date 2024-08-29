@@ -115,10 +115,7 @@ function qrun_fzf()
     fzf_run({source = source, sink = sink, options = options})
 end
 
-
-
 -- Store the window ID globally
-
 -- Function to open the quickfix list in a floating window
 function qopen()
     -- Check if the quickfix list is empty
@@ -161,9 +158,9 @@ function qopen()
 
     vim.cmd('normal! zt') -- cursor at the top
 end
+
 -- Function to close the floating quickfix window
 function qclose()
-
     if Window.close(qfloat.winid) then
         qfloat.win_id = nil
     else
@@ -172,7 +169,6 @@ function qclose()
 end
 
 -- Store the window ID of the floating quickfix window
-
 function qtoggle()
     vim.opt.filetype = 'lua'
     if qfloat.win_id and vim.api.nvim_win_is_valid(qfloat.win_id) then
@@ -196,14 +192,12 @@ end
 function qnext()
     local is_qf = is_quickfix()
     if is_qf then
-
         if vim.fn.getqflist({idx = 0}).idx == vim.fn.getqflist({size = 1}).size then
             vim.cmd("cfirst")
         else
             vim.cmd("cnext")
         end
         vim.cmd("normal! zt") -- Center the cursor
-
     else
         vim.cmd.wincmd('p')
     end

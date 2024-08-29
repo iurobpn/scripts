@@ -4,7 +4,7 @@ local insp = require'inspect'
 local fmt = string.format
 
 function print_table(...)
-    for i,v in pairs({...}) do
+    for _,v in pairs({...}) do
         print(insp.inspect(v))
     end
     -- print(inspect(t,{depth=3}))
@@ -16,7 +16,7 @@ end
 
 function numel(t)
     local n = 0
-    for k,v in pairs(t) do
+    for _,_ in pairs(t) do
         n = n + 1
     end
     return n
@@ -73,7 +73,7 @@ function traceback ()
         if info.what == "C" then   -- is a C function?
             print(level, "C function")
         else   -- a Lua function
-            print(string.format("[%s]:%d",
+            print(string.format("%s:%d",
                 info.short_src, info.currentline))
         end
         level = level + 1

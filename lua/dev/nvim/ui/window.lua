@@ -1,4 +1,6 @@
 require('dev.nvim.ui.float')
+require'utils'
+
 Float = {
     window = nil,
     buf = nil,
@@ -11,42 +13,7 @@ function Float.toggle()
         Float.open()
     end
 end
--- function Float.toggle()
---     -- local hidden_zindex = -100  -- A zindex value that ensures the Float is beneath everything
---     -- local visible_zindex = 50  -- The default visible zindex
---
---     local id = vim.api.nvim_get_current_win()
---     if Float.hidden == nil and id == Float.visible then
---         Float.hidden = id
---         Float.visible = nil
---     elseif Float.visible == nil and Float.hidden ~= nil then
---         id = Float.hidden
---         Float.hidden = nil
---         Float.visible = id
---     elseif Float.hidden == nil and Float.visible == nil then
---         Float.open()
---         return
---     else
---         print('Cannot toggle Float window, inconsistent state')
---     end
---
---
---     if id ~= nil and Window.is_floating(id) then
---         local win_config = vim.api.nvim_win_get_config(id)
---         if win_config.zindex > 0 then
---             -- Set zindex to a very low value to hide it
---             print('Hiding window')
---             win_config.zindex = Float.hidden_zindex
---         else
---             -- Restore zindex to the default visible value
---             print('Show window')
---             win_config.zindex = Float.zindex
---         end
---         vim.api.nvim_win_set_config(id, win_config)
---     else
---         print('Window is not a floating window')
---     end
--- end
+
 function Float.open()
     local win = nil
     if Float.window then
@@ -80,10 +47,12 @@ function Float.open()
     local win_config = vim.api.nvim_win_get_config(win.id)
     Float.zindex = win_config.zindex
     Float.visible = win.id
+    Window.floats[win.id] = win
 end
 
 function Float.close()
     if Float.window then
+        traceback()
         print('Closing float')
         Float.window.close()
         Float.window = nil
@@ -143,9 +112,9 @@ function test_pos()
     win:open()
 
     print('corner Float sizes')
-    for _, win in ipairs(wins) do
+    for _, wi in ipairs(wins) do
         print('Win: ' .. win.name)
-        win:params()
+        wi:params()
     end
 end
 
@@ -172,9 +141,19 @@ function Float.clear()
     Float.buf = nil
 end
 
+function Float.toggle_fullscreen()
+    local win_id = vim.fn.win_getid()
+    local win_config = vim.api.nvim_win_get_config(win_id)
+    if Window.floats[win_id].fullscreen then
+        Window.redraw()
+    else
+        Window.fullscreen()
+    end
+end
+
 
 function close_wins()
-    for i,win in ipairs(wins) do
+    for _,win in ipairs(wins) do
         win:close()
     end
 end
@@ -182,7 +161,9 @@ end
 vim.api.nvim_create_user_command("Float", "lua Float.toggle()", {})
 vim.api.nvim_create_user_command("FloatOpen", "lua Float.open()", {})
 vim.api.nvim_create_user_command("FloatClose", "lua Float.close()", {})
+vim.api.nvim_create_user_command("FloatToggleFullScreen", "lua Float.toggle_fullscreen()", {})
 
 -- define maps
-vim.api.nvim_set_keymap('n', '<C-ç>', ':Float<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'ç+c', ':FloatClear<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', 'Ç', ':Float<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', 'ç+c', ':FloatClear<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', 'º', ':FloatToggleFullScreen<CR>', { noremap = true, silent = true })
