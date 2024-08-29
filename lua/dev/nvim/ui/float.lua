@@ -717,7 +717,7 @@ vim.api.nvim_create_user_command("WinFullScreen", ':lua Window.fullscreen()', {}
 vim.api.nvim_create_user_command("WinRedraw", ':lua Window.redraw()', {})
 
 -- handle_link()
--- ag  '\- \[.\]' | cut -d : -f1,2 | sed 's/:/ /g'                                                                                                                   22.3.0 󰌠 3.12.4 (python3.12)
+-- ag  '\- \[.\]' | cut -d : -f1,2 | sed 's/:/ /g' | sort | uniq
 
 --setup the buffer with links and test
 -- setup_buffer_with_links()
