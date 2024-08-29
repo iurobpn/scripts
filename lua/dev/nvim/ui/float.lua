@@ -267,10 +267,10 @@ function Window:open()
     elseif self.filename ~= nil and #self.filename > 0 then
         self:load(self.filename)
     elseif self.content ~= nil and #self.content > 0 then
-        self.buf = vim.api.nvim_create_buf(self.buffer.listed, self.buffer,scratch)
+        self.buf = vim.api.nvim_create_buf(self.buffer.listed, self.buffer.scratch)
         self:write(self.content, 0, false)
     else
-        self.buf = vim.api.nvim_create_buf(self.buffer.listed, self.buffer,scratch)
+        self.buf = vim.api.nvim_create_buf(self.buffer.listed, self.buffer.scratch)
     end
 
 
