@@ -60,6 +60,14 @@ function check_repos
         end
     end
 
+    if test -z "$dirty"
+        echo "All repos are up to date"
+    else
+        echo ''
+        echo 'dirty repos:'
+        echo "$dirty" | sed -e 's/ /\n/g'
+    end
+
     echo ' '
     # echo "dirty repos: $dirty"
     cd "$pwd"
