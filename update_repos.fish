@@ -1,38 +1,61 @@
 #!/usr/bin/env fish
 
+# This script is used to update all git repositories in a given directory
 function check_repos
-    set GIT $HOME/git
-    set pwd $(pwd)
+    argparse --name=check_repos 'h/help' 'g/git_dir=' -- $argv
+    or return
+
+    if set -q _flag_h
+        echo "Usage: check_repos [-g|--git-dir <git-dir>] [<repositories>]"
+        return 0
+    end
+
+    if set -q _flag_g
+        set GIT $_flag_g
+    else
+        set GIT $HOME/git
+    end
 
     if test -n "$argv"
-        set dirs ''
-        set args (string split ' ' $argv)
-        # echo 'checking args:'
-
-        for arg in $args
-            set dir (fd . -td -d1 $GIT | sed -e 's/ /\n/g' | grep "$arg")
-            set dirs "$dirs $dir"
-        end
+        set repos $argv
     else
-        set dirs $(fd . -td $GIT -d 1)
+        set repos CGAL-matlab ProVANT-Simulator_Developer algortihmns armadillo-pmr cpp_tests data_structures dotfiles matlab-dev nmpc-obs ocpsol pres-research prov_sim_configs pylattes reports papers scripts sets-obs svgs test thesis
+        # set repos (echo ""$repos |  sed -e 's#\([a-zA-Z\._0-9\-]\+\)#/home/gagarin/git/\1#g')
+    end
+    set n (count $repos)
+    for i in (seq 1 $n)
+        set repos[$i] "$GIT/$repos[$i]"
     end
 
-    if test -z "$dirs"
-        echo "No repos found"
-        return 1
-    end
-    set repos
+    set pwd $(pwd)
 
-    set dirs (string split ' ' $dirs)
-    
+    if set -q _flag_r_
+        set dirs
 
-    for repo in $dirs
-        if test -d $repo
-            cd $repo
-            if not is_git_repo
+        set dir
+        set n (count $repos)
+        for i in (seq 1 $n)
+            if not test -d $repos[$i]
+                set -e repos[$i]
+            else
                 continue
             end
-        else
+        end
+    else
+        set dirs $(fd . -td $GIT -d1)
+    end
+
+    if test -z "$repos"
+        echo "No repos found"
+        return 1
+    else
+        echo "Found "$(count $repos)" repositories"
+    end
+
+    set dirty
+    for repo in $repos
+        cd $repo
+        if not is_git_repo
             continue
         end
 
@@ -53,14 +76,15 @@ function check_repos
             set repo_name $(basename $repo)
         
             if notstaged || untracked
-                echo ' '
+                echo ''
                 echo "repo $repo_name has uncommited changes"
-                set dirty "$dirty $repo_name"
+                set -a dirty $dirty
             end
         end
     end
 
     if test -z "$dirty"
+        echo ''
         echo "All repos are up to date"
     else
         echo ''
@@ -68,7 +92,7 @@ function check_repos
         echo "$dirty" | sed -e 's/ /\n/g'
     end
 
-    echo ' '
+    echo ''
     # echo "dirty repos: $dirty"
     cd "$pwd"
 end
@@ -76,10 +100,10 @@ end
 
 function update_ufmg
     set GIT $HOME/git
-    set repos "CGAL-matlab ProVANT-Simulator_Developer algortihmns armadillo-pmr cpp_tests data_structures dotfiles matlab-dev nmpc-obs ocpsol pres-research prov_sim_configs pylattes reports papers scripts sets-obs svgs test thesis"
-    set repos (echo $repos |  sed -e 's#\([a-zA-Z\._0-9\-]\+\)#/home/gagarin/git/\1#g')
+    set repos CGAL-matlab ProVANT-Simulator_Developer algortihmns armadillo-pmr cpp_tests data_structures dotfiles matlab-dev nmpc-obs ocpsol pres-research prov_sim_configs pylattes reports papers scripts sets-obs svgs test thesis
+    # set repos (echo $repos |  sed -e 's#\([a-zA-Z\._0-9\-]\+\)#/home/gagarin/git/\1#g')
     # echo "updating repos: $repos"
-    check_repos "$repos"
+    check_repos $repos
 end
 
 
