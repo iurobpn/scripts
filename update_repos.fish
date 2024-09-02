@@ -17,15 +17,23 @@ function check_repos
     end
 
     if test -n "$argv"
-        set repos $argv
+        set old_repos $argv
     else
-        set repos CGAL-matlab ProVANT-Simulator_Developer algortihmns armadillo-pmr cpp_tests data_structures dotfiles matlab-dev nmpc-obs ocpsol pres-research prov_sim_configs pylattes reports papers scripts sets-obs svgs test thesis
+        set old_repos CGAL-matlab ProVANT-Simulator_Developer algortihmns armadillo-pmr cpp_tests data_structures dotfiles matlab-dev nmpc-obs ocpsol pres-research prov_sim_configs pylattes reports papers scripts sets-obs svgs test thesis
         # set repos (echo ""$repos |  sed -e 's#\([a-zA-Z\._0-9\-]\+\)#/home/gagarin/git/\1#g')
     end
-    set n (count $repos)
+    set n (count $old_repos)
+    set repos
+    echo "Checking repositories:"
     for i in (seq 1 $n)
-        set repos[$i] "$GIT/$repos[$i]"
+        if test -d "$GIT/$old_repos[$i]"
+            set -a repos "$GIT/$old_repos[$i]"
+        else
+            echo "repo $repos[$i] not found"
+        end
     end
+    echo 'checking finished'
+    echo ''
 
     set pwd $(pwd)
 
