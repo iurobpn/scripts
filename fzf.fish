@@ -82,20 +82,19 @@ function find_tasks
     if set -q _flag_w
         # Work in progress
         set pattern '\- \[v\]'
-    end
-
-    if set -q _flag_d
+    else if set -q _flag_d
         # Task done
         set pattern '\- \[ *x *\]'
-    end
-
-    if set -q _flag_n
+    else if set -q _flag_n
         # Task not started
         set pattern '\- \[ \]'
+    else
+    # No option specified, search for all tasks
+        set pattern '\- *\[ *[ a-z] *\]'
     end
 
     # Any remaining arguments are treated as search patterns (hashtags or other filters)
-        set search_args $argv
+    set search_args $argv
 
     # Perform the search using ag with the specified pattern and additional arguments
     if test -n "$pattern"
@@ -104,21 +103,10 @@ function find_tasks
         else
             ag "$pattern"
         end
-        echo "search_args: $search_args"
-        echo "pattern: $pattern"
-        # ag "$pattern" # "$search_args" #| cut -d : -f1,2 | sed 's/:/ /g' | sort
     else
         echo "Please specify a valid option: -w (work in progress), -d (done), -n (not started)"
     end
 
-        # ag "$pattern" $search_args | cut -d : -f1,2 | sed 's/:/ /g' | sort
-    # if test -n "$argv"; or test "argv" = "-h"; 
-    #     echo "Usage: find_tasks [ x]\n searchs in git repo for tasks"; 
-    #     return
-    # else
-    #     set argv " "
-    # end
-    # ag  '\- \[ \]' | cut -d : -f1,2 | sed 's/:/ /g' | sort | uniq
 end
 
 # # fbr - checkout git branch (including remote branches)
