@@ -29,7 +29,7 @@ function check_repos
         if test -d "$GIT/$old_repos[$i]"
             set -a repos "$GIT/$old_repos[$i]"
         else
-            echo "repo $repos[$i] not found"
+            echo "repo $old_repos[$i] not found"
         end
     end
     echo 'checking finished'
