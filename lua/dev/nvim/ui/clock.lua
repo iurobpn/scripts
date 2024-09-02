@@ -5,6 +5,10 @@ Clock = {
 -- Clock = class(Clock)
 
 function Clock.update(buf, t_period)
+    if not buf then
+        error('Clock buffer not found')
+        return
+    end
     if not t_period then
         t_period = 1000 -- ms
     end

@@ -74,6 +74,7 @@ function find_tasks
     argparse --name=find_tasks 'w' 'd/done' 'n/not-started' -- $argv
 
     # Initialize variables
+
     set pattern ''
     set search_args ''
 
@@ -94,13 +95,17 @@ function find_tasks
     end
 
     # Any remaining arguments are treated as search patterns (hashtags or other filters)
-    for arg in $_arguments
-        set search_args "$search_args $arg"
-    end
+        set search_args $argv
 
     # Perform the search using ag with the specified pattern and additional arguments
     if test -n "$pattern"
-        ag "$pattern" | grep '#today #main'
+        if test -n "$search_args"
+            ag "$pattern" | grep $search_args
+        else
+            ag "$pattern"
+        end
+        echo "search_args: $search_args"
+        echo "pattern: $pattern"
         # ag "$pattern" # "$search_args" #| cut -d : -f1,2 | sed 's/:/ /g' | sort
     else
         echo "Please specify a valid option: -w (work in progress), -d (done), -n (not started)"

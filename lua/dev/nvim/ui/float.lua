@@ -7,6 +7,15 @@ local fmt = string.format
 local log = Log('float')
 
 Window = {
+    -- static ----------------------
+    id_count = 0,
+    floats = {}, -- list of open floats, indexed by the wim win id
+    hidden = {}, -- list of windows close using toggle, indexed by the idx inner index
+    --------------------------------
+
+    vid = nil, -- vim id
+    idx = -1,  -- index of the window inside the module
+
     relative = 'editor',
     size = {
         relative = {
@@ -31,12 +40,9 @@ Window = {
     -- },
     -- style = 'minimal',
     border = 'rounded',
-    close = false, -- close current window when it is being floated
 
     content = '',
     filename = '',
-    focusable = true,
-    modifiable = true,
     -- zindex = 50,
     -- external = false,
     title = '',
@@ -52,17 +58,39 @@ Window = {
     close_map = {
         mode = 'n',
         key = 'q',
-        cmd = ':lua Window.close()<CR>',
+        cmd = ':lua Window.toggle()<CR>',
         opts = { noremap = true, silent = true }
     },
-    current = false,
-    floats = {},
+    current = false, --get current windows buffer
     buffer = {
         listed = true,
         scratch = false,
     },
     fullscreem = false,
+
+    is_hidden = false,
+
+    focusable = true,
+    modifiable = true,
+    close_current = false, -- close current window when it is being floated
 }
+
+function Window.new(pos, size)
+    local win = Window()
+    win:config({position = pos, size = size})
+    win.idx = Window.id_count
+    win:open()
+    Window.id_count = Window.id_count + 1
+    Window.floats[win.vid] = win
+    return win
+end
+
+function Window.open_current()
+    local win = Window()
+    win.current = true
+    win:open()
+    Window.floats[win.vid] = win
+end
 
 function Window:ui_width()
     return vim.api.nvim_get_option("columns")
@@ -82,39 +110,6 @@ function Window:config(...)
     end
 end
 
-function Window.popup(...)
-    local win = Window()
-
-    local args = {...}
-    args = args[1]
-    -- local args = {...}
-    local opts = {
-        size = {
-            absolute = {
-                width = 8,
-                height = 1,
-            }
-        },
-        border = "round",
-        zindex = 50,
-        position = 'center',
-        anchor = 'NW',
-        style = "minimal",
-        modifiable = false,
-        cursor = false,
-        current = false,
-    }
-    if args then
-        for k, v in pairs(args) do
-            opts[k] = v
-        end
-    end
-    win.config(opts)
-
-    return win
-end
-
-
 function Window:get_size()
     local ui_width = self:ui_width()
     local ui_height = self:ui_height()
@@ -131,10 +126,6 @@ function Window:get_size()
         error('Size not set size')
     end
 
-    -- print('get size')
-    -- print(fmt('UI: width: %s, height: %s', ui_width, ui_height))
-    -- print(fmt('width: %s, height: %s', self.width, self.height))
-
     return width, height
 end
 
@@ -142,10 +133,6 @@ function Window:set_size()
     self.width, self.height = self:get_size()
     self.width = math.floor(self.width)
     self.height = math.floor(self.height)
-
-    -- print('set size')
-    -- print(fmt('UI: width: %s, height: %s', self:ui_width(), self:ui_height()))
-    -- print(fmt('width: %s, height: %s', self.width, self.height))
 end
 
 function Window:add_map(mode, keys, cmd, opts)
@@ -162,14 +149,17 @@ function Window.up()
     -- get the current window  win id
     Window.move(0, 3)
 end
+
 function Window.down()
     -- get the current window  win id
     Window.move(0, -3)
 end
+
 function Window.left()
     -- get the current window  win id
     Window.move(5, 0)
 end
+
 function Window.right()
     -- get the current window  win id
     Window.move(-5, 0)
@@ -192,29 +182,29 @@ function Window.move(dx, dy)
     vim.api.nvim_win_set_config(win_id, win_config)
 end
 
-function Window:close(id)
+function Window:close(vid)
     local win_id = 0
-    if self == nil and id == nil then 
+    if self == nil and vid == nil then 
         win_id = vim.fn.win_getid()
-    elseif not id then
-        win_id = self.id
-    elseif id then
-        win_id = id
+    elseif vid == nil then
+        win_id = self.vid
+    elseif vid >= 0 then
+        win_id = vid
         Window.set_win(win_id)
     end
-    if win_id and Window.is_floating(win_id) then
+    if win_id ~= nil and Window.is_floating(win_id) then
         local buf = vim.api.nvim_get_current_buf()
         Buffer.unmap(buf)
-        vim.api.nvim_win_close(win_id, false)
+        vim.api.nvim_win_close(win_id, true)
         Window.floats[win_id] = nil
     else
         print("Current window is either invalid (id) or is not a float to close.")
     end
 end
 
-function Window.set_win(id)
-    if vim.api.nvim_win_is_valid(id) then
-        vim.api.nvim_set_current_win(id)
+function Window.set_win(vid)
+    if vim.api.nvim_win_is_valid(vid) then
+        vim.api.nvim_set_current_win(vid)
     else
         print("Invalid window ID")
     end
@@ -239,61 +229,66 @@ function Window:options()
 end
 
 function Window.close_all()
-    for id, win in pairs(Window.floats) do
-        if win ~= nil and Window.is_floating(id) then
+    for vid, win in pairs(Window.floats) do
+        if win ~= nil and Window.is_floating(vid) then
             win:close()
         end
     end
 end
 
 function Window:open()
+    -- traceback()
     self:set_size()
     self:set_position()
 
+    -- if not self.cursor then
+    -- --     vim.opt.guicursor = vim.o.background
+    --     vim.cmd(fmt('highlight Cursor guifg=%s guibg=%s', vim.o.background, vim.o.background))
+    -- end
 
-    if not self.cursor then
-    --     vim.opt.guicursor = vim.o.background
-        vim.cmd(fmt('highlight Cursor guifg=%s guibg=%s', vim.o.background, vim.o.background))
-    end
+    if self.current then -- use current buffer
+        self.vid, self.buf, self.filename = Window.get_current()
+        self.close_current = true
+    elseif self.buf then -- use the buffer already set
 
-    local id = nil
-    if self.current then
-        self.id, self.buf, self.filename = Window.get_current()
-        self.close = true
-        id = self.id
-    elseif self.buf then
-
-    elseif self.id then
-        self.buf, self.filename = Window.get_window(self.id)
-    elseif self.filename ~= nil and #self.filename > 0 then
-        self:load(self.filename)
-    elseif self.content ~= nil and #self.content > 0 then
-        self.buf = vim.api.nvim_create_buf(self.buffer.listed, self.buffer.scratch)
-        self:write(self.content, 0, false)
+    elseif self.vid ~= nil then -- use the window id already set. It must be a float
+        self.buf, self.filename = Window.get_window(self.vid)
     else
-        self.buf = vim.api.nvim_create_buf(self.buffer.listed, self.buffer.scratch)
+        if not self.buf then
+            -- create new buffer
+            self.buf = Buffer.new(self.buffer.listed, self.buffer.scratch)
+        end
+        if self.filename ~= nil and #self.filename > 0 then -- create a buffer to load the file
+            Buffer.load(self.buf,self.filename)
+        elseif self.content ~= nil and #self.content > 0 then -- create a buffer and load the content into it
+            Buffer.set_lines(self.buf, 0,  -1, self.content) -- write to buffer
+        end
     end
-
 
     local opts = self:options()
-    -- inspect(self, 'self (win open()): ')
-    -- inspect(opts, 'opts (win open()): ')
-    vim.api.nvim_buf_set_option(self.buf, 'modifiable', self.modifiable)
-    -- local opts = self:options()
-    self.id = vim.api.nvim_open_win(self.buf, true, opts)
 
-    if id ~= nil and self.close then
-        vim.api.nvim_win_close(id, false)
+    if not self.buf then
+        print("No buffer to open")
+        return
+    end
+    vim.api.nvim_buf_set_option(self.buf, 'modifiable', self.modifiable)
+
+    self.vid = vim.api.nvim_open_win(self.buf, true, opts)
+
+    if vid ~= nil and self.close_current then
+        vim.api.nvim_win_close(self.vid, false)
+    end
+    if self.idx < 0 then
+        self.idx = Window.id_count
+        Window.id_count = Window.id_count + 1
     end
 
-    --
-    -- vim.api.nvim_buf_set_keymap(0, 'n', 'q', ':lua close_float()<CR>', { noremap = true, silent = true })
-    -- vim.api.nvim_buf_set_keymap(buf, 'n', '', map.cmd, map.opts)
-    if not self.midifiable ~= nil then
+    if not self.modifiable then
         vim.api.nvim_buf_set_keymap(self.buf, self.close_map.mode, self.close_map.key, self.close_map.cmd, { noremap = true, silent = true })
     else
         vim.api.nvim_buf_set_keymap(self.buf, 'n', '<ESC>', self.close_map.cmd, self.close_map.opts)
     end
+
     for mode, maps in pairs(self.maps) do
         for _, map in pairs(maps) do
             if map ~= nil then
@@ -301,27 +296,15 @@ function Window:open()
             end
         end
     end
-    Window.floats[self.id] = self
+    Window.floats[self.vid] = self
 end
 
-function Window:load(filename)
-    if not filename or #filename == 0 then
-        filename = self.filename
-        if not filename or #filename == 0 then
-            error('No filename provided')
-            return
-        end
-    end
-    self.buf = vim.api.nvim_create_buf(true, false)
-    vim.api.nvim_buf_set_name(self.buf, filename)
-    vim.api.nvim_command("edit " .. filename)
-end
 
-function Window.get_window(id)
+function Window.get_window(vid)
     -- Get the current window and buffer
     local buf, filename = nil, nil
-    if Window.is_floating(id) then
-        buf = vim.api.nvim_win_get_buf(id)
+    if Window.is_floating(vid) then
+        buf = vim.api.nvim_win_get_buf(vid)
         filename = vim.api.nvim_buf_get_name(buf)
     else
         print('window is not a float')
@@ -332,39 +315,24 @@ end
 
 function Window.get_current()
     -- Get the current window and buffer
-    local id = vim.api.nvim_get_current_win()
+    local vid = vim.api.nvim_get_current_win()
     local buf = vim.api.nvim_get_current_buf()
     local filename = vim.api.nvim_buf_get_name(buf)
 
-    return id, buf, filename
+    return vid, buf, filename
 end
 
-    -- no link to the file, like in :r filename
+-- no link to the file, like in :r filename
 function Window:read(filename)
     vim.api.nvim_buf_call(self.buf, function()
         vim.api.nvim_command("edit " .. filename)
     end)
 end
 
-function Window.is_floating(id)
-    return id ~= nil and vim.api.nvim_win_is_valid(id) and vim.api.nvim_win_get_config(id).relative ~= ''
+function Window.is_floating(vid)
+    return vid ~= nil and vim.api.nvim_win_is_valid(vid) and vim.api.nvim_win_get_config(vid).relative ~= ''
 end
 
-function Window:write(content, line_nr, append)
-    if line_nr == nil then
-        line_nr = 0
-    end
-    if append == nil then
-        append = false
-    end
-    if type(content) == 'string' then
-        content = vim.split(content, '\n')
-        if type(content) == 'string' then
-            content = {content}
-        end
-    end
-    vim.api.nvim_buf_set_lines(self.buf, line_nr, -1, append, content) -- overwrite file
-end
 
 function Window.snap_down()
     local win_id = vim.fn.win_getid()
@@ -377,6 +345,7 @@ function Window.snap_down()
     win_config.row = vim.api.nvim_get_option("columns") - win_config.height
     vim.api.nvim_win_set_config(win_id, win_config)
 end
+
 function Window.snap_up()
     local win_id = vim.fn.win_getid()
     if not win_id or not vim.api.nvim_win_is_valid(win_id) or not Window.is_floating(win_id) then
@@ -388,6 +357,7 @@ function Window.snap_up()
     win_config.row = 0
     vim.api.nvim_win_set_config(win_id, win_config)
 end
+
 function Window.snap_right()
     local win_id = vim.fn.win_getid()
     if not win_id or not vim.api.nvim_win_is_valid(win_id) or not Window.is_floating(win_id) then
@@ -412,22 +382,6 @@ function Window.snap_left()
     vim.api.nvim_win_set_config(win_id, win_config)
 end
 
-function test_window()
-    local win = Window()
-    win.width = 0.5
-    win.height = 0.5
-    win.row = 0.5
-    win.col = 0.5
-    win:open()
-    win:params()
-end
-
-function test_popup()
-    local win = Window.popup({content='hello'})
-    win:open()
-    win:params()
-end
-
 function Window.fullscreen()
     local win_id = vim.fn.win_getid()
     if win_id == nil or not vim.api.nvim_win_is_valid(win_id) or not Window.is_floating(win_id) then
@@ -444,31 +398,6 @@ function Window.fullscreen()
     Window.floats[win_id].fullscreen = true
 end
 
-function popup(...)
-    local buf = vim.api.nvim_create_buf(false, true)  -- false for listed, true for scratch
-
-    local ui_width = vim.api.nvim_get_option("columns")
-    local ui_height = vim.api.nvim_get_option("lines")
-    local opts = {
-        relative = 'editor',
-        width = 8,
-        height = 3,
-        row = math.floor((ui_height - 8) / 2),
-        col = math.floor((ui_width - 3) / 2),
-        style = 'minimal',
-        border = 'rounded',
-        modifiable = false,
-        buffer = {
-            listed = false,
-            scratch = true,
-        },
-    }
-    for k, v in pairs(arg) do
-        opts[k] = v
-    end
-
-    local win = vim.api.nvim_open_win(buf, true, opts)
-end
 
 -- generate links in file:number
 -- Create a buffer with example links
@@ -506,7 +435,7 @@ local function setup_buffer_with_links()
     return buf
 end
 
-local function handle_link()
+function handle_link()
     -- Get the current line content
     local line = vim.api.nvim_get_current_line()
 
@@ -526,53 +455,6 @@ local function handle_link()
     end
 end
 
-function layout_popup()
-    local Popup = require("nui.popup")
-    local Layout = require("nui.layout")
-
-    local popup_one, popup_two = Popup({
-        enter = true,
-        border = "single",
-    }), Popup({
-        border = "double",
-    })
-
-    local layout = Layout(
-        {
-            position = "50%",
-            size = {
-                width = 80,
-                height = "60%",
-            },
-        },
-        Layout.Box({
-            Layout.Box(popup_one, { size = "40%" }),
-            Layout.Box(popup_two, { size = "60%" }),
-        }, { dir = "row" })
-    )
-
-    local current_dir = "row"
-
-    popup_one:map("n", "r", function()
-        if current_dir == "col" then
-            layout:update(Layout.Box({
-                Layout.Box(popup_one, { size = "40%" }),
-                Layout.Box(popup_two, { size = "60%" }),
-            }, { dir = "row" }))
-
-            current_dir = "row"
-        else
-            layout:update(Layout.Box({
-                Layout.Box(popup_two, { size = "60%" }),
-                Layout.Box(popup_one, { size = "40%" }),
-            }, { dir = "col" }))
-
-            current_dir = "col"
-        end
-    end, {})
-
-    layout:mount()
-end
 
 Window = class(
     Window,
@@ -593,15 +475,13 @@ Window = class(
     }
 )
 
+-- calculate the position of the float window
 function Window:get_position()
     local ui_height = self:ui_height()
     local ui_width = self:ui_width()
 
     local float_width, float_height = self.width, self.height
     local row, col = 0, 0
-    -- print('position: ' .. require'inspect'.inspect(self.position))
-    -- print(fmt('ui_width: %s, ui_height: %s', ui_width, ui_height))
-    -- print(fmt('width: %s, height: %s', float_width, float_height))
 
     if type(self.position) == 'string' then
         if self.position == 'center' then
@@ -627,7 +507,7 @@ function Window:get_position()
             error('Position not set')
         end
     end
-    -- print(fmt('get_pos: row: %s, col: %s', row, col))
+
     return row, col
 end
 
@@ -635,15 +515,13 @@ function Window:set_position()
     self.row, self.col = self:get_position()
     self.row = math.floor(self.row)
     self.col = math.floor(self.col)
-    -- print('set_pos:')
-    -- print(fmt('set pos: row: %s, col: %s', self.row, self.col))
 end
 
 function Window:redraw()
-    local id = nil
+    local vid = nil
     if not self then
-        id = vim.fn.win_getid()
-        self = Window.floats[id]
+        vid = vim.fn.win_getid()
+        self = Window.floats[vid]
         if not self then
             print("Current window is not a float to be redrawn.")
             return
@@ -654,9 +532,92 @@ function Window:redraw()
     self:set_position()
     vim.api.nvim_buf_set_option(self.buf, 'modifiable', self.modifiable)
 
-    vim.api.nvim_win_set_config(self.id, self:options())
-    Window.floats[id].fullscreen = false
+    vim.api.nvim_win_set_config(self.vid, self:options())
 end
+
+function Window.toggle_fullscreen()
+    local win_id = vim.fn.win_getid()
+    -- local win_config = vim.api.nvim_win_get_config(win_id)
+    if Window.floats == nil or Window.floats[win_id] == nil then
+        print("Current window is not a float to be toggled.")
+        return
+    end
+    if  Window.floats[win_id].fullscreen then
+        Window.floats[win_id].fullscreen = false
+        Window.redraw()
+    else
+        Window.fullscreen()
+    end
+end
+
+function Window.popup(...)
+    local win = Window()
+
+    local args = {...}
+    args = args[1]
+    -- local args = {...}
+    local opts = {
+        size = {
+            absolute = {
+                width = 8,
+                height = 1,
+            }
+        },
+        border = "round",
+        zindex = 50,
+        position = 'center',
+        anchor = 'NW',
+        style = "minimal",
+        modifiable = false,
+        cursor = false,
+        current = false,
+    }
+    if args then
+        for k, v in pairs(args) do
+            opts[k] = v
+        end
+    end
+    win.config(opts)
+
+    return win
+end
+
+function Window.toggle()
+    local vid = vim.fn.win_getid()
+    if Window.floats[vid] then
+        local win = Window.floats[vid]
+        if not win then
+            print("Current window is not a float to be toggled.")
+            return
+        end
+        Window.hidden[win.idx] = win
+        win:close()
+        Window.floats[vid] = nil
+    else
+        local n = numel(Window.hidden)
+        local win = nil
+        local idx = -1
+        if n > 0 then
+            for i, w in ipairs(Window.hidden) do
+                idx = i
+                win = w
+                break
+            end
+            if win == nil then
+                print("No window to toggle")
+                return
+            end
+            win:open()
+            Window.floats[win.vid] = win
+            Window.hidden[idx] = nil
+        else
+            local win = Window()
+            win:open()
+            Window.floats[win.vid] = win
+        end
+    end
+end
+
 
 Buffer = {}
 function Buffer.mapping_exists(bufnr, mode, lhs)
@@ -669,15 +630,6 @@ function Buffer.mapping_exists(bufnr, mode, lhs)
     return false
 end
 
-function Window.toggle_fullscreen()
-    local win_id = vim.fn.win_getid()
-    -- local win_config = vim.api.nvim_win_get_config(win_id)
-    if Window.floats[win_id].fullscreen then
-        Window.redraw()
-    else
-        Window.fullscreen()
-    end
-end
 
 function Buffer.unmap(bufnr)
     local modes = {'n', 'v', 'i', 'x', 's', 'o', 'c', 't'}
@@ -689,18 +641,66 @@ function Buffer.unmap(bufnr)
     end
 end
 
+function Buffer.load(buf,filename)
+    if not buf then
+        print("No buffer provided")
+        return
+    end
+    if not filename or #filename == 0 then
+        error('No filename provided')
+        return
+    end
+    if not buf then
+        buf = vim.api.nvim_create_buf(true, false)
+    end
+    vim.api.nvim_buf_set_name(buf, filename)
+    vim.api.nvim_command("edit " .. filename)
+end
+
+function Buffer.append_lines(buf, content)
+    local line_start = vim.api.nvim_buf_line_count(buf)
+    Buffer.check_content(content)
+    vim.api.nvim_buf_set_lines(buf, line_start, -1, true, content) -- append to file
+
+end
+function Buffer.set_lines(buf, line_start, line_end, content)
+    if not buf then
+        print("No buffer provided")
+        return
+    end
+    if line_start == nil then
+        line_start = 0
+    end
+    Buffer.check_content(content)
+    vim.api.nvim_buf_set_lines(self.buf, line_start, -1, true, content) -- overwrite file
+end
+
+function Buffer.check_content(content)
+    if type(content) == 'string' then
+        content = vim.split(content, '\n')
+        if type(content) == 'string' then
+            content = {content}
+        end
+    end
+end
+
+-- preserve marks
+function Buffer.set_text(buf, start_row, start_col, end_row, end_col, content)
+    Buffer.check_content(content)
+    vim.api.nvim_buf_set_text(buf, start_row, start_col, end_row, end_col, content)
+end
+
+function Buffer.new(listed, scratch)
+    if listed == nil then
+        listed = true
+    end
+    if scratch == nil then
+        scratch = false
+    end
+    return vim.api.nvim_create_buf(listed, scratch)  -- false for listed, true for scratch
+end
 
 
--- create mappings for the move functions
-vim.api.nvim_set_keymap('n', '<C-S-Up>', ':lua Window.up()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-S-Down>', ':lua Window.down()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-S-Left>', ':lua Window.left()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-S-Right>', ':lua Window.right()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-k>', ':lua Window.snap_up()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-j>', ':lua Window.snap_down()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-l>', ':lua Window.snap_right()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-h>', ':lua Window.snap_left()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '°', ':WinToggleFullScreen<CR>', { noremap = true, silent = true })
 
 
 
@@ -715,7 +715,23 @@ vim.api.nvim_create_user_command("WinSnapRight", ':lua Window.right()', {})
 vim.api.nvim_create_user_command("WinToggleFullScreen", ':lua Window.toggle_fullscreen()', {})
 vim.api.nvim_create_user_command("WinFullScreen", ':lua Window.fullscreen()', {})
 vim.api.nvim_create_user_command("WinRedraw", ':lua Window.redraw()', {})
+vim.api.nvim_create_user_command("WinToggle", ':lua Window.toggle()', {})
+vim.api.nvim_create_user_command("WinNew", ':lua Window.new()', {})
+vim.api.nvim_create_user_command("WinOpenCurrent", ':lua Window.open_current()', {})
 
+-- create mappings for the move functions
+vim.api.nvim_set_keymap('n', '<C-S-Up>', ':lua Window.up()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-S-Down>', ':lua Window.down()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-S-Left>', ':lua Window.left()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-S-Right>', ':lua Window.right()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-k>', ':lua Window.snap_up()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-j>', ':lua Window.snap_down()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-l>', ':lua Window.snap_right()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-h>', ':lua Window.snap_left()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', 'º', ':WinToggleFullScreen<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', 'Ç', ':WinToggle<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<LocalLeader>n', ':WinNew<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', 'gç', ':WinOpenCurrent<CR>', { noremap = true, silent = true })
 -- handle_link()
 -- ag  '\- \[.\]' | cut -d : -f1,2 | sed 's/:/ /g' | sort | uniq
 

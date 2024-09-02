@@ -89,20 +89,6 @@ function qfile(filename)
     qopen()
 end
 
-function fzf_run(arg)
-    local source, sink, options = arg.source, arg.sink, arg.options
-    if not source then
-        source = 'fd . --type f --hidden --follow --exclude .git --exclude .gtags'
-    end
-
-    if not sink then
-        sink = function(selected)
-            qfloat.last_file = selected
-        end
-    end
-    vim.fn['fzf#run']({source = source, sink = sink, options = options})
-end
-
 function qrun_fzf()
     local source = 'fd . --type f'
     local sink = function(selected)

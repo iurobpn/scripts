@@ -152,6 +152,8 @@ function Float.toggle_fullscreen()
 end
 
 
+
+
 function close_wins()
     for _,win in ipairs(wins) do
         win:close()
@@ -164,6 +166,5 @@ vim.api.nvim_create_user_command("FloatClose", "lua Float.close()", {})
 vim.api.nvim_create_user_command("FloatToggleFullScreen", "lua Float.toggle_fullscreen()", {})
 
 -- define maps
-vim.api.nvim_set_keymap('n', 'Ç', ':Float<CR>', { noremap = true, silent = true })
 -- vim.api.nvim_set_keymap('n', 'ç+c', ':FloatClear<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'º', ':FloatToggleFullScreen<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', 'º', ':FloatToggleFullScreen<CR>', { noremap = true, silent = true })
