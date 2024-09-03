@@ -19,7 +19,7 @@ function check_repos
     if test -n "$argv"
         set old_repos $argv
     else
-        set old_repos CGAL-matlab ProVANT-Simulator_Developer algortihmns armadillo-pmr cpp_tests data_structures dotfiles matlab-dev nmpc-obs ocpsol pres-research prov_sim_configs pylattes reports papers scripts sets-obs svgs test thesis
+        set old_repos CGAL-matlab ProVANT-Simulator_Developer armadillo-pmr cpp_tests data_structures dotfiles matlab-dev nmpc-obs ocpsol pres-research prov_sim_configs pylattes reports papers scripts sets-obs svgs thesis
         # set repos (echo ""$repos |  sed -e 's#\([a-zA-Z\._0-9\-]\+\)#/home/gagarin/git/\1#g')
     end
     set n (count $old_repos)
@@ -113,7 +113,7 @@ end
 
 function update_ufmg
     set GIT $HOME/git
-    set repos CGAL-matlab ProVANT-Simulator_Developer algortihmns armadillo-pmr cpp_tests data_structures dotfiles matlab-dev nmpc-obs ocpsol pres-research prov_sim_configs pylattes reports papers scripts sets-obs svgs test thesis
+    set repos CGAL-matlab ProVANT-Simulator_Developer armadillo-pmr cpp_tests data_structures dotfiles matlab-dev nmpc-obs ocpsol pres-research prov_sim_configs pylattes reports papers scripts sets-obs svgs thesis
     # set repos (echo $repos |  sed -e 's#\([a-zA-Z\._0-9\-]\+\)#/home/gagarin/git/\1#g')
     # echo "updating repos: $repos"
     check_repos $repos
