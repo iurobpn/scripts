@@ -63,6 +63,9 @@ function check_repos
     set dirty
     for repo in $repos
         cd $repo
+        echo ''
+        echo "-------- Checking repo $repo  ----------"
+        git fetch
         if not is_git_repo
             continue
         end
@@ -89,6 +92,8 @@ function check_repos
                 set -a dirty $dirty
             end
         end
+        echo ''
+        echo '----------------------------'
     end
 
     if test -z "$dirty"
