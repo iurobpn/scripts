@@ -1,4 +1,5 @@
 json = require('dkjson')
+require('utils')
 local M = {
     root_priority = {'main_root', 'git', 'root_files'},
     settings_file = '.settings.json',
@@ -75,7 +76,7 @@ function M.save_settings()
     local filename = M.root_dir .. '/' .. M.settings_file
     local settings = {}
     for k, v in pairs(M) do
-        if k ~= 'find_root' then
+        if not is_callable(k) and not is_callable(v) then
             settings[k] = v
         end
     end

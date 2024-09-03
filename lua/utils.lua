@@ -3,6 +3,12 @@ Log = require'dev.lua.log'
 local insp = require'inspect'
 local fmt = string.format
 
+
+function is_callable(f)
+    local fmt = getmetatable(f)
+    return type(f) == 'function' or (fmt ~= nil and fmt.__call ~= nil)
+end
+
 function print_table(...)
     for _,v in pairs({...}) do
         print(insp.inspect(v))
