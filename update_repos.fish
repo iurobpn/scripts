@@ -4,6 +4,7 @@
 function check_repos
     argparse --name=check_repos 'h/help' 'g/git_dir=' -- $argv
     or return
+    set pwd $(pwd)
 
     if set -q _flag_h
         echo "Usage: check_repos [-g|--git-dir <git-dir>] [<repositories>]"
@@ -19,10 +20,14 @@ function check_repos
     if test -n "$argv"
         set old_repos $argv
     else
-        set old_repos CGAL-matlab ProVANT-Simulator_Developer armadillo-pmr cpp_tests data_structures dotfiles matlab-dev nmpc-obs ocpsol pres-research prov_sim_configs pylattes reports papers scripts sets-obs svgs thesis
-        # set repos (echo ""$repos |  sed -e 's#\([a-zA-Z\._0-9\-]\+\)#/home/gagarin/git/\1#g')
+        cd $GIT
+        set old_repos (fd . --relative-path -td -d1)
     end
     set n (count $old_repos)
+    if test $n -eq 0
+	echo 'not repos were selected'
+	return
+    end
     set repos
     echo "Checking repositories:"
     for i in (seq 1 $n)
@@ -35,7 +40,6 @@ function check_repos
     echo 'checking finished'
     echo ''
 
-    set pwd $(pwd)
 
     if set -q _flag_r_
         set dirs
