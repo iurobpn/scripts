@@ -1,3 +1,4 @@
+json = require('dkjson')
 local M = {
     root_priority = {'main_root', 'git', 'root_files'},
     settings_file = '.settings.json',
@@ -7,8 +8,29 @@ local M = {
     main_root = '.root',
     root_files = { -- not tested
         'root.tex',
-    },
+    }
 }
+
+local mt = {}
+mt.__call = function(self)
+    if vim.g.proj_roots then
+        M.roots_files = vim.g.proj_root_files
+    end
+    if vim.g.proj_root_priority then
+        M.root_priority = vim.g.proj_root_priority
+    end
+    for _, root in ipairs(M.root_priority) do
+        M.root_dir = M.find_root[root](M[root])
+        if M.root_dir then
+            M.root_dir = M.root_dir:gsub('/$', '')
+            break
+        end
+    end
+
+    return M.root_dir
+end
+
+setmetatable(M.find_root, mt)
 
 function M.init()
     if vim ~=nil and vim.g.enable_project == nil then
@@ -17,7 +39,7 @@ function M.init()
     if vim == nil or not vim.g.enable_project then
         return
     end
-    M.root_dir = find_root()
+    M.root_dir = M.find_root()
     if not M.root_dir then
         print('Project root directory not found')
         return
@@ -44,14 +66,14 @@ function M.init()
 
     local t_period = 30000
     -- save the settings every 30 s
-    vim.fn.defer_fn(function()
+    vim.defer_fn(function()
         M.save_settings()
     end, t_period)
 end
 
 function M.save_settings()
     local filename = M.root_dir .. '/' .. M.settings_file
-    settings = {}
+    local settings = {}
     for k, v in pairs(M) do
         if k ~= 'find_root' then
             settings[k] = v
