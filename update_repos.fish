@@ -82,13 +82,13 @@ function check_repos
             set -l nbehind (echo $line | get_n_behind)
             set -l local_branch (echo $line | get_local_branch)
             set -l remote (echo $line | get_remote_from_branch_status)
-            echo "-------------- debug info ---------------------------"
-            echo "n_ahead: $nahead"
-            echo "n_behind: $nbehind"
-            echo "local_branch: $local_branch"
-            echo "remote: $remote"
-            echo "current_branch: $current_branch"
-            echo "------------- end of debug info ---------------------"
+            # echo "-------------- debug info ---------------------------"
+            # echo "n_ahead: $nahead"
+            # echo "n_behind: $nbehind"
+            # echo "local_branch: $local_branch"
+            # echo "remote: $remote"
+            # echo "current_branch: $current_branch"
+            # echo "------------- end of debug info ---------------------"
 
             if [ $remote = 'origin' ]
                 if clean
@@ -153,10 +153,11 @@ function sync_repo
     set cmd $argv[1]
     set branch $argv[3]
     set remote $argv[2]
-	echo "current branch: $current_branch"
-	echo "branch: $branch"
-	echo "remote: $remote"
-	echo "cmd: $cmd"
+	
+	# echo "current branch: $current_branch"
+	# echo "branch: $branch"
+	# echo "remote: $remote"
+	# echo "cmd: $cmd"
 
     if [ $cur_branch != $branch ]
         git checkout $branch --quiet
