@@ -71,11 +71,11 @@ function check_repos
         echo ''
         echo "-------- Checking repo $repo  ----------"
 
-        git fetch
+        git fetch origin --quiet
         set -l bstatus (branch_status)
         set current_branch (echo $bstatus | get_local_branch)
         for line in $bstatus
-            echo "-------------- branch status loop ---------------------------"
+            # echo "-------------- branch status loop ---------------------------"
             set -l nahead (echo $line | get_n_ahead)
             set -l nbehind (echo $line | get_n_behind)
             set -l local_branch (echo $line | get_local_branch)
@@ -94,14 +94,14 @@ function check_repos
                     # ahead && echo "git push $repo"
                     if test $nbehind -gt 0
                         echo ''
+                        # set -l cur_branch (get_current_branch)
+                        # echo "current branch (nbehind if): $cur_branch"
+                        # if [ "$cur_branch" !=  "$local_branch" ]
+                        #     # echo "cur_branch != local_branch"
+                        #     git checkout $local_branch
+                        # end
                         echo "git pull origin $local_branch"
-                        set -l cur_branch (get_current_branch)
-                        echo "current branch (nbehind if): $cur_branch"
-                        if [ "$cur_branch" !=  "$local_branch" ]
-                            echo "cur_branch != local_branch"
-                            git checkout $local_branch
-                        end
-                        git pull origin $local_branch
+                        sync_repo pull origin $local_branch
                     end
                 else 
                     set repo_name $(basename $repo)
@@ -115,26 +115,17 @@ function check_repos
                 if test $nahead -gt 0
                     echo ''
                     echo "git push origin $local_branch"
-                    set -l cur_branch (get_current_branch)
-                    echo "current branch (nahead if): $cur_branch"
-                    if [ "$cur_branch" !=  "$local_branch" ]
-                        echo "$cur_branch != $local_branch"
-                        git checkout $local_branch
-                    end
-                    git push origin $local_branch
+                    # set -l cur_branch (get_current_branch)
+                    # echo "current branch (nahead if): $cur_branch"
+                    sync_repo push origin $local_branch
                 end
             end
 
-            echo ''
-            echo '---------- end of branch status loop -----------------'
+            # echo ''
+            # echo '---------- end of branch status loop -----------------'
 
-            set -l cur_branch (get_current_branch)
-            if [ "$cur_branch" != "$current_branch" ]
-                echo "$cur_branch != $current_branch"
-                git checkout $current_branch
-            end
         end
-        echo '-------- end of repo loop -----------------'
+        # echo '-------- end of repo loop -----------------'
     end
 
     if test -z "$dirty"
@@ -151,6 +142,23 @@ function check_repos
     cd "$pwd"
 end
 
+function sync_repo
+    if test (count $argv) -lt 3
+        echo "Usage: sync_repo <command> <remote> <repo>"
+        return 1
+    end
+    set current_branch (get_current_branch)
+    set cmd $argv[1]
+    set branch $argv[3]
+    set remote $argv[2]
+    if $current_branch != $branch
+        git checkout --quiet $branch
+    end
+    git $cmd $remote $branch
+    if $current_branch != $branch
+        git checkout --quiet -
+    end
+end
 
 function update_ufmg
     set GIT $HOME/git
