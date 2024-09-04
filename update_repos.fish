@@ -63,45 +63,86 @@ function check_repos
     set dirty
     for repo in $repos
         cd $repo
-        echo ''
-        echo "-------- Checking repo $repo  ----------"
-        git fetch
+
         if not is_git_repo
             continue
         end
 
-        if clean
-            # behind && echo "git pull $repo"
-            # ahead && echo "git push $repo"
-            if behind
-                echo ''
-                echo "git pull $repo"
-                git pull
+        echo ''
+        echo "-------- Checking repo $repo  ----------"
+
+        git fetch
+        set -l bstatus (branch_status)
+        set current_branch (echo $bstatus | get_local_branch)
+        for line in $bstatus
+            echo "-------------- branch status loop ---------------------------"
+            set -l nahead (echo $line | get_n_ahead)
+            set -l nbehind (echo $line | get_n_behind)
+            set -l local_branch (echo $line | get_local_branch)
+            set -l remote (echo $line | get_remote_from_branch_status)
+            echo "-------------- debug info ---------------------------"
+            echo "n_ahead: $nahead"
+            echo "n_behind: $nbehind"
+            echo "local_branch: $local_branch"
+            echo "remote: $remote"
+            echo "current_branch: $current_branch"
+            echo "------------- end of debug info ---------------------"
+
+            if [ $remote = 'origin' ]
+                if clean
+                    # behind && echo "git pull $repo"
+                    # ahead && echo "git push $repo"
+                    if test $nbehind -gt 0
+                        echo ''
+                        echo "git pull origin $local_branch"
+                        set -l cur_branch (get_current_branch)
+                        echo "current branch (nbehind if): $cur_branch"
+                        if [ "$cur_branch" !=  "$local_branch" ]
+                            echo "cur_branch != local_branch"
+                            git checkout $local_branch
+                        end
+                        git pull origin $local_branch
+                    end
+                else 
+                    set repo_name $(basename $repo)
+
+                    if notstaged || untracked
+                        echo ''
+                        echo "repo $repo_name has uncommited changes"
+                        set -a dirty $dirty
+                    end
+                end
+                if test $nahead -gt 0
+                    echo ''
+                    echo "git push origin $local_branch"
+                    set -l cur_branch (get_current_branch)
+                    echo "current branch (nahead if): $cur_branch"
+                    if [ "$cur_branch" !=  "$local_branch" ]
+                        echo "$cur_branch != $local_branch"
+                        git checkout $local_branch
+                    end
+                    git push origin $local_branch
+                end
             end
-            if ahead
-                echo ''
-                echo "git push $repo"
-                git push
-            end
-        else 
-            set repo_name $(basename $repo)
-        
-            if notstaged || untracked
-                echo ''
-                echo "repo $repo_name has uncommited changes"
-                set -a dirty $dirty
+
+            echo ''
+            echo '---------- end of branch status loop -----------------'
+
+            set -l cur_branch (get_current_branch)
+            if [ "$cur_branch" != "$current_branch" ]
+                echo "$cur_branch != $current_branch"
+                git checkout $current_branch
             end
         end
-        echo ''
-        echo '----------------------------'
+        echo '-------- end of repo loop -----------------'
     end
 
     if test -z "$dirty"
         echo ''
-        echo "All repos are up to date"
+        echo "All repos are clean"
     else
         echo ''
-        echo 'dirty repos:'
+        echo 'dirty repos: '
         echo "$dirty" | sed -e 's/ /\n/g'
     end
 
@@ -143,3 +184,4 @@ end
 function is_git_repo
     test -d .git
 end
+
