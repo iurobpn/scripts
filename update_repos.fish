@@ -149,7 +149,7 @@ function sync_repo
         echo "Usage: sync_repo <command> <remote> <repo>"
         return 1
     end
-    set current_branch (get_current_branch)
+    set cur_branch (get_current_branch)
     set cmd $argv[1]
     set branch $argv[3]
     set remote $argv[2]
@@ -158,11 +158,13 @@ function sync_repo
 	echo "remote: $remote"
 	echo "cmd: $cmd"
 
-    if $current_branch != $branch
+    if $cur_branch != $branch
         git checkout $branch --quiet
     end
+
     git $cmd $remote $branch
-    if $current_branch != $branch
+
+    if $cur_branch != $branch
         git checkout --quiet -
     end
 end

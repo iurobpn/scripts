@@ -68,6 +68,6 @@ function get_remotes
 end
 
 function get_current_branch
-    git status -sb | sed 's/## \([a-zA-Z0-9._\/-]\+\)\.\.\..*/\1/'
+    git status -sb | sed -n '1s/## \([a-zA-Z0-9._\/-]\+\)\.\.\..*$/\1/p'
 end
 
