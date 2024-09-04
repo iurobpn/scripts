@@ -158,11 +158,11 @@ function sync_repo
 	echo "remote: $remote"
 	echo "cmd: $cmd"
 
-    if "$current_branch" != "$branch"
+    if $current_branch != $branch
         git checkout $branch --quiet
     end
     git $cmd $remote $branch
-    if "$current_branch" != "$branch"
+    if $current_branch != $branch
         git checkout --quiet -
     end
 end
