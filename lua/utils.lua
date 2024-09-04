@@ -10,8 +10,8 @@ function is_callable(f)
 end
 
 function print_table(...)
-    for _,v in pairs({...}) do
-        print(insp.inspect(v))
+    for k,v in pairs({...}) do
+        print('key: ' .. k .. ': ' .. insp.inspect(v))
     end
     -- print(inspect(t,{depth=3}))
 end
