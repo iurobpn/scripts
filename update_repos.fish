@@ -149,10 +149,10 @@ function sync_repo
         echo "Usage: sync_repo <command> <remote> <repo>"
         return 1
     end
-    set -l current_branch (get_current_branch)
-    set -l cmd $argv[1]
-    set -l branch $argv[3]
-    set -l remote $argv[2]
+    set current_branch (get_current_branch)
+    set cmd $argv[1]
+    set branch $argv[3]
+    set remote $argv[2]
 	echo "current branch: $current_branch"
 	echo "branch: $branch"
 	echo "remote: $remote"
