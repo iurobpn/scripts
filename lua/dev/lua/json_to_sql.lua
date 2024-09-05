@@ -1,3 +1,4 @@
+require('dev.lua.utils')
 require('class')
 local json = require("dkjson")
 require('dev.lua.sqlite')
@@ -14,27 +15,32 @@ local M = {
 function M:create_table()
     -- Connect to (or create) the SQLite database
     -- Create a table to store the JSON data
-    local create_table_sql = [[
+    local create_table_task = [[
 CREATE TABLE IF NOT EXISTS tasks (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     filename TEXT,
     line_number INTEGER,
     status TEXT,
     description TEXT
-);
+);]]
+
+local create_table_tags = [[
 CREATE TABLE IF NOT EXISTS tags (
     task_id INTEGER,
     tag TEXT,
     FOREIGN KEY(task_id) REFERENCES tasks(id)
-);
+);]]
+    local create_table_parameters = [[
 CREATE TABLE IF NOT EXISTS parameters (
     task_id INTEGER,
-    parameter_name TEXT,
-    parameter_value TEXT,
+    name TEXT,
+    value TEXT,
     FOREIGN KEY(task_id) REFERENCES tasks(id)
 );
 ]]
-    self.sql:run(create_table_sql)
+    self.sql:run(create_table_task)
+    self.sql:run(create_table_tags)
+    self.sql:run(create_table_parameters)
 end
 
 M = class(M, {constructor = function(self, filename)
@@ -71,7 +77,7 @@ function M:insert(task)
     -- Insert parameters
     for param_name, param_value in pairs(task) do
         if param_name ~= "filename" and param_name ~= "line_number" and param_name ~= "status" and param_name ~= "description" and param_name ~= "tags" then
-            local insert_param_sql = string.format("INSERT INTO parameters (task_id, parameter_name, parameter_value) VALUES (%d, '%s', '%s');", task_id, param_name, param_value)
+            local insert_param_sql = string.format("INSERT INTO parameters (task_id, name, value) VALUES (%d, '%s', '%s');", task_id, param_name, param_value)
             self.sql:run(insert_param_sql)
         end
     end
@@ -116,6 +122,10 @@ function M:read_notes(folder)
     self.sql:connect()
     self:create_table()
 
+    -- local tables = self.sql:query_n("SELECT name FROM sqlite_master WHERE type='table';")
+
+    -- print('tables: ')
+    -- print_table(tables)
     -- inspect(raw_tasks)
     for _, line in ipairs(raw_tasks) do
         print_table(line)
@@ -126,6 +136,10 @@ function M:read_notes(folder)
             self:insert(task)
         end
     end
+    -- tables = self.sql:query_n("SELECT name FROM sqlite_master WHERE type='table';")
+
+    -- print('tables: ')
+    -- print_table(tables)
     self.sql:close()
 end
 
@@ -133,7 +147,7 @@ end
 function M.select_tasks()
     local query = 'SELECT * FROM tasks;'
     local query2 = 'SELECT tag FROM tags WHERE task_id = 1;'
-    local query3 = 'SELECT parameter_name, parameter_value FROM parameters WHERE task_id = 1;'
+    local query3 = 'SELECT name, value FROM parameters WHERE task_id = 1;'
 end
 
 function M.tosql()
