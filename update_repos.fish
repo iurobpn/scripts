@@ -90,7 +90,7 @@ function check_repos
             # echo "current_branch: $current_branch"
             # echo "------------- end of debug info ---------------------"
 
-            if [ $remote = 'origin' ]
+            if [ "$remote" = 'origin' ]
                 if clean
                     # behind && echo "git pull $repo"
                     # ahead && echo "git push $repo"
@@ -159,13 +159,13 @@ function sync_repo
 	# echo "remote: $remote"
 	# echo "cmd: $cmd"
 
-    if [ $cur_branch != $branch ]
+    if [ "$cur_branch" != "$branch" ]
         git checkout $branch --quiet
     end
 
     git $cmd $remote $branch
 
-    if [ $cur_branch != $branch ]
+    if [ "$cur_branch" != "$branch" ]
         git checkout --quiet -
     end
 end
