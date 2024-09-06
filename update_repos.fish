@@ -5,6 +5,8 @@ function check_repos
     argparse --name=check_repos 'h/help' 'g/git_dir=' 'r/remote=' -- $argv
     or return
 
+    set pwd $(pwd)
+    echo "pwd: $pwd"
     if set -q _flag_h
         echo "Usage: check_repos [-g|--git-dir <git-dir>] [-r|--remote <remote_name>] [<repositories>]"
         return 0
@@ -35,7 +37,8 @@ function check_repos
     set -l repos
     echo "Checking repositories:"
     for i in (seq 1 $n)
-        if test -d "$GIT/$old_repos[$i]"
+        if test -d "$GIT/$old_repos[$i]"; and check_remote $remote "$GIT/$old_repos[$i]"
+
             set -a repos "$GIT/$old_repos[$i]"
         else
             echo "repo $old_repos[$i] not found"
@@ -44,7 +47,6 @@ function check_repos
     echo 'checking finished'
     echo ''
 
-    set -l pwd $(pwd)
 
     set -l dirs $(fd . -td $GIT -d1)
 
@@ -57,6 +59,7 @@ function check_repos
 
     set -l dirty
     for repo in $repos
+        echo "repo: $repo"    
         cd $repo
 
         if not is_git_repo
@@ -132,6 +135,65 @@ function check_repos
 
     echo ''
     # echo "dirty repos: $dirty"
+    cd "$pwd"
+    echo "pwd: $(pwd)"
+end
+
+#check if a remote <remote> exists
+function check_remote
+    set -l remote $argv[1]
+    set -l repo $argv[2]
+    set -l pwd $(pwd)
+
+    if not test -d "$repo"
+        set repo $HOME/git/$repo
+    end
+    if not test -d "$repo"
+        echo "repo $repo not found"
+        return 1
+    end
+    cd "$repo"
+    git remote | grep $remote > /dev/null
+end
+
+# Add remotes to newly create bare repositories in $HOME/git/bare
+# cloned from $HOME/git/<repo> where <repo> is the name of the repository
+#
+function add_remotes
+    set -l pwd (pwd)
+    set -l GIT $HOME/git
+
+    source $GIT/scripts/scripts.fish
+    set -l BARE $GIT/bare
+    set -l repos $argv
+
+    if test -z "$repos"
+        echo "Usage: add_remotes <repo1> <repo2> ..."
+        exit 1
+    end
+    for repo in $repos
+        cd "$GIT/$repo"
+        set -l remote_dir "$BARE/$repo.git"
+        echo "Checking for $remote_dir"
+        if test -d "$remote_dir"
+            if check_remote "bare" "$repo"
+                if git remote set-url bare "$remote_dir" 
+                    echo "git remote set-url bare $remote_dir"
+                else
+                    echo "git remote set-url bare $remote_dir failed"
+                end
+            else
+                if git remote add bare "$remote_dir"
+                    echo "git remote add bare $remote_dir"
+                else
+                    echo "git remote add bare $remote_dir failed"
+                end
+            end
+        else
+            echo "No bare repository found for $repo"
+        end
+    end
+    # ls $BARE
     cd "$pwd"
 end
 
