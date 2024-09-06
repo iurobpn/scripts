@@ -59,7 +59,6 @@ function check_repos
 
     set -l dirty
     for repo in $repos
-        echo "repo: $repo"    
         cd $repo
 
         if not is_git_repo
