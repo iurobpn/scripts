@@ -10,8 +10,8 @@ function is_callable(f)
 end
 
 function print_table(...)
-    for _,v in pairs({...}) do
-        print(insp.inspect(v))
+    for k,v in pairs({...}) do
+        print('key: ' .. k .. ': ' .. insp.inspect(v))
     end
     -- print(inspect(t,{depth=3}))
 end
@@ -94,4 +94,33 @@ function bt2qfix ()
     file:write(bt)
     file:close()
     vim.cmd.cfile(f)
+end
+
+function pprint(tbl, indent)
+    indent = indent or 0
+    local indent_str = string.rep("  ", indent)
+
+    if type(tbl) ~= "table" then
+        print(indent_str .. tostring(tbl))
+        return
+    end
+
+    print(indent_str .. "{")
+    for k, v in pairs(tbl) do
+        local key
+        if type(k) == "string" then
+            key = k -- No brackets for string keys
+        else
+            key = "[" .. tostring(k) .. "]" -- Use brackets for non-string keys
+        end
+        
+        io.write(indent_str .. "  " .. tostring(key) .. " = ")
+        
+        if type(v) == "table" then
+            pprint(v, indent + 1)
+        else
+            print(tostring(v) .. ",")
+        end
+    end
+    print(indent_str .. "}")
 end
