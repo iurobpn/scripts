@@ -2,22 +2,29 @@
 
 # This script is used to update all git repositories in a given directory
 function check_repos
-    argparse --name=check_repos 'h/help' 'g/git_dir=' -- $argv
+    argparse --name=check_repos 'h/help' 'g/git_dir= r/remote=' -- $argv
     or return
 
     if set -q _flag_h
-        echo "Usage: check_repos [-g|--git-dir <git-dir>] [<repositories>]"
+        echo "Usage: check_repos [-g|--git-dir <git-dir>] [-r|--remote <remote_name>] [<repositories>]"
         return 0
     end
 
-	set -l GIT
+    set -l GIT
     if set -q _flag_g
         set GIT $_flag_g
     else
         set GIT $HOME/git
     end
 
-	set -l old_repos
+    set -l remote
+    if set -q _flag_r
+        set remote $_flag_r
+    else
+        set remote origin
+    end
+
+    set -l old_repos
     if test -n "$argv"
         set old_repos $argv
     else
@@ -39,21 +46,7 @@ function check_repos
 
     set -l pwd $(pwd)
 
-    if set -q _flag_r_
-        set -l dirs
-
-        set -l dir
-        set -l n (count $repos)
-        for i in (seq 1 $n)
-            if not test -d $repos[$i]
-                set -e repos[$i]
-            else
-                continue
-            end
-        end
-    else
-        set -l dirs $(fd . -td $GIT -d1)
-    end
+    set -l dirs $(fd . -td $GIT -d1)
 
     if test -z "$repos"
         echo "No repos found"
@@ -73,7 +66,7 @@ function check_repos
         echo ''
         echo "-------- Checking repo $repo  ----------"
 
-        git fetch origin --quiet
+        git fetch $remote --quiet
         set -l bstatus (branch_status)
         set -l current_branch (get_current_branch)
         for line in $bstatus
@@ -81,7 +74,7 @@ function check_repos
             set -l nahead (echo $line | get_n_ahead)
             set -l nbehind (echo $line | get_n_behind)
             set -l local_branch (echo $line | get_local_branch)
-            set -l remote (echo $line | get_remote_from_branch_status)
+            # set -l remote (echo $line | get_remote_from_branch_status)
             # echo "-------------- debug info ---------------------------"
             # echo "n_ahead: $nahead"
             # echo "n_behind: $nbehind"
@@ -90,37 +83,35 @@ function check_repos
             # echo "current_branch: $current_branch"
             # echo "------------- end of debug info ---------------------"
 
-            if [ "$remote" = 'origin' ]
-                if clean
-                    # behind && echo "git pull $repo"
-                    # ahead && echo "git push $repo"
-                    if test $nbehind -gt 0
-                        echo ''
-                        # set -l cur_branch (get_current_branch)
-                        # echo "current branch (nbehind if): $cur_branch"
-                        # if [ "$cur_branch" !=  "$local_branch" ]
-                        #     # echo "cur_branch != local_branch"
-                        #     git checkout $local_branch
-                        # end
-                        echo "git pull origin $local_branch"
-                        sync_repo pull origin $local_branch
-                    end
-                else 
-                    set -l repo_name $(basename $repo)
-
-                    if notstaged || untracked
-                        echo ''
-                        echo "repo $repo_name has uncommited changes"
-                        set -al dirty $dirty
-                    end
-                end
-                if test $nahead -gt 0
+            if clean
+                # behind && echo "git pull $repo"
+                # ahead && echo "git push $repo"
+                if test $nbehind -gt 0
                     echo ''
-                    echo "git push origin $local_branch"
                     # set -l cur_branch (get_current_branch)
-                    # echo "current branch (nahead if): $cur_branch"
-                    sync_repo push origin $local_branch
+                    # echo "current branch (nbehind if): $cur_branch"
+                    # if [ "$cur_branch" !=  "$local_branch" ]
+                    #     # echo "cur_branch != local_branch"
+                    #     git checkout $local_branch
+                    # end
+                    echo "git pull $remote $local_branch"
+                    sync_repo pull $remote $local_branch
                 end
+            else 
+                set -l repo_name $(basename $repo)
+
+                if notstaged || untracked
+                    echo ''
+                    echo "repo $repo_name has uncommited changes"
+                    set -al dirty $dirty
+                end
+            end
+            if test $nahead -gt 0
+                echo ''
+                echo "git push $remote $local_branch"
+                # set -l cur_branch (get_current_branch)
+                # echo "current branch (nahead if): $cur_branch"
+                sync_repo push $remote $local_branch
             end
 
             # echo ''
@@ -146,13 +137,13 @@ end
 
 function sync_repo
     if test (count $argv) -lt 3
-        echo "Usage: sync_repo <command> <remote> <repo>"
+        echo "Usage: sync_repo <command> <remote> <branch>"
         return 1
     end
-    set cur_branch $(get_current_branch)
-    set cmd $argv[1]
-    set branch $argv[3]
-    set remote $argv[2]
+    set -l cur_branch $(get_current_branch)
+    set -l cmd $argv[1]
+    set -l remote $argv[2]
+    set -l branch $argv[3]
 	
 	# echo "current branch: $current_branch"
 	# echo "branch: $branch"
@@ -175,7 +166,7 @@ function update_ufmg
     set -l repos CGAL-matlab ProVANT-Simulator_Developer armadillo-pmr cpp_tests data_structures dotfiles matlab-dev nmpc-obs ocpsol pres-research prov_sim_configs pylattes reports papers scripts sets-obs svgs thesis
     # set repos (echo $repos |  sed -e 's#\([a-zA-Z\._0-9\-]\+\)#/home/gagarin/git/\1#g')
     # echo "updating repos: $repos"
-    check_repos $repos
+    check_repos $repos -r origin
 end
 
 
