@@ -27,6 +27,7 @@ function Sql:close()
     -- self.env:close()
     -- self.conn = nil
     -- self.env = nil
+    self.db:close()
     self.connected = false
 end
 
