@@ -2,7 +2,7 @@
 
 # This script is used to update all git repositories in a given directory
 function check_repos
-    argparse --name=check_repos 'h/help' 'g/git_dir= r/remote=' -- $argv
+    argparse --name=check_repos 'h/help' 'g/git_dir=' 'r/remote=' -- $argv
     or return
 
     if set -q _flag_h
