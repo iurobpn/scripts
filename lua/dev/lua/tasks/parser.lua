@@ -2,7 +2,7 @@
 local M = {
     pattern = {
         status = '%- %s*%[%s*([xv ])%s*%]',
-        filename = '[a-zA-ZçÇãõóéá]+.*%.md',
+        filename = '[/]?[a-zA-ZçÇãõóéá]+.*%.md',
         line_number = ':(%d+):',
         description = '%-%s*%[%s*[a-z ]%s*%]%s*(.*)',
         tag = '(#[a-zA-Z_%-]+)',

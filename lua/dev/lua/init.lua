@@ -1,6 +1,5 @@
 -- submodules of dev.lua
 -- require'utils.lua' -- empty
-require'dev.lua.utils'
 require'dev.lua.fs'
 require'dev.lua.log'
 

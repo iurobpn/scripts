@@ -1,7 +1,6 @@
 require'dev.nvim.ui.float'
-require('dev.lua.fs')
-require('dev.lua.utils')
-require('utils')
+local fs = require('dev.lua.fs')
+local utils = require('utils')
 
 local json = require('cjson')
 
@@ -15,13 +14,6 @@ local log = Log('qfloat_log')
 qfloat = {
     win_id = nil,
     last_file = '',
-    root_priority = {'main_root', 'git', 'root_files'},
-    settings_file = '.settings.json',
-    root_dir = nil,
-    main_root = '.root',
-    root_files = { -- not tested
-        'root.tex',
-    },
 }
 
 function read_output(cmd)
@@ -32,32 +24,13 @@ function read_output(cmd)
 end
 
 function init()
-    qfloat.root_dir = find_root()
-    if not qfloat.root_dir then
-        print('Project root directory not found')
-        return
-    else
-        print('Project root directory: ' .. qfloat.root_dir)
-    end
-
-    local filename = qfloat.root_dir .. '/' .. qfloat.settings_file
-    local fd = io.open(filename, 'r')
-    if fd then
-        local s = fd:read('*a')
-        local settings = nil
-        if s and s ~= '' then
-            settings = json.decode(s)
-            for k, v in pairs(settings) do
-                qfloat[k] = v
-            end
+    if vim.g.proj and vim.g.proj.qfloat then
+        for k, v in pairs(vim.g.proj.qfloat) do
+            qfloat[k] = v
         end
-        fd:close()
-    else
-        print('settings file not found')
     end
+    vim.g.proj.register('qfloat', qfloat)
 end
-
-
 
 -- local log_file = '/tmp/error_lua.log'
 function qrun(cmd)
@@ -67,14 +40,14 @@ end
 
 function qrun_lua(filename)
     if not filename or filename == '' then
-        filename = get_current_file()
+        filename = fs.get_current_file()
     end
     qfloat.last_file = filename
 
     -- qrun(fmt('lua.fish %s', filename))
     vim.cmd.cexpr(fmt('system("lua.fish %s")', filename))
 
-    f = io.open(qfloat.settings_file, 'w')
+    local f = io.open(qfloat.settings_file, 'w')
     f:write(json.encode(qfloat))
     f:close()
     vim.cmd('copen')
@@ -103,10 +76,15 @@ end
 
 -- Store the window ID globally
 -- Function to open the quickfix list in a floating window
-function qopen()
+function qopen(...)
+    local opts = {...}
+    opts = opts[1] or {}
+    vim.cmd('cclose')
+    vim.cmd('copen')
+
     -- Check if the quickfix list is empty
-    local lines = vim.fn.getqflist({size = 1}).size
-    if lines == 0 then
+    local n_lines = vim.fn.getqflist({size = 1}).size
+    if n_lines == 0 then
         print("Quickfix list is empty.")
         return
     end
@@ -117,8 +95,7 @@ function qopen()
     --
     -- Open the quickfix window
     -- print('filename in qopen(): ' .. filename)
-    vim.cmd('copen')
-    win = Window({
+    local win = Window({
         width = 0.5,
         height = 0.3,
         row = 0.75,
@@ -126,22 +103,18 @@ function qopen()
         current = true,
         modifiable = false,
     })
+    -- get quickfix win id
+    if id == 0 then
+        print('Quickfix window not found')
+        return
+    end
     -- print('Window: ' .. inspect(win))
     win:add_map('n', '<CR>', ':lua qclose_link()<CR>', { noremap = true, silent = true })
     win:add_map('n', '<Space>', ':lua qlink()<CR>', { noremap = true, silent = true })
+    -- qclose_qfix()
     win:open()
     qfloat.win_id = win.id
-
     -- win:
-    -- open_current_window_as_float(opts)
-
-    -- Convert the quickfix window into a floating window
-    -- vim.api.nvim_win_set_config(qfloat.win_id, opts)
-
-    -- Map 'q' to close the floating quickfix window
-    -- vim.api.nvim_buf_set_keymap(0, 'n', '<CR>', ':lua qclose_link()<CR>', { noremap = true, silent = true })
-    -- vim.api.nvim_buf_set_keymap(0, 'n', '<Space>', ':lua qlink()<CR>', { noremap = true, silent = true })
-
     vim.cmd('normal! zt') -- cursor at the top
 end
 
@@ -209,11 +182,15 @@ function qprev()
     end
 end
 
+-- Function to get the file and line number of the quickfix entry of the line '.'
 function qget_link()
     local line = vim.fn.getline('.')
-    local list_item = split(line, '|')
-    if #list_item < 2 then
-        print("No quickfix entry found.")
+    print('qlink: before split')
+    local list_item = utils.split(line, '|')
+    print('qlink: after split')
+
+    if list_item == nil or #list_item < 2 then
+        print("No quickfix entry found(qget_link).")
         return nil
     end
     local file = list_item[1]
@@ -221,10 +198,12 @@ function qget_link()
     return file, n_line
 end
 
+
+-- Function to open the file at the current line
 function qlink()
     local file, line = qget_link()
-    if not file or not line then
-        print("No quickfix entry found.")
+    if file == nil or line == nil then
+        print('qlink error: No quickfix entry found.')
         return
     end
     vim.cmd('wincmd k') -- Center the cursor
@@ -233,10 +212,19 @@ function qlink()
     vim.cmd('wincmd p') -- Center the cursor
 end
 
+function qopen_close()
+    qopen({close_current = true})
+end
+
 -- Function to open the file at the current line and close the quickfix window
 function qclose_link()
     -- local qf_entry = vim.fn.getqflist({ idx = 0 }) -- Get the current quickfix entry
     local file, line = qget_link()
+    if file == nil or line == nil then
+        print('qclose_link error: No quickfix entry found.')
+        return
+    end
+    print('file: ' .. file)
 
     vim.cmd('cclose') -- Close the quickfix window
     vim.cmd('edit ' .. file) -- Open the file
@@ -249,9 +237,121 @@ function update_time(buf)
 end
 
 function qmessage()
-    set_message_errors()
+    local messages = vim.api.nvim_exec('messages', true)
+    qstring(messages)
     qopen()
 end
+
+-- function to set the quickfix list from a string represening all error lines.
+function qset(errors)
+        vim.fn.setqflist(errors, 'r')  -- 'r' replaces the current quickfix list
+end
+
+-- Function to set the quickfix list from a string represening all error lines.
+-- lines must be separated by '\n' to be parsed, or use the optional sep parameter.
+function qstring(lines_str, sep)
+
+    sep = sep or '\n'
+    local errors = qparse_all(utils.split(lines_str, sep))
+    if errors ~= nil and #errors > 0 then
+        qset(errors)
+    else
+        print("No errors found to populate the quickfix.")
+    end
+end
+
+-- Function to parse the error lines and return a table with the errors
+-- lines are a list of lines
+function qparse_all(lines_list)
+    local errors = {}
+    for _, line in ipairs(lines_list) do
+        -- print('line: ' .. line)
+        error = qparse(line)
+        -- inspect(error, 'error: ')
+        if error then
+            table.insert(errors, error)
+        end
+    end
+    return errors
+end
+
+
+-- clean e list of errors for lua
+function qparse(line)
+    local filepath, lnum, message = line:match("^%s*(.*):(%d*):(.*)")
+    -- local filepath, lnum, message = line:match("([^:]+):(%d+):?(.*)")
+    if filepath == nil then
+        filepath, lnum, message = line:match("^%s*(.*):(%d+)(.*)")
+        if filepath == nil then
+            print("Error parsing line: " .. line)
+            return nil
+        else
+            return {
+                filename = filepath,
+                lnum = tonumber(lnum),
+                text = message, -- Using 0 to refer to the current buffer
+            }
+        end
+    end
+end
+
+--close the quickfix window if it is open
+function qclose_qfix()
+    -- Check if a quickfix window is open
+    for _, win in ipairs(vim.fn.getwininfo()) do
+        if win.quickfix == 1 then
+            vim.api.nvim_win_close(win.winid, true)
+        end
+    end
+end
+-- Check if a quickfix window is open
+local function is_quickfix_open()
+  for _, win in ipairs(vim.fn.getwininfo()) do
+    if win.quickfix == 1 then
+      return true
+    end
+  end
+  return false
+end
+
+-- Function to open the quickfix list in a floating window and close the original quickfix window
+function open_floating_quickfix()
+  -- Close the original quickfix window if it's open
+  for _, win in ipairs(vim.fn.getwininfo()) do
+    if win.quickfix == 1 then
+      vim.cmd('cclose')
+      break
+    end
+  end
+
+  -- Create a floating window to display the quickfix list
+  local width = math.floor(vim.o.columns * 0.8)
+  local height = math.floor(vim.o.lines * 0.3)
+  local row = math.floor((vim.o.lines - height) / 2)
+  local col = math.floor((vim.o.columns - width) / 2)
+
+  -- Open the quickfix list
+  vim.cmd('copen')
+
+  -- Get the buffer number of the quickfix list
+  local qf_buf = vim.fn.getqflist({ winid = 1 }).winid
+
+  -- If a quickfix window exists, transform it into a floating window
+  if qf_buf ~= 0 then
+    -- Set up the floating window options
+    vim.api.nvim_win_set_config(qf_buf, {
+      relative = 'editor',
+      width = width,
+      height = height,
+      row = row,
+      col = col,
+      style = 'minimal',
+      border = 'rounded',
+    })
+  end
+end
+
+-- Example usage
 
 vim.api.nvim_set_keymap('n', '<Tab>', ':lua qtoggle()<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<S-Left>', ':lua qprev()<CR>', { noremap = true, silent = true })

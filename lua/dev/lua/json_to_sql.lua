@@ -1,8 +1,7 @@
-require('dev.lua.utils')
 require('class')
-local json = require("dkjson")
+
+local utils = require'utils'
 require('dev.lua.sqlite')
-local luasql = require("luasql.sqlite3")
 
 local parser = require('dev.lua.tasks.parser')
 
@@ -53,7 +52,7 @@ end})
 
 -- Function to insert data into the SQLite database
 function M:insert(task)
-    print_table(task)
+    utils.print_table(task)
     local insert_task_sql = string.format([[
         INSERT INTO tasks (filename, line_number, status, description)
         VALUES ('%s', %d, '%s', '%s');
@@ -83,19 +82,6 @@ function M:insert(task)
     end
 end
 
-local function get_command_output(cmd)
-    -- Execute the Fish shell command and capture the output
-    local handle = io.popen(cmd)
-    if not handle then
-        print("Failed to execute command: " .. cmd)
-        return nil
-    end
-    local result = handle:read("*a")
-    handle:close()
-    
-    -- Return the output, trimming any trailing newlines
-    return result --:gsub("%s+$", "")
-end
 
 -- Example usage
 -- local output = get_command_output("fish -c 'echo Hello from Fish!'")
@@ -106,14 +92,16 @@ function M:read_notes(folder)
     if folder ~= nil and folder ~='' then
         self.path = folder
     end
-    local raw_tasks = get_command_output("fish -c 'find_tasks.fish --dir=" .. self.path .. "'")
+
+    local raw_tasks = utils.get_command_output("fish -c 'find_tasks.fish --dir=" .. self.path .. "'")
     self.sql:set_path(self.path)
+
     if raw_tasks == nil then
         print('find_tasks returned nil')
         return
     end
-    require'utils'
-    raw_tasks  = split(raw_tasks, '\n')
+
+    raw_tasks  = utils.split(raw_tasks, '\n')
     if raw_tasks == nil then
         print('splitted tasks are nil')
         return
@@ -122,13 +110,7 @@ function M:read_notes(folder)
     self.sql:connect()
     self:create_table()
 
-    -- local tables = self.sql:query_n("SELECT name FROM sqlite_master WHERE type='table';")
-
-    -- print('tables: ')
-    -- print_table(tables)
-    -- inspect(raw_tasks)
     for _, line in ipairs(raw_tasks) do
-        print_table(line)
         local task = parser.parse(line)
         if task == nil then
             print('parser failed to parse the task')
@@ -136,10 +118,7 @@ function M:read_notes(folder)
             self:insert(task)
         end
     end
-    -- tables = self.sql:query_n("SELECT name FROM sqlite_master WHERE type='table';")
 
-    -- print('tables: ')
-    -- print_table(tables)
     self.sql:close()
 end
 

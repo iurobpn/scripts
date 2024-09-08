@@ -1,6 +1,10 @@
-require('utils')
+local utils = require('utils')
 require('class')
 local Log = require('dev.lua.log')
+local nvim = {
+    utils = require('dev.nvim.utils')
+}
+local Buffer = nvim.utils.Buffer
 
 local fmt = string.format
 
@@ -184,7 +188,7 @@ end
 
 function Window:close(vid)
     local win_id = 0
-    if self == nil and vid == nil then 
+    if self == nil and vid == nil then
         win_id = vim.fn.win_getid()
     elseif vid == nil then
         win_id = self.vid
@@ -210,7 +214,7 @@ function Window.set_win(vid)
     end
 end
 
-function Window:options()
+function Window:get_options()
 
     return {
         relative = self.relative,
@@ -237,7 +241,6 @@ function Window.close_all()
 end
 
 function Window:open()
-    -- traceback()
     self:set_size()
     self:set_position()
 
@@ -247,8 +250,8 @@ function Window:open()
     -- end
 
     if self.current then -- use current buffer
+        print('current')
         self.vid, self.buf, self.filename = Window.get_current()
-        self.close_current = true
     elseif self.buf then -- use the buffer already set
 
     elseif self.vid ~= nil then -- use the window id already set. It must be a float
@@ -265,7 +268,12 @@ function Window:open()
         end
     end
 
-    local opts = self:options()
+    utils.pprint(self)
+    local opts = self:get_options()
+    print('opts')
+    utils.pprint(opts)
+    print('content: ')
+    utils.pprint(self.content)
 
     if not self.buf then
         print("No buffer to open")
@@ -273,9 +281,13 @@ function Window:open()
     end
     vim.api.nvim_buf_set_option(self.buf, 'modifiable', self.modifiable)
 
-    self.vid = vim.api.nvim_open_win(self.buf, true, opts)
+    if self.current then
+        vim.api.nvim_win_set_config(self.vid, opts)
+    else
+        self.vid = vim.api.nvim_open_win(self.buf, true, opts)
+    end
 
-    if vid ~= nil and self.close_current then
+    if vid ~= nil and self.close_current or opts.close_current then
         vim.api.nvim_win_close(self.vid, false)
     end
     if self.idx < 0 then
@@ -502,7 +514,9 @@ function Window:get_position()
         if self.position.relative then
             row, col = self.relative.row*ui_height, self.relative.col*ui_width
         elseif self.position.absolute then
-            row, col = unpack(self.position.absolute)
+            print("position absolute")
+            row = self.position.absolute.row
+            col = self.position.absolute.col
         else
             error('Position not set')
         end
@@ -512,7 +526,10 @@ function Window:get_position()
 end
 
 function Window:set_position()
+    print('set_position')
+    utils.pprint(self.position)
     self.row, self.col = self:get_position()
+    utils.pprint(self.position)
     self.row = math.floor(self.row)
     self.col = math.floor(self.col)
 end
@@ -532,7 +549,7 @@ function Window:redraw()
     self:set_position()
     vim.api.nvim_buf_set_option(self.buf, 'modifiable', self.modifiable)
 
-    vim.api.nvim_win_set_config(self.vid, self:options())
+    vim.api.nvim_win_set_config(self.vid, self:get_options())
 end
 
 function Window.toggle_fullscreen()
@@ -619,86 +636,6 @@ function Window.toggle()
 end
 
 
-Buffer = {}
-function Buffer.mapping_exists(bufnr, mode, lhs)
-    local mappings = vim.api.nvim_buf_get_keymap(bufnr, mode)
-    for _, map in ipairs(mappings) do
-        if map.lhs == lhs then
-            return true
-        end
-    end
-    return false
-end
-
-
-function Buffer.unmap(bufnr)
-    local modes = {'n', 'v', 'i', 'x', 's', 'o', 'c', 't'}
-    for _,mode in ipairs(modes) do
-        local mappings = vim.api.nvim_buf_get_keymap(bufnr, mode)
-        for _, map in ipairs(mappings) do
-            vim.api.nvim_buf_del_keymap(0, mode, map.lhs)
-        end
-    end
-end
-
-function Buffer.load(buf,filename)
-    if not buf then
-        print("No buffer provided")
-        return
-    end
-    if not filename or #filename == 0 then
-        error('No filename provided')
-        return
-    end
-    if not buf then
-        buf = vim.api.nvim_create_buf(true, false)
-    end
-    vim.api.nvim_buf_set_name(buf, filename)
-    vim.api.nvim_command("edit " .. filename)
-end
-
-function Buffer.append_lines(buf, content)
-    local line_start = vim.api.nvim_buf_line_count(buf)
-    Buffer.check_content(content)
-    vim.api.nvim_buf_set_lines(buf, line_start, -1, true, content) -- append to file
-
-end
-function Buffer.set_lines(buf, line_start, line_end, content)
-    if not buf then
-        print("No buffer provided")
-        return
-    end
-    if line_start == nil then
-        line_start = 0
-    end
-    Buffer.check_content(content)
-    vim.api.nvim_buf_set_lines(self.buf, line_start, -1, true, content) -- overwrite file
-end
-
-function Buffer.check_content(content)
-    if type(content) == 'string' then
-        content = vim.split(content, '\n')
-        if type(content) == 'string' then
-            content = {content}
-        end
-    end
-end
-
--- preserve marks
-function Buffer.set_text(buf, start_row, start_col, end_row, end_col, content)
-    Buffer.check_content(content)
-    vim.api.nvim_buf_set_text(buf, start_row, start_col, end_row, end_col, content)
-end
-
-function Buffer.new(listed, scratch)
-    if listed == nil then
-        listed = true
-    end
-    if scratch == nil then
-        scratch = false
-    end
-    return vim.api.nvim_create_buf(listed, scratch)  -- false for listed, true for scratch
-end
 
 
 

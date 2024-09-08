@@ -243,7 +243,7 @@ function menu()
     return menu
 end
 
-function split()
+function nui_split()
     local split = Split({
         relative = "editor",
         position = "bottom",

@@ -85,7 +85,8 @@ function Log:format(message, level, color)
     local log_mod = fmt(" %s%-10s%s%s", self.module_color, log_module, gruvbox.reset, self.color)
     local log_suffix = fmt(" %s%s", message, gruvbox.reset)
     local info = debug.getinfo(3)
-    filename = split(info.short_src, '/')
+    local utils = require'utils'
+    filename = utils.split(info.short_src, '/')
     filename = filename[#filename]
     local log_debug = fmt(' %s[%s:%d] %s', self.colors["debug"], filename , info.currentline, gruvbox.reset)
 

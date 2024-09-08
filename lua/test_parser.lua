@@ -1,4 +1,4 @@
-require'utils'
+local utils = require'utils'
 local parser = require'dev.lua.tasks.parser'
 
 
@@ -11,6 +11,6 @@ print(description2)
 
 
 local new_task = parser.parse(task)
-print_table(new_task)
+utils.print_table(new_task)
 new_task = parser.parse(task2)
-print_table(new_task)
+utils.print_table(new_task)

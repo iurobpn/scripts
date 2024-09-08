@@ -1,5 +1,5 @@
 local Thread = require 'thread'.Thread
-
+local utils = require 'utils'
 -- local function test_thread()
 local thread = Thread(function()
     local time = require('time')
@@ -16,7 +16,7 @@ local thread = Thread(function()
 end)
 
 print('\nThread obj tab')
-print_table(thread)
+utils.print_table(thread)
 
 thread:start()
 -- return thread

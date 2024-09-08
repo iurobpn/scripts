@@ -1,5 +1,6 @@
-json = require('dkjson')
-require('utils')
+local json = require('dkjson')
+local utils = require('utils')
+local fs = require('dev.lua.fs')
 local M = {
     root_priority = {'main_root', 'git', 'root_files'},
     settings_file = '.settings.json',
@@ -9,7 +10,8 @@ local M = {
     main_root = '.root',
     root_files = { -- not tested
         'root.tex',
-    }
+    },
+    tables = {},
 }
 
 local mt = {}
@@ -76,7 +78,7 @@ function M.save_settings()
     local filename = M.root_dir .. '/' .. M.settings_file
     local settings = {}
     for k, v in pairs(M) do
-        if not is_callable(k) and not is_callable(v) then
+        if not utils.is_callable(k) and not utils.is_callable(v) then
             settings[k] = v
         end
     end
@@ -125,7 +127,7 @@ function M.find_root.root_files(file_list)
         for _, file in ipairs(file_list) do
             local root_path = current_dir .. '/' .. file
 
-            if file_exists(root_path) then
+            if fs.file_exists(root_path) then
                 lfs.chdir(cdir)
                 return root_path:gsub('\n', '')
             end
@@ -138,4 +140,9 @@ function M.find_root.root_files(file_list)
 
     return false
 end
+
+function M.register(name,tab)
+    M.tables[name] = tab
+end
+
 return M;

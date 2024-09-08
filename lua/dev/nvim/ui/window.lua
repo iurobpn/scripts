@@ -1,5 +1,5 @@
 require('dev.nvim.ui.float')
-require'utils'
+local utils = require'utils'
 
 Float = {
     window = nil,
@@ -52,7 +52,7 @@ end
 
 function Float.close()
     if Float.window then
-        traceback()
+        utils.traceback()
         print('Closing float')
         Float.window.close()
         Float.window = nil

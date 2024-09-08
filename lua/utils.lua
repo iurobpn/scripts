@@ -3,24 +3,26 @@ Log = require'dev.lua.log'
 local insp = require'inspect'
 local fmt = string.format
 
+local M = {}
 
-function is_callable(f)
+
+function M.is_callable(f)
     local fmt = getmetatable(f)
     return type(f) == 'function' or (fmt ~= nil and fmt.__call ~= nil)
 end
 
-function print_table(...)
+function M.print_table(...)
     for k,v in pairs({...}) do
         print('key: ' .. k .. ': ' .. insp.inspect(v))
     end
     -- print(inspect(t,{depth=3}))
 end
 
-function inspect(obj,s)
-    print(fmt('%s%s', s or '', require('inspect').inspect(obj, {depth=3})))
+function M.inspect(obj,s)
+    print(fmt('%s%s', s or '', insp.inspect(obj, {depth=3})))
 end
 
-function numel(t)
+function M.numel(t)
     local n = 0
     for _,_ in pairs(t) do
         n = n + 1
@@ -28,7 +30,7 @@ function numel(t)
     return n
 end
 
-function argparse(arg)
+function M.argparse(arg)
     if arg == 'help' then
         print('Usage: lua launch_tserver.lua [host] [port]')
         os.exit()
@@ -55,23 +57,38 @@ function argparse(arg)
     end
 end
 
-function print_mt(t)
+function M.print_mt(t)
     local mt = getmetatable(t)
-    print_table(mt)
+    M.print_table(mt)
 end
 
-function split(inputstr, sep)
-  if sep == nil then
-    sep = "%s"
-  end
-  local t = {}
-  for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
-    table.insert(t, str)
-  end
-  return t
+function M.split(inputstr, sep)
+    if sep == nil then
+        sep = "%s"
+    end
+    local t = {}
+    for str in string.gmatch(inputstr, "([^"..sep.."]+)") do
+        table.insert(t, str)
+    end
+
+    return t
 end
 
-function traceback ()
+function M.get_command_output(cmd)
+    -- Execute the Fish shell command and capture the output
+    local handle = io.popen(cmd)
+    if not handle then
+        print("Failed to execute command: " .. cmd)
+        return nil
+    end
+    local result = handle:read("*a")
+    handle:close()
+
+    -- Return the output, trimming any trailing newlines
+    return result --:gsub("%s+$", "")
+end
+
+function M.traceback()
     local level = 1
     while true do
         local info = debug.getinfo(level, "Sl")
@@ -86,7 +103,8 @@ function traceback ()
     end
 end
 
-function bt2qfix ()
+-- convert backtrace to quickfix list
+function M.qbacktrace ()
     require'debug'
     local bt = debug.traceback()
     local f = '/tmp/bt.log'
@@ -96,8 +114,8 @@ function bt2qfix ()
     vim.cmd.cfile(f)
 end
 
-function pprint(tbl, indent)
-    indent = indent or 0
+function M.pprint(tbl, indent)
+    indent = indent or 1
     local indent_str = string.rep("  ", indent)
 
     if type(tbl) ~= "table" then
@@ -117,10 +135,13 @@ function pprint(tbl, indent)
         io.write(indent_str .. "  " .. tostring(key) .. " = ")
         
         if type(v) == "table" then
-            pprint(v, indent + 1)
+            M.pprint(v, indent + 1)
         else
             print(tostring(v) .. ",")
         end
     end
     print(indent_str .. "}")
 end
+
+
+return M
