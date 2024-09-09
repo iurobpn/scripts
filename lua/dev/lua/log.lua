@@ -128,5 +128,8 @@ Log = class(Log,
         end, adv = 1
     })
 -- setmetatable(Log, mt)
+local M = {
+    Log = Log
+}
 
-return Log
+return M

@@ -11,7 +11,7 @@ local M = {
 }
 local json = require("dkjson") -- Assumes you have dkjson installed for JSON serialization
 
-function M.parse(task) 
+function M.parse(task)
     local status_map = {
         ["[x]"] = "done",
         ["[v]"] = "in progress",

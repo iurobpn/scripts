@@ -1,16 +1,14 @@
 local utils = require('utils')
 require('class')
-local Log = require('dev.lua.log')
-local nvim = {
-    utils = require('dev.nvim.utils')
-}
-local Buffer = nvim.utils.Buffer
+local Log = require('dev.lua.log').Log
+
+local Buffer = require('dev.nvim.utils').Buffer
 
 local fmt = string.format
 
-local log = Log('float')
+-- local log = Log('float')
 
-Window = {
+local Window = {
     -- static ----------------------
     id_count = 0,
     floats = {}, -- list of open floats, indexed by the wim win id
@@ -62,7 +60,7 @@ Window = {
     close_map = {
         mode = 'n',
         key = 'q',
-        cmd = ':lua Window.toggle()<CR>',
+        cmd = ':WinToggle<CR>',
         opts = { noremap = true, silent = true }
     },
     current = false, --get current windows buffer
@@ -77,24 +75,14 @@ Window = {
     focusable = true,
     modifiable = true,
     close_current = false, -- close current window when it is being floated
+    option = {
+        swapfile = true,
+        buftype = '', -- set the buffer type prompt and terminal are interesting types
+        bufhidden = '',
+        bulisted = true,
+
+    },
 }
-
-function Window.new(pos, size)
-    local win = Window()
-    win:config({position = pos, size = size})
-    win.idx = Window.id_count
-    win:open()
-    Window.id_count = Window.id_count + 1
-    Window.floats[win.vid] = win
-    return win
-end
-
-function Window.open_current()
-    local win = Window()
-    win.current = true
-    win:open()
-    Window.floats[win.vid] = win
-end
 
 function Window:ui_width()
     return vim.api.nvim_get_option("columns")
@@ -112,6 +100,14 @@ function Window:config(...)
             self[k] = v
         end
     end
+    print('size in Window.config')
+    if opts and opts.position then
+        utils.pprint(opts.position)
+    end
+    print('size in Window.config')
+    if opts and opts.size then
+        utils.pprint(opts.size)
+    end
 end
 
 function Window:get_size()
@@ -121,9 +117,11 @@ function Window:get_size()
     local width = 0
     local height = 0
     if self.size.relative then
+        print('Window get_size relative')
         width = ui_width*self.size.relative.width
         height = ui_height*self.size.relative.height
     elseif self.size.absolute then
+        print('Window get_size absolute')
         width = self.size.absolute.width
         height = self.size.absolute.height
     else
@@ -268,12 +266,9 @@ function Window:open()
         end
     end
 
-    utils.pprint(self)
     local opts = self:get_options()
     print('opts')
     utils.pprint(opts)
-    print('content: ')
-    utils.pprint(self.content)
 
     if not self.buf then
         print("No buffer to open")
@@ -481,11 +476,17 @@ Window = class(
                     end
                 end
             end
+            self.idx = Window.new_id()
 
             return self
         end
     }
 )
+
+function Window.new_id()
+    Window.id_count = Window.id_count + 1
+    return Window.id_count
+end
 
 -- calculate the position of the float window
 function Window:get_position()
@@ -567,38 +568,6 @@ function Window.toggle_fullscreen()
     end
 end
 
-function Window.popup(...)
-    local win = Window()
-
-    local args = {...}
-    args = args[1]
-    -- local args = {...}
-    local opts = {
-        size = {
-            absolute = {
-                width = 8,
-                height = 1,
-            }
-        },
-        border = "round",
-        zindex = 50,
-        position = 'center',
-        anchor = 'NW',
-        style = "minimal",
-        modifiable = false,
-        cursor = false,
-        current = false,
-    }
-    if args then
-        for k, v in pairs(args) do
-            opts[k] = v
-        end
-    end
-    win.config(opts)
-
-    return win
-end
-
 function Window.toggle()
     local vid = vim.fn.win_getid()
     if Window.floats[vid] then
@@ -635,43 +604,38 @@ function Window.toggle()
     end
 end
 
-
-
-
-
-
-
-vim.api.nvim_create_user_command("WinUp", ':lua Window.up()', {})
-vim.api.nvim_create_user_command("WinDown", ':lua Window.down()', {})
-vim.api.nvim_create_user_command("WinLeft", ':lua Window.left()', {})
-vim.api.nvim_create_user_command("WinRight", ':lua Window.right()', {})
-vim.api.nvim_create_user_command("WinSnapUp", ':lua Window.up()', {})
-vim.api.nvim_create_user_command("WinSnapDown", ':lua Window.down()', {})
-vim.api.nvim_create_user_command("WinSnapLeft", ':lua Window.left()', {})
-vim.api.nvim_create_user_command("WinSnapRight", ':lua Window.right()', {})
-vim.api.nvim_create_user_command("WinToggleFullScreen", ':lua Window.toggle_fullscreen()', {})
-vim.api.nvim_create_user_command("WinFullScreen", ':lua Window.fullscreen()', {})
-vim.api.nvim_create_user_command("WinRedraw", ':lua Window.redraw()', {})
-vim.api.nvim_create_user_command("WinToggle", ':lua Window.toggle()', {})
-vim.api.nvim_create_user_command("WinNew", ':lua Window.new()', {})
-vim.api.nvim_create_user_command("WinOpenCurrent", ':lua Window.open_current()', {})
+vim.api.nvim_create_user_command("WinUp",               ':lua dev.nvim.ui.float.Window.up()',                {})
+vim.api.nvim_create_user_command("WinDown",             ':lua dev.nvim.ui.float.Window.down()',              {})
+vim.api.nvim_create_user_command("WinLeft",             ':lua dev.nvim.ui.float.Window.left()',              {})
+vim.api.nvim_create_user_command("WinRight",            ':lua dev.nvim.ui.float.Window.right()',             {})
+vim.api.nvim_create_user_command("WinSnapUp",           ':lua dev.nvim.ui.float.Window.up()',                {})
+vim.api.nvim_create_user_command("WinSnapDown",         ':lua dev.nvim.ui.float.Window.down()',              {})
+vim.api.nvim_create_user_command("WinSnapLeft",         ':lua dev.nvim.ui.float.Window.left()',              {})
+vim.api.nvim_create_user_command("WinSnapRight",        ':lua dev.nvim.ui.float.Window.right()',             {})
+vim.api.nvim_create_user_command("WinToggleFullScreen", ':lua dev.nvim.ui.float.Window.toggle_fullscreen()', {})
+vim.api.nvim_create_user_command("WinFullScreen",       ':lua dev.nvim.ui.float.Window.fullscreen()',        {})
+vim.api.nvim_create_user_command("WinRedraw",           ':lua dev.nvim.ui.float.Window.redraw()',            {})
+vim.api.nvim_create_user_command("WinToggle",           ':lua dev.nvim.ui.float.Window.toggle()',            {})
 
 -- create mappings for the move functions
-vim.api.nvim_set_keymap('n', '<C-S-Up>', ':lua Window.up()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-S-Down>', ':lua Window.down()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-S-Left>', ':lua Window.left()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-S-Right>', ':lua Window.right()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-k>', ':lua Window.snap_up()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-j>', ':lua Window.snap_down()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-l>', ':lua Window.snap_right()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-h>', ':lua Window.snap_left()<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'º', ':WinToggleFullScreen<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'Ç', ':WinToggle<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<LocalLeader>n', ':WinNew<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'gç', ':WinOpenCurrent<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-S-Up>',    ':WinUp<CR>',               { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-S-Down>',  ':WinDown<CR>',             { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-S-Left>',  ':WinLeft<CR>',             { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-S-Right>', ':WinRight<CR>',            { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-k>',       ':WinSnapUp<CR>',           { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-j>',       ':WinSnapDown<CR>',         { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-l>',       ':WinSnapRight<CR>',        { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-h>',       ':WinSnapLeft<CR>',         { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', 'º',           ':WinToggleFullScreen<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', 'Ç',           ':WinToggle<CR>',           { noremap = true, silent = true })
 -- handle_link()
 -- ag  '\- \[.\]' | cut -d : -f1,2 | sed 's/:/ /g' | sort | uniq
 
 --setup the buffer with links and test
 -- setup_buffer_with_links()
-return Window
+
+local M = {
+    Window = Window
+}
+
+return M

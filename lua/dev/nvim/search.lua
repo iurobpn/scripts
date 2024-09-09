@@ -1,4 +1,5 @@
-function fzf()
+local M = {}
+function M.fzf()
     local source = 'fd . --type f'
     local sink = function(selected)
         if selected and #selected > 0 then
@@ -9,7 +10,7 @@ function fzf()
     fzf_run({source = source, sink = sink, options = options})
 end
 
-function fzf_run(arg)
+function M.fzf_run(arg)
     local source, sink
 
     local options
@@ -33,3 +34,4 @@ function fzf_run(arg)
 
     vim.fn['fzf#run']({source = source, sink = sink, options = options})
 end
+return M

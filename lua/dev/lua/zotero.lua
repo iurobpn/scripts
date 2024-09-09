@@ -52,7 +52,10 @@ function M:inspect_database()
     end
     self.sql:close()
 end
+local Module = {
+    Zotero = M
+}
 
 -- Inspect the database
 -- inspect_database()
-return M
+return Module

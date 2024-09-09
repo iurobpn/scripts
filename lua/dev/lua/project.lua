@@ -1,7 +1,7 @@
 local json = require('dkjson')
 local utils = require('utils')
 local fs = require('dev.lua.fs')
-local M = {
+local Project = {
     root_priority = {'main_root', 'git', 'root_files'},
     settings_file = '.settings.json',
     root_dir = nil,
@@ -15,43 +15,43 @@ local M = {
 }
 
 local mt = {}
-mt.__call = function(self)
+function mt:__call()
     if vim.g.proj_roots then
-        M.roots_files = vim.g.proj_root_files
+        Project.roots_files = vim.g.proj_root_files
     end
     if vim.g.proj_root_priority then
-        M.root_priority = vim.g.proj_root_priority
+        Project.root_priority = vim.g.proj_root_priority
     end
-    for _, root in ipairs(M.root_priority) do
-        M.root_dir = M.find_root[root](M[root])
-        if M.root_dir then
-            M.root_dir = M.root_dir:gsub('/$', '')
+    for _, root in ipairs(Project.root_priority) do
+        Project.root_dir = Project.find_root[root](Project[root])
+        if Project.root_dir then
+            Project.root_dir = Project.root_dir:gsub('/$', '')
             break
         end
     end
 
-    return M.root_dir
+    return Project.root_dir
 end
 
-setmetatable(M.find_root, mt)
+setmetatable(Project.find_root, mt)
 
-function M.init()
+function Project.init()
     if vim ~=nil and vim.g.enable_project == nil then
         vim.g.enable_project = true
     end
     if vim == nil or not vim.g.enable_project then
         return
     end
-    M.root_dir = M.find_root()
-    if not M.root_dir then
+    Project.root_dir = Project.find_root()
+    if not Project.root_dir then
         print('Project root directory not found')
         return
     else
-        print('Project root directory: ' .. M.root_dir)
-        vim.g.root_dir = M.root_dir
+        print('Project root directory: ' .. Project.root_dir)
+        vim.g.root_dir = Project.root_dir
     end
 
-    local filename = M.root_dir .. '/' .. M.settings_file
+    local filename = Project.root_dir .. '/' .. Project.settings_file
     local fd = io.open(filename, 'r')
     if fd then
         local s = fd:read('*a')
@@ -59,7 +59,7 @@ function M.init()
         if s and s ~= '' then
             settings = json.decode(s)
             for k, v in pairs(settings) do
-                M[k] = v
+                Project[k] = v
             end
         end
         fd:close()
@@ -70,14 +70,14 @@ function M.init()
     local t_period = 30000
     -- save the settings every 30 s
     vim.defer_fn(function()
-        M.save_settings()
+        Project.save_settings()
     end, t_period)
 end
 
-function M.save_settings()
-    local filename = M.root_dir .. '/' .. M.settings_file
+function Project.save_settings()
+    local filename = Project.root_dir .. '/' .. Project.settings_file
     local settings = {}
-    for k, v in pairs(M) do
+    for k, v in pairs(Project) do
         if not utils.is_callable(k) and not utils.is_callable(v) then
             settings[k] = v
         end
@@ -92,16 +92,16 @@ function M.save_settings()
 end
 
 
-function M.find_root.main_root(main_root)
+function Project.find_root.main_root(main_root)
     if main_root then
         main_root = main_root:gsub('\n', '')
-        return M.find_root.root_files({main_root})
+        return Project.find_root.root_files({main_root})
     else
         return false
     end
 end
 
-function M.find_root.git()
+function Project.find_root.git()
     local cmd = 'git rev-parse --show-toplevel'
     local fd = io.popen(cmd)
     if not fd then
@@ -117,7 +117,7 @@ function M.find_root.git()
     end
 end
 
-function M.find_root.root_files(file_list)
+function Project.find_root.root_files(file_list)
     local lfs = require("lfs")
     local home_dir = os.getenv("HOME")
     local current_dir = lfs.currentdir()
@@ -141,8 +141,8 @@ function M.find_root.root_files(file_list)
     return false
 end
 
-function M.register(name,tab)
-    M.tables[name] = tab
+function Project.register(name,tab)
+    Project.tables[name] = tab
 end
 
-return M;
+return Project;

@@ -1,7 +1,7 @@
 require('class')
 
 local utils = require'utils'
-require('dev.lua.sqlite')
+local Sql = require('dev.lua.sqlite2').Sql
 
 local parser = require('dev.lua.tasks.parser')
 
@@ -122,18 +122,13 @@ function M:read_notes(folder)
     self.sql:close()
 end
 
-
-function M.select_tasks()
-    local query = 'SELECT * FROM tasks;'
-    local query2 = 'SELECT tag FROM tags WHERE task_id = 1;'
-    local query3 = 'SELECT name, value FROM parameters WHERE task_id = 1;'
-end
-
 function M.tosql()
     local j2s = M()
     j2s:read_notes()
 end
-
-return M
+local mod = {
+    Indexer = M
+}
+return mod
 
 

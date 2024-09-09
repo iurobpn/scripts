@@ -34,12 +34,10 @@ function M.get_context(filename, line_num, size)
     local last_line = vim.api.nvim_buf_line_count(bufnr);
     print('last_line: ' .. last_line)
     local start_line = math.max(0, line_num - context_lines_before - 1)
-    local end_line = math.max(last_line, line_num + context_lines_after)
+    local end_line = math.min(last_line, line_num + context_lines_after)
     print('start_line: ' .. start_line)
     print('end_line: ' .. end_line)
     local lines  = vim.api.nvim_buf_get_lines(bufnr, start_line, end_line, false)
-    print('lines: ')
-    utils.pprint(lines)
 
     return lines
 end
@@ -95,7 +93,7 @@ end
 
 function Buffer.append_lines(buf, content)
     local line_start = vim.api.nvim_buf_line_count(buf)
-    Buffer.check_content(content)
+    content = Buffer.check_content(content)
     vim.api.nvim_buf_set_lines(buf, line_start, -1, true, content) -- append to file
 
 end
@@ -107,7 +105,9 @@ function Buffer.set_lines(buf, line_start, line_end, content)
     if line_start == nil then
         line_start = 0
     end
-    Buffer.check_content(content)
+    content = Buffer.check_content(content)
+    print('content in Buffer.set_lines ')
+    print(type(content))
     vim.api.nvim_buf_set_lines(buf, line_start, -1, true, content) -- overwrite file
 end
 
@@ -144,11 +144,12 @@ function Buffer.check_content(content)
             content = {content}
         end
     end
+    return content
 end
 
 -- preserve marks
 function Buffer.set_text(buf, start_row, start_col, end_row, end_col, content)
-    Buffer.check_content(content)
+    content = Buffer.check_content(content)
     vim.api.nvim_buf_set_text(buf, start_row, start_col, end_row, end_col, content)
 end
 
@@ -161,6 +162,7 @@ function Buffer.new(listed, scratch)
     end
     return vim.api.nvim_create_buf(listed, scratch)  -- false for listed, true for scratch
 end
+
 M.Buffer = Buffer
 
 return M

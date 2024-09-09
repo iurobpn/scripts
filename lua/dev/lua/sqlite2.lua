@@ -2,7 +2,7 @@ local sqlite3 = require("lsqlite3")
 
 require('class')
 
-Sql = {filename = ''}
+local Sql = {filename = ''}
 
 Sql = class(Sql, {constructor = function(self, filename)
     self.filename = filename
@@ -84,4 +84,7 @@ function Sql:query(query)
     local result = self.db:nrows(query)
     return result
 end
-
+local M = {
+    Sql = Sql
+}
+return M

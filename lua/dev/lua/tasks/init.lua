@@ -1,17 +1,13 @@
-TaskParser = require('dev.lua.tasks.parser')
-Sql = require('dev.lua.sqlite2')
-local utils = require('utils')
-local nvim = {
-    utils = require('dev.nvim.utils'),
-}
+local TaskParser = require('dev.lua.tasks.parser')
+local Sql = require('dev.lua.sqlite2')
 
-local M = {
+local Tasks = {
     filename = 'tasks.db',
     path = '/home/gagarin/sync/obsidian/',
     sql = nil,
 }
 
-M = class(M, {constructor = function(self, filename)
+Tasks = class(Tasks, {constructor = function(self, filename)
     if filename ~= nil then
         self.filename = filename
     end
@@ -19,7 +15,7 @@ M = class(M, {constructor = function(self, filename)
     return self
 end})
 
-function M.params_to_string(parameters)
+function Tasks.params_to_string(parameters)
     local str = ''
     for k,v in pairs(parameters) do
         str = str .. '[' .. k .. ':: ' .. v .. '] '
@@ -27,7 +23,7 @@ function M.params_to_string(parameters)
     return str
 end
 
-function M.tags_to_string(tags)
+function Tasks.tags_to_string(tags)
     local str = ''
     for _,tag in ipairs(tags) do
         str = str ..  tag .. ' '
@@ -35,7 +31,7 @@ function M.tags_to_string(tags)
     return str
 end
 
-function M:select_by_id(id)
+function Tasks:select_by_id(id)
     local fmt = string.format
     id = id or 1
     local query_task = fmt('SELECT * FROM tasks WHERE id = %d;', id)
@@ -61,7 +57,7 @@ function M:select_by_id(id)
     return task
 end
 
-function M:select_by_tag(tag)
+function Tasks:select_by_tag(tag)
     tag = tag or 1
     -- local query_tag = "select distinct t.id from tasks t left join tags tg ON t.id = tg.task_id where tg.tag = '#main'"
     -- local query_task = fmt('SELECT * FROM tasks WHERE id = %s;', tag)
@@ -114,7 +110,7 @@ function M:select_by_tag(tag)
     return tasks
 end
 
-function M.open_context_window(filename, line_nr)
+function Tasks.open_context_window(filename, line_nr)
     
     local context_width = math.floor(vim.o.columns * 0.4)
     local context_height = math.floor(vim.o.lines * 0.5)
@@ -126,22 +122,23 @@ function M.open_context_window(filename, line_nr)
     local content = nvim.utils.get_context(filename, line_nr)
     print('content: (open_context_window)')
 
-    local win = Window()
+    local win = nvim.ui.views.fit()
     win:config(
         {
-            relative = 'editor',
-            size = {
-                absolute = {
-                    width = context_width,
-                    height = context_height,
-                },
-            },
+            -- relative = 'editor',
+            -- size = {
+            --     absolute = {
+            --         width = context_width,
+            --         height = context_height,
+            --     },
+            -- },
             position = {
                 absolute = {
                     row = context_row,
                     col = context_col,
                 },
             },
+            buffer = nvim.ui.views.get_scratch_opt(),
             border = 'single',
             modifiable = false,
             content = content,
@@ -157,6 +154,10 @@ function M.open_context_window(filename, line_nr)
     line_nr = math.floor(#content/2)
     vim.api.nvim_win_set_cursor(win.vid, {line_nr, 0})
 end
-
+local M = {
+    Tasks = Tasks,
+    parser = TaskParser,
+    Indexer = require('dev.lua.tasks.indexer').Indexer,
+}
 
 return M

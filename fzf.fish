@@ -1,12 +1,14 @@
 
 function vf
     test -n "$argv"; and test "argv" = "-h"; and echo "Usage: vf [query_dir]\n searchs in subdirectory of query_dir to for files to open in vim"; and return
+    set -l dir
     if test -n "$argv"
         set dir $argv[1]
-    else
-        set dir "."
     end
-    fd . -tf "$dir" |  sed -e 's#^\./(.*)##g' | fzf --multi $FZF_DEFAULT_OPTIONS --bind 'enter:become(vim {+})'
+    if test -z "$dir"
+        set -e dir
+    end
+    fd . -tf $dir |  sed -e 's#^\./(.*)##g' | fzf --multi $FZF_DEFAULT_OPTIONS --bind 'enter:become(vim {+})'
 end
 
 function fprg

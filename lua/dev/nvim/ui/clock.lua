@@ -1,5 +1,5 @@
-require('dev.nvim.ui.float')
-Clock = {
+local views = require('dev.nvim.ui.views')
+local Clock = {
     window = nil
 }
 -- Clock = class(Clock)
@@ -38,12 +38,13 @@ function Clock.toggle()
         Clock.open()
     end
 end
+
 function Clock.open(t)
     local win = nil
     if Clock.window then
         win = Clock.window
     else
-        win = Window.popup()
+        win = views.popup()
     end
     t = t or 1000
     win:config(
@@ -64,9 +65,17 @@ function Clock.open(t)
                 }
             },
             border = 'rounded',
-            position = 'top-right'
+            position = 'top-right',
+            options = {
+                buftype = 'nofile',
+                bufhidden = 'wipe',
+                buflisted = false,
+                swapfile = false,
+            }
         }
     )
+    win:add_map('n', ':bnext', ':wincmd p<CR>', { noremap = true, silent = true })
+    win:add_map('n', ':bprev', ':wincmd p<CR>', { noremap = true, silent = true })
     win:open()
     vim.cmd('wincmd p') -- clock is not focusable, so we need to focus the previous window
     -- win:params()
@@ -85,3 +94,5 @@ end
 vim.api.nvim_create_user_command("Clock", "lua Clock.toggle()", {})
 vim.api.nvim_create_user_command("ClockOpen", "lua Clock.open()", {})
 vim.api.nvim_create_user_command("ClockClose", "lua Clock.close()", {})
+
+return Clock

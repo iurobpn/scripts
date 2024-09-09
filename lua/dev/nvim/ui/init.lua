@@ -1,15 +1,14 @@
-require('dev.nvim.ui.float')
-require('dev.nvim.ui.qfloat')
-require('dev.nvim.ui.clock')
-require('dev.nvim.ui.window')
-require('dev.nvim.ui.nui_examples')
+local ui = {
+    float = require('dev.nvim.ui.float'),
+    qfloat = require('dev.nvim.ui.qfloat'),
+    views = require('dev.nvim.ui.views'),
+}
+ui.views.clock = require('dev.nvim.ui.clock')
 
-
-
-
-function init()
-    Clock.open()
+function ui.init()
+    ui.views.clock.open()
 end
 
-init()
+ui.init()
 
+return ui

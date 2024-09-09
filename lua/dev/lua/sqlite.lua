@@ -1,7 +1,7 @@
 local luasql = require("luasql.sqlite3")
 require('class')
 
-Sql = {filename = ''}
+local Sql = {filename = ''}
 
 Sql = class(Sql, {constructor = function(self, filename)
     self.filename = filename
@@ -95,3 +95,7 @@ function Sql:query(query)
     return out
 end
 
+local M = {
+    Sql = Sql
+}
+return M
