@@ -44,7 +44,6 @@ function M.parse(task)
         parameters[param] = value
         description = description:gsub(M.pattern.parameter, '') --.' *%[' .. param .. ':: *' .. value .. ' *%]', '')
         k = k + 1
-        print('parameters ' .. k .. ': ' .. param .. ' = ' .. value)
     end
 
     if filename == nil or line_number == nil or description == nil then
@@ -58,8 +57,8 @@ function M.parse(task)
         description = description,
         tags = tags
     }
-    for k, v in pairs(parameters) do
-        task_t[k] = v
+    for key, val in pairs(parameters) do
+        task_t[key] = val
     end
 
     return task_t
@@ -71,9 +70,6 @@ function M.run()
         -- Extract filename and line number
         local parsed_task = M.parse_task(line)
         local json_output = json.encode(parsed_task, { indent = true, level = 4 })  -- Pretty print with 4 spaces
-        print(' ')
-        print(line)
-        print(json_output)
     end
 end
 

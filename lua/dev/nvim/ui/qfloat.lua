@@ -6,7 +6,7 @@ local Log = require'dev.lua.log'.Log
 
 local utils = require('utils')
 local json = require('cjson')
-local fzf = require('dev.nvim.search')
+local fzf = require('dev.nvim.fzf')
 
 local fmt = string.format
 
@@ -72,7 +72,7 @@ function qfloat.qrun_fzf()
     end
     local options = '--prompt="Select a file> "'
 
-    fzf.fzf_run({source = source, sink = sink, options = options})
+    fzf.run({source = source, sink = sink, options = options})
 end
 
 -- Store the window ID globally

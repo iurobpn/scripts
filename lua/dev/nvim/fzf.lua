@@ -1,16 +1,6 @@
 local M = {}
-function M.fzf()
-    local source = 'fd . --type f'
-    local sink = function(selected)
-        if selected and #selected > 0 then
-            qrun_lua(selected)
-        end
-    end
 
-    fzf_run({source = source, sink = sink, options = options})
-end
-
-function M.fzf_run(arg)
+function M.run(arg)
     local source, sink
 
     local options
@@ -22,10 +12,13 @@ function M.fzf_run(arg)
     if not source then
         source = 'fd . --type f --hidden --follow --exclude .git --exclude .gtags'
     end
+    if arg.source_append then
+        source = source .. ' ' .. arg.source_append
+    end
 
     if not sink then
         sink = function(selected)
-            print(selected)
+            vim.cmd('edit ' .. selected)
         end
     end
     if not options then

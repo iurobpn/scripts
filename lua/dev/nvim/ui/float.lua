@@ -100,14 +100,6 @@ function Window:config(...)
             self[k] = v
         end
     end
-    print('size in Window.config')
-    if opts and opts.position then
-        utils.pprint(opts.position)
-    end
-    print('size in Window.config')
-    if opts and opts.size then
-        utils.pprint(opts.size)
-    end
 end
 
 function Window:get_size()
@@ -117,11 +109,9 @@ function Window:get_size()
     local width = 0
     local height = 0
     if self.size.relative then
-        print('Window get_size relative')
         width = ui_width*self.size.relative.width
         height = ui_height*self.size.relative.height
     elseif self.size.absolute then
-        print('Window get_size absolute')
         width = self.size.absolute.width
         height = self.size.absolute.height
     else
@@ -248,7 +238,6 @@ function Window:open()
     -- end
 
     if self.current then -- use current buffer
-        print('current')
         self.vid, self.buf, self.filename = Window.get_current()
     elseif self.buf then -- use the buffer already set
 
@@ -267,8 +256,6 @@ function Window:open()
     end
 
     local opts = self:get_options()
-    print('opts')
-    utils.pprint(opts)
 
     if not self.buf then
         print("No buffer to open")
@@ -515,7 +502,6 @@ function Window:get_position()
         if self.position.relative then
             row, col = self.relative.row*ui_height, self.relative.col*ui_width
         elseif self.position.absolute then
-            print("position absolute")
             row = self.position.absolute.row
             col = self.position.absolute.col
         else
@@ -527,10 +513,7 @@ function Window:get_position()
 end
 
 function Window:set_position()
-    print('set_position')
-    utils.pprint(self.position)
     self.row, self.col = self:get_position()
-    utils.pprint(self.position)
     self.row = math.floor(self.row)
     self.col = math.floor(self.col)
 end

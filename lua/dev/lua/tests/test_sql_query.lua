@@ -7,8 +7,6 @@ local tasks_m = tasks.Tasks()
 -- local task1 = Tasks.select_by_id(238)
 -- local task7 = Tasks.select_by_id(61)
 print('pprint task1 and task7:')
--- pprint(task1)
--- pprint(task7)
 
 local task_list = tasks_m.select_by_tag('#main')
 

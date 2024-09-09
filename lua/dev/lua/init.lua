@@ -8,6 +8,7 @@ local lua = {
     log = require'dev.lua.log',
     proj = require'dev.lua.project',
     zotero = require'dev.lua.zotero',
+    templater = require'dev.lua.templater',
 }
 
 vim.g.proj = lua.proj

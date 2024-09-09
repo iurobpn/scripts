@@ -1,9 +1,10 @@
-require('dev.nvim.search')
-require('dev.nvim.ui')
 local nvim = {
-    search = require('dev.nvim.search'),
+    fzf = require('dev.nvim.fzf'),
     utils = require('dev.nvim.utils'),
     ui = require('dev.nvim.ui'),
 }
+nvim.init = function()
+    -- nvim.fzf.
+end
 
 return nvim
