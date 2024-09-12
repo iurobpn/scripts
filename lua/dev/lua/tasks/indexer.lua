@@ -76,7 +76,6 @@ function M:insert(task)
     -- Insert parameters
     for param_name, param_value in pairs(task) do
         if param_name ~= "filename" and param_name ~= "line_number" and param_name ~= "status" and param_name ~= "description" and param_name ~= "tags" and (type(param_name) ~= 'function') then
-            print('param> ' ..param_name, param_value)
             local insert_param_sql = string.format("INSERT INTO parameters (task_id, name, value) VALUES (%d, '%s', '%s');", task_id, param_name, param_value)
             self.sql:run(insert_param_sql)
         end

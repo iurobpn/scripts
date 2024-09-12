@@ -1,6 +1,6 @@
 function find_tasks
     # Define the argparse command to parse options
-    argparse --name=find_tasks 'w' 'f/finished' 'n/not-started' 'd/dir=' -- $argv
+    argparse --name=find_tasks 'h/help' 'w' 'f/finished' 'n/not-started' 'd/dir=' -- $argv
 
     # Initialize variables
 
@@ -17,6 +17,9 @@ function find_tasks
     else if set -q _flag_n
         # Task not started
         set pattern '\- \[ \]'
+    else if set -q _flag_h
+        echo "Usage: search_tasks [-w] [-f] [-n] [-d directory] [search patterns]"
+        return
     else
     # No option specified, search for all tasks
         set pattern '\- *\[ *[ a-z] *\]'
