@@ -39,6 +39,17 @@ function Clock.toggle()
     end
 end
 
+function Clock.redraw()
+    if Clock.window then
+        Clock.window:redraw()
+    end
+end
+
+-- Set an autocommand to trigger the repositioning on VimResized
+vim.api.nvim_create_autocmd("VimResized", {
+  callback = Clock.redraw
+})
+
 function Clock.open(t)
     local win = nil
     if Clock.window then
@@ -91,8 +102,8 @@ function Clock.close()
         print('Clock is not open')
     end
 end
-vim.api.nvim_create_user_command("Clock", "lua Clock.toggle()", {})
-vim.api.nvim_create_user_command("ClockOpen", "lua Clock.open()", {})
-vim.api.nvim_create_user_command("ClockClose", "lua Clock.close()", {})
+vim.api.nvim_create_user_command("Clock", function () Clock.toggle() end, {})
+vim.api.nvim_create_user_command("ClockOpen", function() Clock.open() end, {})
+vim.api.nvim_create_user_command("ClockClose", function() Clock.close() end, {})
 
 return Clock

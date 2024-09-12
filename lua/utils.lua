@@ -4,6 +4,10 @@ local insp = require'inspect'
 local fmt = string.format
 
 local M = {}
+function M.file_exist(name)
+   local f=io.open(name,"r")
+   if f~=nil then io.close(f) return true else return false end
+end
 
 
 function M.is_callable(f)
@@ -18,7 +22,7 @@ function M.print_table(...)
     -- print(inspect(t,{depth=3}))
 end
 
-function M.inspect(obj,s)
+function M.pprint(obj,s)
     print(fmt('%s%s', s or '', insp.inspect(obj, {depth=3})))
 end
 
@@ -114,33 +118,36 @@ function M.qbacktrace ()
     vim.cmd.cfile(f)
 end
 
-function M.pprint(tbl, indent)
-    indent = indent or 1
-    local indent_str = string.rep("  ", indent)
+function M.ppprint(tbl, indent)
+    print(M.insp(tbl))
 
-    if type(tbl) ~= "table" then
-        print(indent_str .. tostring(tbl))
-        return
-    end
-
-    print(indent_str .. "{")
-    for k, v in pairs(tbl) do
-        local key
-        if type(k) == "string" then
-            key = k -- No brackets for string keys
-        else
-            key = "[" .. tostring(k) .. "]" -- Use brackets for non-string keys
-        end
-        
-        io.write(indent_str .. "  " .. tostring(key) .. " = ")
-        
-        if type(v) == "table" then
-            M.pprint(v, indent + 1)
-        else
-            print(tostring(v) .. ",")
-        end
-    end
-    print(indent_str .. "}")
+    -- indent = indent or 0
+    -- local indent_str = string.rep("  ", indent)
+    --
+    -- if type(tbl) ~= "table" then
+    --     print(indent_str .. tostring(tbl))
+    --     return
+    -- end
+    --
+    -- print(indent_str .. "{")
+    -- indent_str = string.rep("  ", indent)
+    -- for k, v in pairs(tbl) do
+    --     local key
+    --     if type(k) == "string" then
+    --         key = k -- No brackets for string keys
+    --     else
+    --         key = "[" .. tostring(k) .. "]" -- Use brackets for non-string keys
+    --     end
+    --     
+    --     io.write(indent_str .. "  " .. tostring(key) .. " = ")
+    --     
+    --     if type(v) == "table" then
+    --         M.pprint(v, indent + 4)
+    --     else
+    --         print(tostring(v) .. ",")
+    --     end
+    -- end
+    -- print(indent_str .. "}")
 end
 
 

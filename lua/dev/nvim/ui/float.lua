@@ -1,3 +1,6 @@
+if vim == nil then
+    error('This is a neovim module, it can only be load from neovim')
+end
 local utils = require('utils')
 require('class')
 local Log = require('dev.lua.log').Log
@@ -190,7 +193,7 @@ function Window:close(vid)
         vim.api.nvim_win_close(win_id, true)
         Window.floats[win_id] = nil
     else
-        print("Current window is either invalid (id) or is not a float to close.")
+        vim.notify("Current window is either invalid (id) or is not a float to close.")
     end
 end
 
@@ -198,7 +201,7 @@ function Window.set_win(vid)
     if vim.api.nvim_win_is_valid(vid) then
         vim.api.nvim_set_current_win(vid)
     else
-        print("Invalid window ID")
+        vim.notify("Invalid window ID")
     end
 end
 
@@ -258,7 +261,7 @@ function Window:open()
     local opts = self:get_options()
 
     if not self.buf then
-        print("No buffer to open")
+        vim.notify("No buffer to open")
         return
     end
     vim.api.nvim_buf_set_option(self.buf, 'modifiable', self.modifiable)
@@ -301,7 +304,7 @@ function Window.get_window(vid)
         buf = vim.api.nvim_win_get_buf(vid)
         filename = vim.api.nvim_buf_get_name(buf)
     else
-        print('window is not a float')
+        vim.notify('window is not a float')
     end
 
     return buf, filename
@@ -331,7 +334,7 @@ end
 function Window.snap_down()
     local win_id = vim.fn.win_getid()
     if not win_id or not vim.api.nvim_win_is_valid(win_id) or not Window.is_floating(win_id) then
-        print("Current window is not floating to snap down.")
+        vim.noitfy("Current window is not floating to snap down.")
         return
     end
 
@@ -343,7 +346,7 @@ end
 function Window.snap_up()
     local win_id = vim.fn.win_getid()
     if not win_id or not vim.api.nvim_win_is_valid(win_id) or not Window.is_floating(win_id) then
-        print("Current window is not floating to snap up.")
+        vim.notify("Current window is not floating to snap up.")
         return
     end
 
@@ -355,7 +358,7 @@ end
 function Window.snap_right()
     local win_id = vim.fn.win_getid()
     if not win_id or not vim.api.nvim_win_is_valid(win_id) or not Window.is_floating(win_id) then
-        print("Current window is not floating to snap right.")
+        vim.notify("Current window is not floating to snap right.")
         return
     end
 
@@ -367,7 +370,7 @@ end
 function Window.snap_left()
     local win_id = vim.fn.win_getid()
     if not win_id or not vim.api.nvim_win_is_valid(win_id) or not Window.is_floating(win_id) then
-        print("Current window is not floating to snap left.")
+        vim.notify("Current window is not floating to snap left.")
         return
     end
 
@@ -379,7 +382,7 @@ end
 function Window.fullscreen()
     local win_id = vim.fn.win_getid()
     if win_id == nil or not vim.api.nvim_win_is_valid(win_id) or not Window.is_floating(win_id) then
-        print("Current window is not floating to be in fullscreen.")
+        vim.notify("Current window is not floating to be in fullscreen.")
         return
     end
 
@@ -488,9 +491,9 @@ function Window:get_position()
             col = (ui_width - float_width) / 2
             row = (ui_height - float_height) / 2
         elseif self.position == "top-left" then
-            row, col = 0, 0
+            row, col = 1, 0
         elseif self.position == "top-right" then
-            row, col = 0, ui_width - float_width
+            row, col = 1, ui_width - float_width
         elseif self.position == "bottom-left" then
             row, col = ui_height - float_height, 0
         elseif self.position == "bottom-right" then
@@ -524,7 +527,7 @@ function Window:redraw()
         vid = vim.fn.win_getid()
         self = Window.floats[vid]
         if not self then
-            print("Current window is not a float to be redrawn.")
+            vim.notify("Current window is not a float to be redrawn.")
             return
         end
     end
@@ -540,7 +543,7 @@ function Window.toggle_fullscreen()
     local win_id = vim.fn.win_getid()
     -- local win_config = vim.api.nvim_win_get_config(win_id)
     if Window.floats == nil or Window.floats[win_id] == nil then
-        print("Current window is not a float to be toggled.")
+        vim.notify("Current window is not a float to be toggled.")
         return
     end
     if  Window.floats[win_id].fullscreen then
@@ -556,14 +559,14 @@ function Window.toggle()
     if Window.floats[vid] then
         local win = Window.floats[vid]
         if not win then
-            print("Current window is not a float to be toggled.")
+            vim.notify("Current window is not a float to be toggled.")
             return
         end
         Window.hidden[win.idx] = win
         win:close()
         Window.floats[vid] = nil
     else
-        local n = numel(Window.hidden)
+        local n = utils.numel(Window.hidden)
         local win = nil
         local idx = -1
         if n > 0 then
@@ -573,7 +576,7 @@ function Window.toggle()
                 break
             end
             if win == nil then
-                print("No window to toggle")
+                vim.notify("No window to toggle")
                 return
             end
             win:open()

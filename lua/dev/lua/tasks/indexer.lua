@@ -1,7 +1,7 @@
 require('class')
 
 local utils = require'utils'
-local Sql = require('dev.lua.sqlite2').Sql
+local Sql = require('dev.lua.sqlite').Sql
 
 local parser = require('dev.lua.tasks.parser')
 
@@ -52,7 +52,6 @@ end})
 
 -- Function to insert data into the SQLite database
 function M:insert(task)
-    utils.print_table(task)
     local insert_task_sql = string.format([[
         INSERT INTO tasks (filename, line_number, status, description)
         VALUES ('%s', %d, '%s', '%s');
@@ -67,6 +66,7 @@ function M:insert(task)
     -- Get the last inserted task_id
     local task_id = self.sql:query("SELECT last_insert_rowid()")
 
+    utils.pprint(task)
     -- Insert tags
     for _, tag in ipairs(task.tags) do
         local insert_tag_sql = string.format("INSERT INTO tags (task_id, tag) VALUES (%d, '%s');", task_id, tag)
@@ -75,7 +75,8 @@ function M:insert(task)
 
     -- Insert parameters
     for param_name, param_value in pairs(task) do
-        if param_name ~= "filename" and param_name ~= "line_number" and param_name ~= "status" and param_name ~= "description" and param_name ~= "tags" then
+        if param_name ~= "filename" and param_name ~= "line_number" and param_name ~= "status" and param_name ~= "description" and param_name ~= "tags" and (type(param_name) ~= 'function') then
+            print('param> ' ..param_name, param_value)
             local insert_param_sql = string.format("INSERT INTO parameters (task_id, name, value) VALUES (%d, '%s', '%s');", task_id, param_name, param_value)
             self.sql:run(insert_param_sql)
         end
@@ -122,13 +123,13 @@ function M:read_notes(folder)
     self.sql:close()
 end
 
-function M.tosql()
-    local j2s = M()
-    j2s:read_notes()
-end
 local mod = {
     Indexer = M
 }
+function mod.tosql()
+    local j2s = M()
+    j2s:read_notes()
+end
 return mod
 
 

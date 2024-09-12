@@ -1,4 +1,3 @@
-
 local luasocket = require'socket'
 local json = require'cjson'
 

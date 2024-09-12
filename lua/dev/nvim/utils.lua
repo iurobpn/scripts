@@ -25,7 +25,6 @@ function M.get_context(filename, line_num, size)
     local context_lines_before = size -- Show 3 lines before the current line
     local context_lines_after = size  -- Show 3 lines after the current line
 
-    
     print('bufnr: ' .. bufnr)
     print('filename: ' .. filename)
     print('line_num: ' .. line_num)

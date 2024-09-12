@@ -44,10 +44,10 @@ function Project.init()
     end
     Project.root_dir = Project.find_root()
     if not Project.root_dir then
-        print('Project root directory not found')
+        vim.notify('Project root directory not found')
         return
     else
-        print('Project root directory: ' .. Project.root_dir)
+        vim.notify('Project root directory: ' .. Project.root_dir)
         vim.g.root_dir = Project.root_dir
     end
 
@@ -64,7 +64,7 @@ function Project.init()
         end
         fd:close()
     else
-        print('settings file not found')
+        vim.notify('settings file not found')
     end
 
     local t_period = 30000
@@ -87,7 +87,7 @@ function Project.save_settings()
         fd:write(json.encode(settings))
         fd:close()
     else
-        print('Error saving settings')
+        vim.notify('Error saving settings')
     end
 end
 
