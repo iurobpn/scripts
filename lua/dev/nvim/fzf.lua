@@ -45,7 +45,7 @@ function M.exec(source, ...)
     end
 
     if options.prompt == nil then
-        options.prompt = '--prompt="select> "'
+        options.prompt = 'search>'
     end
 
     -- Perform the fzf search
@@ -69,6 +69,26 @@ function M.exec(source, ...)
             --     m.prompt_refine_search(selected_tasks)
             -- end
 end
+
+M.cd = function()
+    local source = 'fd . -td --hidden --exclude .git --exclude .gtags ~'
+    local options = {
+        sink = function(selected)
+            vim.cmd('cd ' .. selected[1])
+        end
+    }
+    M.exec(source, options)
+end
+M.lcd = function()
+    local source = 'fd . -td --hidden --exclude .git --exclude .gtags ~'
+    local options = {
+        sink = function(selected)
+            vim.cmd('cd ' .. selected[1])
+        end
+    }
+    M.exec(source, options)
+end
+
 
 function M.run(arg)
     local source, sink
@@ -97,5 +117,5 @@ function M.run(arg)
 
     return vim.fn['fzf#run']({source = source, sink = sink, options = options})
 end
-
+vim.api.nvim_create_user_command('Fcd', M.cd, {})
 return M

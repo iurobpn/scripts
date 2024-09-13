@@ -4,11 +4,11 @@ function fzfbranch
 end
 
 function fzfgit_file_history
-    git log --pretty=format:"%h %ad | %s%d [%an]" --graph --date=short --color -- $argv | fzf --reverse --preview 'git log -n 1 --stat --color=always $(echo {2} | awk "{print \$1}")'
+    git log --pretty=format:"%h %ad | %s%d [%an]" --graph --date=short --no-color -- $argv | fzf --reverse --preview 'git log -n 1 --stat --color=always $(echo {2} | awk "{print \$1}")'
 end
 
 function fzfgit_function_history
-    git log --pretty=format:"%h %ad | %s%d [%an]" --graph --date=short --color -- -L$argv | fzf
+    git log --oneline --graph --date=short --no-color -- -L$argv | fzf --reverse --preview 'git log -n 1 --stat --color=always $(echo {} | awk "{print \$1}")' --ansi
 end
 
 function fzfcommit
