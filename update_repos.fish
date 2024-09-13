@@ -4,6 +4,7 @@
 function check_repos
     argparse --name=check_repos 'h/help' 'g/git_dir=' 'r/remote=' -- $argv
     or return
+    set pwd $(pwd)
 
     set pwd $(pwd)
     echo "pwd: $pwd"
@@ -30,11 +31,11 @@ function check_repos
     if test -n "$argv"
         set old_repos $argv
     else
-        set old_repos CGAL-matlab ProVANT-Simulator_Developer armadillo-pmr cpp_tests data_structures dotfiles matlab-dev nmpc-obs ocpsol pres-research prov_sim_configs pylattes reports papers scripts sets-obs svgs thesis
-        # set repos (echo ""$repos |  sed -e 's#\([a-zA-Z\._0-9\-]\+\)#/home/gagarin/git/\1#g')
+        cd $GIT
+        set old_repos (fd . --relative-path -td -d1)
     end
-    set -l n (count $old_repos)
-    set -l repos
+    set n (count $old_repos)
+    set repos
     echo "Checking repositories:"
     for i in (seq 1 $n)
         if test -d "$GIT/$old_repos[$i]"; and check_remote $remote "$GIT/$old_repos[$i]"
