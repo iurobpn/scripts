@@ -1,37 +1,17 @@
-require'class'
-require'utils'
+-- Define the namespace for extmarks
+local ns_id = vim.api.nvim_create_namespace('my_namespace')
 
-print('Log class: ')
-local Log = require'dev.lua.log'
-print('Log: ' .. require'inspect'.inspect(Log))
-local log = Log('main')
-print('Log mid: ' .. require'inspect'.inspect(Log))
+-- Enable conceallevel in the buffer
+-- vim.api.nvim_buf_set_option(0, 'conceallevel', 2)
 
-local log2 = Log('log2')
-print('Log final: ' .. require'inspect'.inspect(Log))
--- log.log_level = Log.Level.fatal
---
---
--- log:info('test log')
--- log:error('error log')
--- log:log('log log')
--- log:warn('warn log')
--- log:debug('debug log')
--- log:trace('trace log')
--- log:fatal('fatal log')
+-- Define a custom conceal highlight (optional, you can adjust if you want to use conceal symbols)
+vim.api.nvim_set_hl(0, 'MyConceal', { fg = "NONE"})  -- Makes text invisible
 
-print('Foo class: ')
-Foo = {}
-Foo = class(Foo, {
-    constructor = function(obj, ...)
-        local argv = {...}
-        argv = argv[1]
-        obj.name = argv.name
-        obj.age = argv.age
-        return obj
-    end,
+-- Apply conceal to columns 5 to 10 on line 2 (1-based)
+vim.api.nvim_buf_add_highlight(0, ns_id, 'MyConceal', 2, 5, 10)  -- Hide columns 5 to 10
 
-    name = 'foo',
-    age = 10
+-- Set virtual text at the beginning of the line (inline, moving original text to the right)
+vim.api.nvim_buf_set_extmark(0, ns_id, 1, 0, {
+  virt_text = { { "oi: ", "Comment" } },  -- Use your custom highlight group
+  virt_text_pos = "inline",  -- Prepend virtual text inline, moving the original text to the right
 })
-print('Foo: ' .. require'inspect'.inspect(Foo))

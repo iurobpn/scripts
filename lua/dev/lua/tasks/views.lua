@@ -1,5 +1,4 @@
 local fzf_lua = require('fzf-lua')
-local fzf = require('dev.nvim.fzf')
 local nvim = {
     utils = require('dev.nvim.utils')
 }
@@ -140,6 +139,27 @@ function M.format_tasks(tasks)
     return tasks_qf
 end
 
+function M.format_tasks(tasks_in)
+    local tasks = {}
+    local files = {}
+    for id, task  in pairs(tasks_in) do
+        if task.line_number == nil then
+            error('task.line_number is nil')
+        end
+        table.insert(tasks, (task.description or '') .. ' ' .. M.params_to_string(task.parameters) .. ' ' .. M.tags_to_string(task.tags))
+        table.insert(files, {task.filename, task.line_number})
+    end
+
+    return tasks, files
+end
+
+
+function M.query_by_tag_and_due(tag)
+    local q = query.Query()
+    local tasks = q:select_by_tag_and_due(tag)
+
+    return tasks
+end
 function M.query_by_tag(tag)
     local q = query.Query()
     local tasks = q:select_by_tag(tag)
@@ -162,13 +182,39 @@ function M.parse_entry(entry_str)
     }
 end
 
-function M.fzf_query(tag)
-    local tasks = M.query_by_tag(tag)
-    local str_tasks = M.to_lines(tasks)
-    print('number of tasks: ' ..utils.numel(str_tasks))
+function M.fzf_query_due(tag, ...)
+    local opts = {...}
+    opts = opts[1] or {}
 
-    -- Inherit from the "buffer_or_file" previewer
+    if opts.due == nil then
+        opts.due = {order = 'ASC'}
+    end
+    M.fzf_query(tag, opts)
+end
+
+function M.fzf_query(tag, ...)
+    local opts = {...}
+    opts = opts[1] or {}
+    print('opts: (fzf_query)', opts)
+    local tasks
+    if opts == nil or opts.due == nil then
+        print('opts.due is nil: ', tag)
+        tasks = M.query_by_tag(tag)
+    else
+        print('Ordered query selected: ', tag)
+        local order = nil
+        if opts.due ~= nil and opts.due.order ~= nil then
+            order = opts.due.order
+        end
+        tasks = M.query_by_tag_and_due(tag, order)
+    end
+    local str_tasks = M.to_lines(tasks)
+
+    -- debug
     local fd = io.open('fzf.log', 'w')
+    if not fd then
+        error('Cannot open fzf.log')
+    end
     for _, task in ipairs(str_tasks) do
         fd:write(task .. '\n')
     end
@@ -178,6 +224,9 @@ function M.fzf_query(tag)
         previewer = pv.Previewer,
         prompt    = 'Tasks❯ ',
         cwd       = query.Query.path,
+        fzf_opts = {
+            ["--no-sort"] = true,
+        },
 
         -- actions inherit from 'actions.files' and merge
         actions = {
@@ -198,12 +247,25 @@ function M.fzf_query(tag)
     -- require'fzf-lua'.files(str_tasks, task_query_opts)
 end
 
+function M.open_due_window(tag)
+    
+    local tasks_tb = M.query_by_tag_and_due(tag)
+    local tasks_line, files = M.format_tasks(tasks_tb)
+    dev.nvim.ui.views.open(tasks_line)
+end
+
 -- create_command
-vim.api.nvim_create_user_command('TaskFzf', M.fzf_query, {
+vim.api.nvim_create_user_command('TaskOpenTagDue', 'lua dev.lua.tasks.views.open_due_window(<args>)', {
     nargs = 1,
-    complete = 'customlist,v:lua.dev.nvim.tasks.complete_tag',
 })
-vim.api.nvim_set_keymap('n', '<F11>', ':TaskFzf ', {noremap = true, silent = true})
+vim.api.nvim_create_user_command('TaskTagDue', 'lua dev.lua.tasks.views.fzf_query_due(<args>)', {
+    nargs = 1,
+})
+vim.api.nvim_create_user_command('TaskTagSearch', 'lua dev.lua.tasks.views.fzf_query(<args>)', {
+    nargs = 1,
+})
+vim.api.nvim_set_keymap('n', '<F11>', ':TaskTagSearch ', {noremap = true, silent = true})
+vim.api.nvim_set_keymap('n', '<F9>', ':TaskTagDue ', {noremap = true, silent = true})
 
 function M.open_window_by_tag(tag)
     local tasks_qf = M.query_by_tag(tag)

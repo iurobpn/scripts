@@ -1,9 +1,11 @@
 local Window = require('dev.nvim.ui.float').Window
 local views = {}
 
-function views.new_window(pos, size)
+function views.new(pos, size)
     local win = Window()
-    win:config({position = pos, size = size})
+    if pos ~= nil and size ~= nil then
+        win:config({position = pos, size = size})
+    end
     win:open()
     return win
 end
@@ -103,6 +105,13 @@ function views.popup(...)
     end
     win.config(opts)
 
+    return win
+end
+
+function views.open(content)
+    local win = Window()
+    win:config({content = content})
+    win:open()
     return win
 end
 

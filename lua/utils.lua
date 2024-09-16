@@ -150,6 +150,15 @@ function M.ppprint(tbl, indent)
     -- print(indent_str .. "}")
 end
 
+function M.contains(tbl, val)
+    for _, v in pairs(tbl) do
+        if v == val then
+            return true
+        end
+    end
+    return false
+end
+
 function M.get_file_line(entry)
     local parts = M.split(entry, ':')
     return parts[1], tonumber(parts[2])
