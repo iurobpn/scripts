@@ -67,13 +67,11 @@ function Query:select_by_tag(tag)
     -- local query_tags = fmt('SELECT tag FROM tags WHERE task_id = %s;', tag)
  --    local query_params = fmt('SELECT name, value FROM parameters WHERE task_id = %d;', tag)
     local query = string.format([[
-    SELECT distinct t.*, p.name AS name, p.value AS value, tg.tag
+        SELECT distinct t.*,  p.name AS name, p.value AS value, tg.tag
     FROM tasks t
     LEFT JOIN parameters p ON t.id = p.task_id
     LEFT JOIN tags tg ON t.id = tg.task_id
-    WHERE t.id IN (
-        SELECT task_id FROM tags WHERE tag = '%s'
-    );
+    WHERE tg.tag = '#today' and t.status != 'done';
 ]], tag)
 
     self.sql:connect()

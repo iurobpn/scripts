@@ -1,3 +1,4 @@
+local fzf_lua = require('fzf-lua')
 local fzf = require('dev.nvim.fzf')
 local nvim = {
     utils = require('dev.nvim.utils')
@@ -6,6 +7,7 @@ local nvim = {
 local float = require('dev.nvim.ui.float')
 local query = require('dev.lua.tasks.query')
 local utils = require('utils')
+local pv = require('dev.nvim.ui.fzf_previewer')
 
 require('class')
 
@@ -61,6 +63,7 @@ function M.open_context_window(filename, line_nr)
             --         height = context_height,
             --     },
             -- },
+
             position = {
                 absolute = {
                     row = context_row,
@@ -124,6 +127,7 @@ function M.format_file_line(tasks)
 
     return out
 end
+
 function M.format_tasks(tasks)
     local tasks_qf = {}
     for id, task  in pairs(tasks) do
@@ -143,149 +147,55 @@ function M.query_by_tag(tag)
     return tasks
 end
 
+function M.parse_entry(entry_str)
+    -- Assume an arbitrary entry in the format of 'file:line'
+    local task_splited = utils.split(entry_str, ':')
+    if task_splited == nil then
+        error('task_splited is nil')
+    end
+    local path = task_splited[1]
+    local line = task_splited[2]
+    return {
+        path = string.format('"%s"', path),
+        line = tonumber(line) or 1,
+        col = 1,
+    }
+end
+
 function M.fzf_query(tag)
     local tasks = M.query_by_tag(tag)
     local str_tasks = M.to_lines(tasks)
-
-    local builtin = require("fzf-lua.previewer.builtin")
+    print('number of tasks: ' ..utils.numel(str_tasks))
 
     -- Inherit from the "buffer_or_file" previewer
-    local MyPreviewer = builtin.buffer_or_file:extend()
-
-    function MyPreviewer:new(o, opts, fzf_win)
-        MyPreviewer.super.new(self, o, opts, fzf_win)
-        setmetatable(self, MyPreviewer)
-        return self
+    local fd = io.open('fzf.log', 'w')
+    for _, task in ipairs(str_tasks) do
+        fd:write(task .. '\n')
     end
+    fd:close()
 
-    function MyPreviewer:parse_entry(entry_str)
-        -- Assume an arbitrary entry in the format of 'file:line'
-        local task_splited = utils.split(entry_str, ':')
-        if task_splited == nil then
-            error('task_splited is nil')
-        end
-        local path = task_splited[1]
-        local line = task_splited[2]
-        return {
-            path = string.format('"%s"', path),
-            line = tonumber(line) or 1,
-            col = 1,
-        }
-    end
-    local opts = require('config.fzf')
-
-    local task_query_opts = {
-        -- previewer = 'builtin',
-        multi     = true,  -- Allow multiple selections
+    fzf_lua.fzf_exec(str_tasks, {
+        previewer = pv.Previewer,
         prompt    = 'Tasks❯ ',
         cwd       = query.Query.path,
 
-        fzf_opts = {
-            ['--preview-window'] = 'nohidden,down,50%',
-            ['--preview'] = {
-                type = "cmd",
-                fn = function(items)
-                    local task = utils.split(items[1], ':')
-                    return string.format('bat --style=default --color=always --highlight-line=%s "%s"', task[2], task[1])
-                end
-            }
-
-            -- ["--preview"] = 'bat --style=numbers --color=always --theme=gruvbox-dark --highlight-line=$(echo {} | cut -d: -f2) "$(echo {} | cut -d: -f1)"', 
-            -- do not include bufnr in fuzzy matching
-            -- tiebreak by line no.
-            -- ["--delimiter"] = ":",
-            -- ["--nth"]       = '1',
-            -- ["--tiebreak"]  = 'index',
-        },
         -- actions inherit from 'actions.files' and merge
         actions = {
             ["default"] = function(selected)
                 if selected then
                     for _, task in ipairs(selected) do
-                        local task_splited = utils.split(task, ':')
-                        if task_splited == nil then
-                            error('task_splited is nil')
-                        end
-                        local filename = task_splited[1]
-                        local line_nr = task_splited[2]
+                        local filename, line_nr = utils.get_file_line(task, ':')
                         if filename and line_nr then
                             vim.cmd.edit(filename)
-                            vim.fn.cursor(tonumber(line_nr), 1)
+                            vim.fn.cursor(line_nr, 1)
                         end
                     end
                 end
             end
         },
-    }
-    -- for k, v in pairs(task_query_opts) do
-    --     opts[k] = task_query_opts[v]
-    -- end
+    })
 
     -- require'fzf-lua'.files(str_tasks, task_query_opts)
-    fzf.exec(str_tasks, task_query_opts)
-        -- prompt = 'Search> ',
-        -- fzf_opts = {
-            -- ["--delimiter"] = ':',
-            -- ["--with-nth"] = 1,
-            -- ["--nth"] = 1,
-            -- ["--preview-window"] = "right:60%",
-            -- ["--preview"] = 'bat --style=numbers --color=always --theme=gruvbox-dark --highlight-line=$(echo {} | cut -d: -f2) $(echo {} | cut -d: -f1)', 
-        -- },
-        -- preview = {
-        --     border         = 'border',        -- border|noborder, applies only to
-        --     -- native fzf previewers (bat/cat/git/etc)
-        --     wrap           = 'nowrap',        -- wrap|nowrap
-        --     hidden         = 'nohidden',      -- hidden|nohidden
-        --     vertical       = 'down:45%',      -- up|down:size
-        --     horizontal     = 'right:60%',     -- right|left:size
-        --     layout         = 'flex',          -- horizontal|vertical|flex
-        --     -- flip_columns   = 120,             -- #cols to switch to horizontal on flex
-        --     -- Only used with the builtin previewer:
-        --     -- title          = true,            -- preview border title (file/buf)?
-        --     -- title_pos      = "center",        -- left|center|right, title alignment
-        --     -- scrollbar      = 'float',         -- `false` or string:'float|border'
-        --     -- -- float:  in-window floating border
-        --     -- -- border: in-border chars (see below)
-        --     -- scrolloff      = '-2',            -- float scrollbar offset from right
-        --     -- -- applies only when scrollbar = 'float'
-        --     -- scrollchars    = {'█', '' },      -- scrollbar chars ({ <full>, <empty> }
-        --     -- -- applies only when scrollbar = 'border'
-        --     -- delay          = 100,             -- delay(ms) displaying the preview
-        --     -- -- prevents lag on fast scrolling
-        --     -- winopts = {                       -- builtin previewer window options
-        --     --     number            = true,
-        --     --     relativenumber    = false,
-        --     --     cursorline        = true,
-        --     --     cursorlineopt     = 'both',
-        --     --     cursorcolumn      = false,
-        --     --     signcolumn        = 'no',
-        --     --     list              = false,
-        --     --     foldenable        = false,
-        --     --     foldmethod        = 'manual',
-        --     -- },
-        -- },
-
-        -- previewers = {
-        --     -- Enable syntax highlighting for the preview window.
-        --     bat = {
-        --         cwd = query.Query.path,
-        --         enabled = true,
-        --         theme = 'gruvbox-dark',  -- Choose your preferred theme
-        --         args = '--style=numbers --color=always --theme=gruvbox-dark --highlight-line=$(echo {} | cut -d: -f2) $(echo {} | cut -d: -f1)',
-        --     }
-        -- },
-            -- })
-            --    sink = function(selected)
-            --     -- capture the selected tasks
-            --     local selected_tasks = {}
-            --     for _, task_line in ipairs(selected) do
-            --         -- extract file and line information (and other data)
-            --         table.insert(selected_tasks, task_line)
-            --     end
-            --
-            --     -- prompt for refining the search on the selected tasks
-            --     m.prompt_refine_search(selected_tasks)
-            -- end
 end
 
 -- create_command

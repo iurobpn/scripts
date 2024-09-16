@@ -1,3 +1,4 @@
+local utils = require('utils')
 -- Helper function to check if a file exists
 local M = {}
 function M.file_exists(filename)
@@ -19,7 +20,12 @@ function M.get_current_file()
 end
 
 function M.get_filename(path)
-    local parts = split(path, '/')
+    local parts = utils.split(path, '/')
+    return parts[#parts]
+end
+
+function M.get_file_extension(path)
+    local parts = utils.split(path, '.')
     return parts[#parts]
 end
 

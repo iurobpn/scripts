@@ -1,28 +1,37 @@
-local fzf_lua = require("fzf-lua")
+-- -----------------------------------------
+-- Author: Iuro Nascimento
+-- Date 2024-09-15 13:05
+-- Description: Custom previewer for fzf-lua
+-- -----------------------------------------
+
+-- local fzf_lua = require("fzf-lua")
 local builtin = require("fzf-lua.previewer.builtin")
 
+local utils = require("utils")
 local fs = require("dev.lua.fs")
 
-M = {}
+
+local M = {}
 
 -- Inherit from "base" instead of "buffer_or_file"
-local MyPreviewer = builtin.base:extend()
+local Previewer = builtin.buffer_or_file:extend()
 
-function MyPreviewer:new(o, opts, fzf_win)
-    MyPreviewer.super.new(self, o, opts, fzf_win)
-    setmetatable(self, MyPreviewer)
+
+function Previewer:new(o, opts, fzf_win)--i
+    print('creating new previewer')
+    Previewer.super.new(self, o, opts, fzf_win)
+    setmetatable(self, Previewer)
     return self
 end
 
-function MyPreviewer:populate_preview_buf(entry_str)
+function Previewer:populate_preview_buf(entry_str)
+
     local tmpbuf = self:get_tmp_buffer()
 
-    local task_splited = vim.split(entry_str, ':')
-    if task_splited == nil then
-        error('task_splited is nil')
+    local path, line_nr = utils.get_file_line(entry_str)
+    if path == nil then
+        error('line parsed does not have a file and line number')
     end
-    local path = task_splited[1]
-    local line_nr = tonumber(task_splited[2])
 
     self.load_buffer(tmpbuf, path)
     self:set_preview_buf(tmpbuf)
@@ -35,7 +44,7 @@ function MyPreviewer:populate_preview_buf(entry_str)
     self.set_syntax(winid, path)
 end
 
-function MyPreviewer.set_syntax(winid,file)
+function Previewer.set_syntax(winid,file)
     local ft = fs.get_file_extension(file)
     if ft == 'md' then
         ft = 'markdown'
@@ -43,8 +52,12 @@ function MyPreviewer.set_syntax(winid,file)
     vim.api.nvim_win_set_option(winid, 'filetype', ft)
 end
 
+
+function Previewer:set_winopts(opts)
+    self.added_winopts = opts
+end
 -- Disable line numbering and word wrap
-function MyPreviewer:gen_winopts()
+function Previewer:gen_winopts()
     local new_winopts = {
         wrap           = false,
         number         = true,
@@ -53,10 +66,14 @@ function MyPreviewer:gen_winopts()
         title_pos      = "center",
         -- cursorline        = true,
     }
-    return vim.tbl_extend("force", self.winopts, new_winopts)
+    self.winopts = vim.tbl_extend("force", self.winopts, new_winopts)
+    if self.added_winopts == nil then
+        return self.winopts
+    end
+    return vim.tbl_extend("force", self.winopts, self.added_winopts)
 end
 
-function MyPreviewer.load_buffer(tmpbuf, path)
+function Previewer.load_buffer(tmpbuf, path)
     -- local path = entry_str
     local fd = io.open(path, 'r')
     if fd == nil then
@@ -72,15 +89,13 @@ function MyPreviewer.load_buffer(tmpbuf, path)
     end
 
     vim.api.nvim_buf_set_lines(tmpbuf, 0, -1, false, lines)
-    vim.api.nvim_buf_set_name(tmpbuf, path)
-    vim.cmd('filetype plugin on')
-    vim.cmd('filetype on')
-    vim.cmd('syntax on')
+    -- vim.cmd('filetype plugin on')
+    -- vim.cmd('filetype on')
+    -- vim.cmd('syntax on')
     vim.cmd('filetype detect')
-    print('filetype: ' .. vim.bo.filetype)
 end
 
-function MyPreviewer.load_buffer_line(tmpbuf, path, line_nr)
+function Previewer.load_buffer_line(tmpbuf, path, line_nr)
     -- local path = entry_str
     local fd = io.open(path, 'r')
     if fd == nil then
@@ -103,27 +118,6 @@ function MyPreviewer.load_buffer_line(tmpbuf, path, line_nr)
     vim.api.nvim_buf_set_lines(tmpbuf, 0, -1, false, lines)
     vim.api.nvim_buf_set_name(tmpbuf, path)
 end
+M.Previewer = Previewer
 
-function M.search()
-    fzf_lua.fzf_exec("fd .lua -tf | files_line.awk", {
-        previewer = MyPreviewer,
-        prompt = "Task> ",
-        -- preview = {
-        --     syntax          = true,
-        --     winopts = {                       -- builtin previewer window options
-        --         number            = true,
-        --         relativenumber    = false,
-        --         cursorline        = true,
-        --         cursorlineopt     = 'both',
-        --         cursorcolumn      = false,
-        --         signcolumn        = 'no',
-        --         list              = false,
-        --         foldenable        = false,
-        --         foldmethod        = 'manual',
-        --     },
-        -- },
-    })
-end
-M.MyPreviewer = MyPreviewer
 return M
-

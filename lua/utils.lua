@@ -150,5 +150,9 @@ function M.ppprint(tbl, indent)
     -- print(indent_str .. "}")
 end
 
+function M.get_file_line(entry)
+    local parts = M.split(entry, ':')
+    return parts[1], tonumber(parts[2])
+end
 
 return M

@@ -52,7 +52,19 @@ end
 
 function fcd
     test -n "$argv"; and test "argv" = "-h"; and echo "Usage: fcd [query_dir]\n enters the selected directory"; and return
-    fscd $argv | xargs cd
+    set dir (fscd $argv)
+    echo $dir
+    if test -n "$dir"
+        cd $dir
+    end
+end
+
+# fzf with preview for results with format file:line: ...
+function agf
+    test -n "$argv"; and test "argv" = "-h"; and echo "Usage: fzp [query_dir]\n searchs in subdirectory of query_dir to for files to open in vim"; and return
+
+    ag $argv |  fzf --multi $FZF_DEFAULT_OPTIONS --bind 'enter:become(vim {+})' --preview 'bat --style=numbers --color=always --theme=gruvbox-dark --highlight-line=$(echo {} | cut -d: -f2) $(echo {} | cut -d: -f1)' --ansi
+    cd -
 end
 
 # fscd query_dir

@@ -21,6 +21,7 @@ function M.get_context(filename, line_num, size)
     if not size then
         size = 3
     end
+
     -- Get the current file context (surrounding lines)
     local context_lines_before = size -- Show 3 lines before the current line
     local context_lines_after = size  -- Show 3 lines after the current line
