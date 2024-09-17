@@ -214,6 +214,7 @@ function Window:get_options()
         width = self.width,
         height = self.height,
         title = self.title,
+        title_pos = self.title_pos,
         style = self.style,
         border = self.border,
         focusable = self.focusable,
@@ -269,6 +270,7 @@ function Window:open()
     if self.current then
         vim.api.nvim_win_set_config(self.vid, opts)
     else
+        print('title: '  .. opts.title)
         self.vid = vim.api.nvim_open_win(self.buf, true, opts)
     end
 
@@ -398,7 +400,7 @@ end
 
 -- generate links in file:number
 -- Create a buffer with example links
-local function setup_buffer_with_links()
+function Window.setup_buffer_with_links()
     -- Create a new buffer
     local buf = vim.api.nvim_create_buf(false, true)
 
@@ -415,8 +417,9 @@ local function setup_buffer_with_links()
     -- Define a pattern to match 'filename.lua:number'
     local pattern = [[\v(\S+\.lua):(\d+)]]
 
+    -- vim.api.nvim_set_hl(buf, "Link", { guifg = "red", guibg = "blue" })
     -- Highlight the matching pattern
-    vim.fn.matchadd("Underlined", pattern)
+    vim.fn.matchaddpos("", pattern)
 
     -- Set the buffer as the current buffer
     vim.api.nvim_set_current_buf(buf)
@@ -432,7 +435,7 @@ local function setup_buffer_with_links()
     return buf
 end
 
-function handle_link()
+function Window.handle_link()
     -- Get the current line content
     local line = vim.api.nvim_get_current_line()
 

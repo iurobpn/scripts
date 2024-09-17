@@ -52,15 +52,12 @@ function Previewer:set_custom_hl(buf, line)
 
     local entry = vim.api.nvim_buf_get_lines(buf, line-1, line, false)
     
-    print('set_custom_hl start ')
-    print('entry: ', entry)
     entry = entry[1]
     if entry == nil then
         print(string.format('could not get line %d from buffer', line))
         return
     end
     local due_date = entry:match("due:: (%d%d%d%d%-%d%d%-%d%d)")
-    print(string.format('due date: ', due_date))
     if due_date == nil then
         print('no due date found')
         return
@@ -71,15 +68,11 @@ function Previewer:set_custom_hl(buf, line)
     -- Create your custom highlight group with color similar to comments
 
     -- Set virtual text at a given line (line 2 in this case, 0-based index)
-    print('line : ', line -1)
     vim.api.nvim_buf_set_extmark(buf, ns_id, line-1, 0, {
         virt_text = { { string.format("(due: %s) ", due_date), "MetaTags" } },  -- Text and optional highlight group
         virt_text_pos = "inline",
         -- virt_text_pos = "eol",  -- Places the virtual text at the end of the line
     })
-
-    print('set_custom_hl end ')
-
 end
 
 function Previewer.set_syntax(winid,file)

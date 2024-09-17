@@ -108,9 +108,14 @@ function views.popup(...)
     return win
 end
 
-function views.open(content)
+function views.scratch(content, ...)
+    local opts = {...}
+    opts = opts[1] or {}
     local win = Window()
-    win:config({content = content})
+    opts.buffer = views.get_scratch_opt()
+    opts.content = content
+
+    win:config(opts)
     win:open()
     return win
 end

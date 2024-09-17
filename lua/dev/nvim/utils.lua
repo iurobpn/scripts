@@ -26,17 +26,9 @@ function M.get_context(filename, line_num, size)
     local context_lines_before = size -- Show 3 lines before the current line
     local context_lines_after = size  -- Show 3 lines after the current line
 
-    print('bufnr: ' .. bufnr)
-    print('filename: ' .. filename)
-    print('line_num: ' .. line_num)
-    print('context_lines_before: ' .. context_lines_before)
-    print('context_lines_after: ' .. context_lines_after)
     local last_line = vim.api.nvim_buf_line_count(bufnr);
-    print('last_line: ' .. last_line)
     local start_line = math.max(0, line_num - context_lines_before - 1)
     local end_line = math.min(last_line, line_num + context_lines_after)
-    print('start_line: ' .. start_line)
-    print('end_line: ' .. end_line)
     local lines  = vim.api.nvim_buf_get_lines(bufnr, start_line, end_line, false)
 
     return lines
@@ -106,8 +98,6 @@ function Buffer.set_lines(buf, line_start, line_end, content)
         line_start = 0
     end
     content = Buffer.check_content(content)
-    print('content in Buffer.set_lines ')
-    print(type(content))
     vim.api.nvim_buf_set_lines(buf, line_start, -1, true, content) -- overwrite file
 end
 

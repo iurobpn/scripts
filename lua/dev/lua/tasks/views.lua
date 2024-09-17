@@ -96,6 +96,33 @@ function M.tostring(tasks)
     return out
 end
 
+function M.set_custom_hl(buf, line)
+
+    local entry = vim.api.nvim_buf_get_lines(buf, line-1, line, false)
+    
+    entry = entry[1]
+    if entry == nil then
+        print(string.format('could not get line %d from buffer', line))
+        return
+    end
+    local due_date = entry:match("due:: (%d%d%d%d%-%d%d%-%d%d)")
+    if due_date == nil then
+        print('no due date found')
+        return
+    end
+    vim.api.nvim_set_hl(0, 'MetaTags', { fg = "#818181", italic = true })  -- Adjust the color as needed
+    -- Define the namespace for extmarks (you can use the same namespace for multiple extmarks)
+    local ns_id = vim.api.nvim_create_namespace('previewer_due')
+    -- Create your custom highlight group with color similar to comments
+
+    -- Set virtual text at a given line (line 2 in this case, 0-based index)
+    vim.api.nvim_buf_set_extmark(buf, ns_id, line-1, 0, {
+        virt_text = { { string.format("(due: %s) ", due_date), "MetaTags" } },  -- Text and optional highlight group
+        virt_text_pos = "inline",
+        -- virt_text_pos = "eol",  -- Places the virtual text at the end of the line
+    })
+end
+
 function M.to_lines(tasks)
     local tasks_qf = M.format_tasks(tasks)
     local out = {}
@@ -127,7 +154,7 @@ function M.format_file_line(tasks)
     return out
 end
 
-function M.format_tasks(tasks)
+function M.format_tasks_short(tasks)
     local tasks_qf = {}
     for id, task  in pairs(tasks) do
         if task.line_number == nil then
@@ -146,7 +173,7 @@ function M.format_tasks(tasks_in)
         if task.line_number == nil then
             error('task.line_number is nil')
         end
-        table.insert(tasks, (task.description or '') .. ' ' .. M.params_to_string(task.parameters) .. ' ' .. M.tags_to_string(task.tags))
+        table.insert(tasks, '- [ ] ' .. (task.description or '') .. ' ' .. M.params_to_string(task.parameters) .. ' ' .. M.tags_to_string(task.tags))
         table.insert(files, {task.filename, task.line_number})
     end
 
@@ -195,13 +222,10 @@ end
 function M.fzf_query(tag, ...)
     local opts = {...}
     opts = opts[1] or {}
-    print('opts: (fzf_query)', opts)
     local tasks
     if opts == nil or opts.due == nil then
-        print('opts.due is nil: ', tag)
         tasks = M.query_by_tag(tag)
     else
-        print('Ordered query selected: ', tag)
         local order = nil
         if opts.due ~= nil and opts.due.order ~= nil then
             order = opts.due.order
@@ -243,7 +267,6 @@ function M.fzf_query(tag, ...)
             end
         },
     })
-
     -- require'fzf-lua'.files(str_tasks, task_query_opts)
 end
 
@@ -251,7 +274,18 @@ function M.open_due_window(tag)
     
     local tasks_tb = M.query_by_tag_and_due(tag)
     local tasks_line, files = M.format_tasks(tasks_tb)
-    dev.nvim.ui.views.open(tasks_line)
+    local win = dev.nvim.ui.views.scratch(tasks_line, {
+        title = (tag or '') .. ' tasks',
+        title_pos = 'center'})
+    vim.cmd("set ft=markdown")
+    vim.cmd("TSContextDisable")
+    vim.api.nvim_win_set_option(0, 'winhighlight', 'Normal:Normal')
+
+    local buffer = vim.api.nvim_win_get_buf(win.vid)
+    for i, file in ipairs(files) do
+        M.set_custom_hl(buffer, i)
+    end
+    -- win.buffer
 end
 
 -- create_command

@@ -97,7 +97,6 @@ function Query:select_by_tag(tag)
 end
 
 function Query:select_tasks(query)
-    print('query: ' .. query)
     self.sql:connect()
 
     local tasks = {}
@@ -137,7 +136,6 @@ function Query:select_tasks(query)
             table.insert(tasks_per_id[task_id].tags, rtask.tag)
         end
     end
-
 
     return tasks
 end
