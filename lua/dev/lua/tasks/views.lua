@@ -174,7 +174,7 @@ function M.format_tasks(tasks_in)
             error('task.line_number is nil')
         end
         table.insert(tasks, '- [ ] ' .. (task.description or '') .. ' ' .. M.params_to_string(task.parameters) .. ' ' .. M.tags_to_string(task.tags))
-        table.insert(files, {task.filename, task.line_number})
+        table.insert(files, {file = task.filename, line = task.line_number})
     end
 
     return tasks, files
@@ -271,19 +271,18 @@ function M.fzf_query(tag, ...)
 end
 
 function M.open_due_window(tag)
-    
     local tasks_tb = M.query_by_tag_and_due(tag)
     local tasks_line, files = M.format_tasks(tasks_tb)
     local win = dev.nvim.ui.views.scratch(tasks_line, {
         title = (tag or '') .. ' tasks',
         title_pos = 'center'})
-    vim.cmd("set ft=markdown")
-    vim.cmd("TSContextDisable")
-    vim.api.nvim_win_set_option(0, 'winhighlight', 'Normal:Normal')
 
-    local buffer = vim.api.nvim_win_get_buf(win.vid)
+    win:open()
+    vim.cmd("set ft=markdown")
+    vim.api.nvim_win_set_option(0, 'winhighlight', 'Normal:Normal')
     for i, file in ipairs(files) do
-        M.set_custom_hl(buffer, i)
+        M.set_custom_hl(win.buf, i)
+        win:set_buf_links(files)
     end
     -- win.buffer
 end

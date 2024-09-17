@@ -116,7 +116,6 @@ function views.scratch(content, ...)
     opts.content = content
 
     win:config(opts)
-    win:open()
     return win
 end
 

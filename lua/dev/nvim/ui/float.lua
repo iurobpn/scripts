@@ -188,8 +188,7 @@ function Window:close(vid)
         Window.set_win(win_id)
     end
     if win_id ~= nil and Window.is_floating(win_id) then
-        local buf = vim.api.nvim_get_current_buf()
-        Buffer.unmap(buf)
+        -- Buffer.unmap(self.buf)
         vim.api.nvim_win_close(win_id, true)
         Window.floats[win_id] = nil
     else
@@ -311,6 +310,11 @@ function Window.get_window(vid)
 
     return buf, filename
 end
+function Window.get_win()
+    local vid = vim.api.nvim_get_current_win()
+    
+    return Window.floats[vid]
+end
 
 function Window.get_current()
     -- Get the current window and buffer
@@ -397,6 +401,37 @@ function Window.fullscreen()
     Window.floats[win_id].fullscreen = true
 end
 
+function Window:set_links(files, lines)
+
+end
+
+function Window.open_link()
+    local win = Window.get_win()
+    local linenr = vim.fn.line('.')
+    win:close()
+    Window.floats[win.vid] = nil
+    vim.cmd.e(win.map_file_line[linenr].file)
+    vim.api.nvim_win_set_cursor(0, {win.map_file_line[linenr].line,0})
+end
+
+function Window.set_line_hl(group,line)
+    vim.fn.matchadd(group, '\\%' .. line .. 'l')
+end
+
+function Window:set_buf_links(map_file_line)
+    self.map_file_line = map_file_line
+    vim.api.nvim_buf_set_keymap(self.buf, 'n', '<CR>',
+        ':lua dev.nvim.ui.float.Window.open_link()<CR>',
+        { noremap = true, silent = true }
+    )
+
+    local hlgroup = 'LinkHighlight'
+    vim.api.nvim_set_hl(0, hlgroup, { underline = true, fg = '#00afff' })
+    local N = utils.numel(map_file_line)
+    for i=1,N do
+        vim.fn.matchadd(hlgroup, '\\%' .. i .. 'l')
+    end
+end
 
 -- generate links in file:number
 -- Create a buffer with example links
@@ -449,6 +484,7 @@ function Window.handle_link()
             noremap = true,
             silent = true,
             callback = function()
+                win.close()
                 open_in_floating_window(filename, tonumber(line_number))
             end
         })

@@ -11,6 +11,15 @@ function vf
     fd . -tf $dir |  sed -e 's#^\./(.*)##g' | fzf --multi $FZF_DEFAULT_OPTIONS --bind 'enter:become(vim {+})'
 end
 
+function fg
+    set rg_prefix 'rg --column --line-number --no-heading --color=always --smart-case';
+    fzf --bind "start:reload:$rg_prefix {q}" \
+    --bind "change:reload:$rg_prefix {q} || true" \
+    --bind 'enter:become(vim {1} +{2})' \
+    --ansi --disabled \
+    --height=50% --layout=reverse
+end
+
 function fprg
     test -n "$argv"; and test "argv" = "-h"; and echo "Usage: fprg [query_dir] [prog]\n searchs in subdirectory of query_dir to run aprog with the selected files as arguemnts"; and return
     if test (count $argv) -ge 1
