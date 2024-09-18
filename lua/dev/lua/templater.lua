@@ -64,7 +64,7 @@ function M.expand(text)
 end
 
 function M.expand_file(template_file)
-    if template_file == nil then
+    if template_file == nil or template_file == '' then
         require'dev.nvim.fzf'.run({
             source_append = M.templates.root,
             sink = function(selected)
@@ -93,7 +93,7 @@ function M.expand_file(template_file)
         return content
     end
 end
-vim.api.nvim_create_user_command('TemplIns', function()
-    M.expand_file()
-end, {})
+vim.api.nvim_create_user_command('TemplIns', function(opt)
+    M.expand_file(opt.args)
+end, {nargs='?'})
 return M
