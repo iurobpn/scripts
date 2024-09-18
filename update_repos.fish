@@ -45,7 +45,7 @@ function check_repos
             echo "repo $old_repos[$i] not found"
         end
     end
-    echo 'checking finished'
+    echo 'checking finished: '(count $repos)' repos found'
     echo ''
 
 
@@ -106,7 +106,7 @@ function check_repos
                 if notstaged || untracked
                     echo ''
                     echo "repo $repo_name has uncommited changes"
-                    set -al dirty $dirty
+                    set -a dirty $repo
                 end
             end
             if test $nahead -gt 0
