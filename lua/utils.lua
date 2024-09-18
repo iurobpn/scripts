@@ -66,6 +66,15 @@ function M.print_mt(t)
     M.print_table(mt)
 end
 
+-- Function to split text into lines without losing empty lines
+function M.split2(text)
+  local lines = {}
+  for line in string.gmatch(text, "([^\n]*)\n?") do
+    table.insert(lines, line)
+  end
+  return lines
+end
+
 function M.split(inputstr, sep)
     if sep == nil then
         sep = "%s"

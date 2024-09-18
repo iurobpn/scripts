@@ -110,15 +110,18 @@ function M.set_custom_hl(buf, line)
         print('no due date found')
         return
     end
-    vim.api.nvim_set_hl(0, 'MetaTags', { fg = "#818181", italic = true })  -- Adjust the color as needed
+    local gruvbox = require('config.gruvbox-colors').get_colors()
+    local hl_group = 'MetaTags'
+    vim.api.nvim_set_hl(0, hl_group, { fg = gruvbox.gray , italic = true })  -- Adjust the color as needed
     -- Define the namespace for extmarks (you can use the same namespace for multiple extmarks)
     local ns_id = vim.api.nvim_create_namespace('previewer_due')
     -- Create your custom highlight group with color similar to comments
 
     -- Set virtual text at a given line (line 2 in this case, 0-based index)
     vim.api.nvim_buf_set_extmark(buf, ns_id, line-1, 0, {
-        virt_text = { { string.format("(due: %s) ", due_date), "MetaTags" } },  -- Text and optional highlight group
+        virt_text = { { string.format("(due: %s) ", due_date), hl_group } },  -- Text and optional highlight group
         virt_text_pos = "inline",
+        priority = 100,
         -- virt_text_pos = "eol",  -- Places the virtual text at the end of the line
     })
 end
@@ -275,16 +278,61 @@ function M.open_due_window(tag)
     local tasks_line, files = M.format_tasks(tasks_tb)
     local win = dev.nvim.ui.views.scratch(tasks_line, {
         title = (tag or '') .. ' tasks',
-        title_pos = 'center'})
+        title_pos = 'center',
+        size = {
+            flex = true,
+        },
+    })
 
     win:open()
     vim.cmd("set ft=markdown")
     vim.api.nvim_win_set_option(0, 'winhighlight', 'Normal:Normal')
     for i, file in ipairs(files) do
-        M.set_custom_hl(win.buf, i)
+        -- M.set_custom_hl(win.buf, i)
         win:set_buf_links(files)
     end
+    vim.opt.wrap = false
+    vim.opt.number = false
+    vim.opt.relativenumber = false
+    M.highlight_tags(win.buf)
+    local opts = vim.api.nvim_win_get_config(win.vid)
+
+
+    -- Reapply the configuration to the floating window
+    vim.cmd.hi('clear FloatTitle')
     -- win.buffer
+end
+
+-- Function to highlight the pattern
+function M.highlight_tags(bufnr)
+
+    local ns_id = vim.api.nvim_create_namespace("highlight_tags")
+
+    -- Define the orange highlight group
+    vim.api.nvim_set_hl(0, 'PatternHighlight', {fg = '#FFA500'})  -- Orange color (Hex: #FFA500)
+
+    -- Define the pattern
+    local pattern = '\\[\\w\\+:: [\\w\\d:\\-/]\\+\\]'  -- Escaped Lua pattern for your desired regex
+    -- Get total lines in the buffer
+    local line_count = vim.api.nvim_buf_line_count(bufnr)
+
+    -- Loop through each line and apply highlights
+    for line_num = 0, line_count - 1 do
+        -- Get the line content
+        local line = vim.api.nvim_buf_get_lines(bufnr, line_num, line_num + 1, false)[1]
+
+        -- Find matches using vim.fn.matchstrpos, which returns start and end of a match
+        local start_pos, end_pos = 0, 0
+        repeat
+            local res = vim.fn.matchstrpos(line, pattern, end_pos)
+            start_pos = tonumber(res[2]) + 1  -- Convert to 1-based index
+            end_pos = tonumber(res[3]) + 1  -- Convert to 1-based index
+            if start_pos > 0 and end_pos > 0 then
+                -- Highlight the match with higher priority to overlay link highlights
+                vim.api.nvim_buf_add_highlight(bufnr, ns_id, 'PatternHighlight', line_num, start_pos, end_pos, {priority = 150})
+            end
+        until start_pos == 0 and end_pos == 0  -- Stop if no more matches are found
+    end
 end
 
 -- create_command

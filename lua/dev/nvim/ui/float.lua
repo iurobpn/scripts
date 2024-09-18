@@ -31,6 +31,7 @@ local Window = {
         --     height = 0,
         --     height = 0,
         -- },
+        flex = false
     },
     position = 'center',
         -- {
@@ -85,7 +86,36 @@ local Window = {
         bulisted = true,
 
     },
+    colors = require('config.gruvbox-colors').get_colors(),
+    ns = {},
 }
+
+function Window.set_link_ns()
+    local ns_id = vim.api.nvim_create_namespace('dev_float')
+    if Window.nslink == nil then
+        Window.ns['link'] = { -- highlight namespaces
+            id = ns_id,
+            name = 'dev_float',
+            normal = {
+                group = 'link_hl',
+                opts = { 
+                    fg = Window.colors.neutral_blue,
+                    underline = false,
+                },
+            },
+            hover = {
+                group = 'link_hover_hl',
+                opts = {
+                    fg = Window.colors.blue,
+                    underline = false,
+                }
+            }
+        }
+    end
+    local link = Window.ns.link
+    vim.api.nvim_set_hl(0, link.normal.group, link.normal.opts)
+    vim.api.nvim_set_hl(0, link.hover.group, link.hover.opts)
+end
 
 function Window:ui_width()
     return vim.api.nvim_get_option("columns")
@@ -117,6 +147,13 @@ function Window:get_size()
     elseif self.size.absolute then
         width = self.size.absolute.width
         height = self.size.absolute.height
+    elseif self.size.flex then
+        height = ui_height*Window.size.relative.height
+        local tmp_width = self.get_max_content_width(self.content)+2
+        if tmp_width > ui_width or tmp_width <= 1 then
+            tmp_width = ui_width
+        end
+        width = tmp_width
     else
         error('Size not set size')
     end
@@ -232,8 +269,6 @@ function Window.close_all()
 end
 
 function Window:open()
-    self:set_size()
-    self:set_position()
 
     -- if not self.cursor then
     -- --     vim.opt.guicursor = vim.o.background
@@ -258,6 +293,9 @@ function Window:open()
         end
     end
 
+    self:set_size()
+    self:set_position()
+
     local opts = self:get_options()
 
     if not self.buf then
@@ -269,7 +307,6 @@ function Window:open()
     if self.current then
         vim.api.nvim_win_set_config(self.vid, opts)
     else
-        print('title: '  .. opts.title)
         self.vid = vim.api.nvim_open_win(self.buf, true, opts)
     end
 
@@ -312,7 +349,7 @@ function Window.get_window(vid)
 end
 function Window.get_win()
     local vid = vim.api.nvim_get_current_win()
-    
+
     return Window.floats[vid]
 end
 
@@ -414,10 +451,6 @@ function Window.open_link()
     vim.api.nvim_win_set_cursor(0, {win.map_file_line[linenr].line,0})
 end
 
-function Window.set_line_hl(group,line)
-    vim.fn.matchadd(group, '\\%' .. line .. 'l')
-end
-
 function Window:set_buf_links(map_file_line)
     self.map_file_line = map_file_line
     vim.api.nvim_buf_set_keymap(self.buf, 'n', '<CR>',
@@ -425,12 +458,64 @@ function Window:set_buf_links(map_file_line)
         { noremap = true, silent = true }
     )
 
-    local hlgroup = 'LinkHighlight'
-    vim.api.nvim_set_hl(0, hlgroup, { underline = true, fg = '#00afff' })
-    local N = utils.numel(map_file_line)
-    for i=1,N do
-        vim.fn.matchadd(hlgroup, '\\%' .. i .. 'l')
+    if Window.ns.link == nil then
+        Window.set_link_ns()
     end
+    local link = Window.ns.link
+
+    local cursor_line = vim.api.nvim_win_get_cursor(0)[1] - 1
+    local N = utils.numel(map_file_line)
+    for i=0,N-1 do
+        -- vim.api.nvim_buf_add_highlight(self.buf, link.id, link.normal.group, i, 0, -1)
+        vim.api.nvim_buf_clear_namespace(self.buf, link.id, i, i+1)
+        -- vim.fn.matchadd(link_group, '\\%' .. i .. 'l')
+    end
+
+    vim.api.nvim_buf_add_highlight(self.buf, link.id, link.hover.group, cursor_line, 0, -1)
+    -- Create an autocommand for updating when cursor moves
+    vim.api.nvim_create_autocmd("CursorMoved", {
+        buffer = self.buf,
+        callback = function()
+            local link = Window.ns.link
+            -- Clear all highlights first
+            vim.api.nvim_buf_clear_namespace(self.buf, link.id, 0, -1)
+
+            local line_count = vim.api.nvim_buf_line_count(self.buf)
+
+            local cursor_line = vim.api.nvim_win_get_cursor(0)[1] - 1
+            -- Reapply without cursor highlights
+            for i = 0, line_count - 1 do
+                if i ~= cursor_line then
+                    vim.api.nvim_buf_clear_namespace(self.buf, link.id, i, i+1)
+                    -- vim.api.nvim_buf_add_highlight(self.buf, link.id, link.normal.group, i, 0, -1)
+                end
+            end
+
+            -- Get current cursor line
+
+            -- Apply the highlight with cursor on the current line
+            vim.api.nvim_buf_add_highlight(self.buf, link.id, link.hover.group, cursor_line, 0, -1)
+        end,
+    })
+end
+
+-- Function to calculate the max width of the content
+function Window.get_max_content_width(lines)
+    if lines == nil or lines == 0 then
+        lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+    end
+    local max_width = 0
+    for _, line in ipairs(lines) do
+        local len = vim.fn.strdisplaywidth(line) -- Handles wide characters too
+        if len > max_width then
+            max_width = len
+        end
+    end
+    max_width = max_width + 5
+    if max_width > vim.api.nvim_get_option("columns") then
+        max_width = vim.api.nvim_get_option("columns")
+    end
+    return math.floor(max_width)
 end
 
 -- generate links in file:number

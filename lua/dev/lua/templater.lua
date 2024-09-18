@@ -47,12 +47,15 @@ M.templates.reminders = function()
     else
         filename = M.templates.root .. '/' .. templ
     end
-    local file = io.open(filename, 'r')
+    print('filename: ', filename)
+    local file = io.open(filename)
     if not file then
         print(string.format('File %s does not exist', filename))
         return ''
     end
-    local file_content = file:read("*all")
+    local file_content = file:read('*a')
+    print('file_content')  
+    print(file_content)
     file:close()
     return M.templater:render(file_content, M.templates)
 end
@@ -65,11 +68,14 @@ end
 
 function M.expand_file(template_file)
     if template_file == nil or template_file == '' then
-        require'dev.nvim.fzf'.run({
-            source_append = M.templates.root,
-            sink = function(selected)
-                M.expand_file(selected)
-            end,
+        require'fzf-lua'.fzf_exec('fd . -tf ' .. M.templates.root, {
+            prompt = 'Select> ',
+            actions = {
+                ['default'] = function(selected)
+                    print('selected: ', selected[1])
+                    M.expand_file(selected[1])
+                end,
+            },
         })
         
         return
@@ -83,7 +89,7 @@ function M.expand_file(template_file)
     end
     local file_content = file:read("*all")
     file:close()
-    local content = require'utils'.split(M.expand(file_content), '\n')
+    local content = require'utils'.split2(M.expand(file_content), '\n')
     if type(content) == 'string' then
         content = {content}
     end
