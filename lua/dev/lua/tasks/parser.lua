@@ -6,10 +6,27 @@ local M = {
         line_number = ':(%d+):',
         description = '%-%s*%[%s*[a-z ]%s*%]%s*(.*)',
         tag = '(#[a-zA-Z_%-]+)',
-        parameter = '%[([a-zA-Z_]+)%s*::%s*([a-zA-Z0-9:%-]*)%]'
+        parameter = '%[([a-zA-Z_]+)%s*::%s*([a-zA-Z0-9:%-]*)%]',
+        metatag = {'%[', '%s*::%s*([a-zA-Z0-9:%-]*)%]'} -- a specific metatag
     }
 }
 local json = require("dkjson") -- Assumes you have dkjson installed for JSON serialization
+
+-- Parse a task string into a table
+function M.find_metatags(task)
+    local metatags = {}
+    for mtag in task:gmatch(M.pattern.parameter) do
+        table.insert(metatags, mtag)
+        task = task:gsub(M.pattern.parameter, '')
+    end
+    return metatags, task
+end
+
+function M.get_param_value(task,metatag)
+    local pattern = '%[' .. metatag .. '%s*::%s*([a-zA-Z0-9:%- ]*)%]'
+    print()
+    return task:match(pattern)
+end
 
 function M.parse(task)
     local status_map = {
