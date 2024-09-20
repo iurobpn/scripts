@@ -1,4 +1,6 @@
 local templater = require 'lustache'
+local fs = require'dev.lua.fs'
+
 local M = {
     templater = templater,
     templates = nil,
@@ -47,18 +49,97 @@ M.templates.reminders = function()
     else
         filename = M.templates.root .. '/' .. templ
     end
-    print('filename: ', filename)
     local file = io.open(filename)
     if not file then
         print(string.format('File %s does not exist', filename))
         return ''
     end
     local file_content = file:read('*a')
-    print('file_content')  
-    print(file_content)
     file:close()
     return M.templater:render(file_content, M.templates)
 end
+
+-- local uv = vim.loop
+--
+-- -- The folder to watch for new files (modify to your desired folder)
+-- local folder_to_watch = "/path/to/your/folder"
+--
+-- -- The template to insert when a new file is created
+-- local daily_tasks_template = [[
+-- # Daily Tasks for %s
+--
+-- - [ ] Task 1
+-- - [ ] Task 2
+-- - [ ] Task 3
+--
+-- ]]
+
+-- Function to insert the template
+function M.insert_template(filepath)
+    -- Get the current date
+    local date = os.date("%Y-%m-%d")
+    -- Open the new file
+    local new_file = io.open(filepath, "w")
+    if new_file then
+        -- Write the template with the current date
+        new_file:write(string.format(daily_tasks_template, date))
+        new_file:close()
+    else
+        print("Could not open file:", filepath)
+    end
+end
+
+-- Function to watch for file creation in the specified folder
+function M.watch_folder_for_new_files()
+    local handle = uv.new_fs_event()
+    if handle == nil then
+        print("Failed to create file watcher")
+        return
+    end
+
+    -- Start watching the folder
+    uv.fs_event_start(handle, folder_to_watch, {}, function(err, filepath, event)
+        if err then
+            print("Error watching folder:", err)
+            return
+        end
+
+        -- Check if the event is a file creation event
+        if event == "create" and filepath then
+            if filepath[1] ~= "/" then
+                if filepath[1] == '.' then
+                    filepath = folder_to_watch .. "/" .. filepath.sub(3)
+                end
+                filepath = folder_to_watch .. "/" .. filepath
+            end
+
+            local today os.date("%Y-%m-%d.md")
+            local filename = fs.get_filename(filepath)
+            if filename == today then
+                -- check if the file is loaded in a buffer
+                if vim.fn.bufexists(filepath) == 1 then
+                    -- get the buffer number
+                    local bufnr = vim.fn.bufnr(filepath)
+
+                    -- get the window number
+                    local winnr = vim.fn.bufwinnr(bufnr)
+
+                    -- switch to the window
+                    vim.cmd(winnr .. 'wincmd w')
+                end
+                
+                vim.cmd('normal! G')
+                vim.api.nvim_put({''}, 'l', true, false) -- add a line below the current line
+                M.expand_file(M.config.template_dir .. '/daily.tpl')
+            end
+            vim.notify("Today daily file created: ", filepath)
+        end
+    end)
+
+    vim.notify("Watching folder:", folder_to_watch)
+end
+
+
 
 -- create a command to insert the template
 -- :lua require('templater').insert_template()
@@ -66,8 +147,40 @@ function M.expand(text)
     return M.templater:render(text, M.templates)
 end
 
-function M.expand_file(template_file)
+
+function M.get_expanded_file(template_file)
+    print('templater.expand_file(' .. template_file .. ')')
     if template_file == nil or template_file == '' then
+        print('template_file is nil')
+        require'fzf-lua'.fzf_exec('fd . -tf ' .. M.templates.root, {
+            prompt = 'Select> ',
+            actions = {
+                ['default'] = function(selected)
+                    print('selected: ', selected[1])
+                    M.get_expand_file(selected[1])
+                end,
+            },
+        })
+        
+        return
+    end
+    local file = io.open(template_file, 'r')
+    if file == '' or file == nil or not file then
+        print(string.format('Template file %s does not exist', template_file))
+        return ''
+    end
+    local file_content = file:read("*all")
+    file:close()
+    local content = require'utils'.split2(M.expand(file_content), '\n')
+    if type(content) == 'string' then
+        content = {content}
+    end
+    return content
+end
+function M.expand_file(template_file)
+    print('templater.expand_file(' .. template_file .. ')')
+    if template_file == nil or template_file == '' then
+        print('template_file is nil')
         require'fzf-lua'.fzf_exec('fd . -tf ' .. M.templates.root, {
             prompt = 'Select> ',
             actions = {
@@ -94,7 +207,7 @@ function M.expand_file(template_file)
         content = {content}
     end
     if vim then
-        vim.api.nvim_put(content, 'l', true, false)
+        return api.nvim_put(content, 'l', true, false)
     else
         return content
     end
