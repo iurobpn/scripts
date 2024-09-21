@@ -1,8 +1,10 @@
-source $HOME/git/scripts/fzf.fish
-source $HOME/git/scripts/grid.fish
-source $HOME/git/scripts/update_repos.fish
-source $HOME/git/scripts/branch-status.fish
-source $HOME/git/scripts/git_scripts.fish
-source $HOME/git/scripts/query.fish
+set -l SCRIPTS_DIR $HOME/git/scripts
+source $SCRIPTS_DIR/fzf.fish
+source $SCRIPTS_DIR/grid.fish
+source $SCRIPTS_DIR/update_repos.fish
+source $SCRIPTS_DIR/branch-status.fish
+source $SCRIPTS_DIR/git_scripts.fish
+source $SCRIPTS_DIR/query.fish
 
-source $HOME/git/scripts/lua/dev/lua/tasks/find.fish
+source $SCRIPTS_DIR/lua/dev/lua/tasks/find.fish
+source $SCRIPTS_DIR/copilot.fish

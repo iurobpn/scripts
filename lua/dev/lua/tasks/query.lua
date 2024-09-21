@@ -1,6 +1,5 @@
 local utils = require('utils')
 require('class')
-local parser = require('dev.lua.tasks.parser')
 local sql = require('dev.lua.sqlite2')
 local M = {}
 
@@ -60,7 +59,7 @@ function Query:select_by_id(id)
     return task
 end
 
-function Query:select_by_tag(tag)
+function Query:select_by_tag_and_due(tag, order)
     tag = tag or 0
     -- local query_tag = "select distinct t.id from tasks t left join tags tg ON t.id = tg.task_id where tg.tag = '#main'"
     -- local query_task = fmt('SELECT * FROM tasks WHERE id = %s;', tag)
@@ -71,14 +70,40 @@ function Query:select_by_tag(tag)
     FROM tasks t
     LEFT JOIN parameters p ON t.id = p.task_id
     LEFT JOIN tags tg ON t.id = tg.task_id
-    WHERE tg.tag = '#today' and t.status != 'done';
-]], tag)
+    WHERE tg.tag = '%s' and t.status != 'done' and p.name = 'due'
+    ORDER BY p.value %s;
+]], tag, (order or ''))
 
+    return self:select_tasks(query)
+end
+
+function Query:select_by_tag(tag)
+    tag = tag or 0
+    -- local query_tag = "select distinct t.id from tasks t left join tags tg ON t.id = tg.task_id where tg.tag = '#main'"
+    -- local query_task = fmt('SELECT * FROM tasks WHERE id = %s;', tag)
+    -- local query_tags = fmt('SELECT tag FROM tags WHERE task_id = %s;', tag)
+ --    local query_params = fmt('SELECT name, value FROM parameters WHERE task_id = %d;', tag)
+    local query = [[
+        SELECT distinct t.*,  p.name AS name, p.value AS value, tg.tag
+    FROM tasks t
+    LEFT JOIN parameters p ON t.id = p.task_id
+    LEFT JOIN tags tg ON t.id = tg.task_id
+    WHERE t.status != 'done']]
+
+    if tag ~= nil then
+        query = query .. string.format([[ and tg.tag = '%s']], tag)
+    end
+    return self:select_tasks(query .. ';')
+end
+
+function Query:select_tasks(query)
     self.sql:connect()
 
     local tasks = {}
     local raw_tasks = self.sql:query_n(query)
+    self.sql:close()
 
+    local tasks_per_id = {}
     for _,rtask in ipairs(raw_tasks) do
         local task_id = rtask.id
 
@@ -89,7 +114,7 @@ function Query:select_by_tag(tag)
                 error('task id: ' .. task_id .. ' is not valid')
             end
 
-            tasks[task_id] = {
+            table.insert(tasks, {
                 id = task_id,
                 filename = rtask.filename,
                 line_number = rtask.line_number,
@@ -97,21 +122,20 @@ function Query:select_by_tag(tag)
                 description = rtask.description,
                 parameters = {},
                 tags = {}
-            }
+            })
+            tasks_per_id[task_id] = tasks[#tasks]
         end
 
         -- Add the parameter if it exists and is not already added
-        if rtask.name and rtask.value then
-            tasks[task_id].parameters[rtask.name] = rtask.value
+        if rtask.name ~= nil and rtask.value and tasks_per_id[task_id].parameters[rtask.name] == nil then
+            tasks_per_id[task_id].parameters[rtask.name] = rtask.value
         end
 
         -- Add the tag if it exists and is not already added
-        if rtask.tag and not tasks[task_id].tags[rtask.tag] then
-            table.insert(tasks[task_id].tags, rtask.tag)
+        if rtask.tag ~= nil and not utils.contains(tasks_per_id[task_id].tags,rtask.tag) then
+            table.insert(tasks_per_id[task_id].tags, rtask.tag)
         end
     end
-
-    self.sql:close()
 
     return tasks
 end

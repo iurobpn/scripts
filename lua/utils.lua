@@ -66,6 +66,15 @@ function M.print_mt(t)
     M.print_table(mt)
 end
 
+-- Function to split text into lines without losing empty lines
+function M.split2(text)
+  local lines = {}
+  for line in string.gmatch(text, "([^\n]*)\n?") do
+    table.insert(lines, line)
+  end
+  return lines
+end
+
 function M.split(inputstr, sep)
     if sep == nil then
         sep = "%s"
@@ -148,6 +157,15 @@ function M.ppprint(tbl, indent)
     --     end
     -- end
     -- print(indent_str .. "}")
+end
+
+function M.contains(tbl, val)
+    for _, v in pairs(tbl) do
+        if v == val then
+            return true
+        end
+    end
+    return false
 end
 
 function M.get_file_line(entry)
