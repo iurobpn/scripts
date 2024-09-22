@@ -168,6 +168,38 @@ function M.contains(tbl, val)
     return false
 end
 
+M.list_extend = function(t1, t2)
+    for _,v in ipairs(t2) do
+        table.insert(t1,v)
+    end
+    return t1
+end
+M.tbl_extend = function(t1, t2)
+    for k,v in pairs(t2) do
+        t1[k] = v
+    end
+    return t1
+end
+
+M.tbl_flatten = function(t,d)
+    if d == nil then
+        d = 5
+    end
+    if d == 0 then
+        return t
+    end
+    local res = {}
+    for _, v in pairs(t) do
+        if type(v) == 'table' then
+            local inner = M.tbl_flatten(v, d-1)
+            res = M.list_extend(res, inner)
+        else
+            table.insert(res, v)
+        end
+    end
+    return res
+end
+
 function M.get_file_line(entry)
     local parts = M.split(entry, ':')
     return parts[1], tonumber(parts[2])
