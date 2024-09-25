@@ -7,7 +7,7 @@ local parser = require('dev.lua.tasks.parser')
 
 local M = { 
     filename = 'tasks.db',
-    path = '/home/gagarin/sync/obsidian/',
+    path = '/home/gagarin/sync/obsidian/.tasks',
     sql = nil,
 }
 
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     description TEXT
 );]]
 
-local create_table_tags = [[
+    local create_table_tags = [[
 CREATE TABLE IF NOT EXISTS tags (
     task_id INTEGER,
     tag TEXT,
@@ -125,10 +125,19 @@ end
 local mod = {
     Indexer = M
 }
+
+Thread = require'thread'
 function mod.tosql()
-    local j2s = M()
-    j2s:read_notes()
+    local thread = Thread(
+        function()
+            local indexer = require('dev.lua.tasks.indexer').Indexer()
+            indexer:read_notes()
+        end
+    )
+    thread:start()
+
 end
+
 return mod
 
 

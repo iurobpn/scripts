@@ -1,6 +1,8 @@
 local utils = require('utils')
+
 -- Helper function to check if a file exists
 local M = {}
+
 function M.file_exists(filename)
     local file = io.open(filename, "r")
     if file then
@@ -30,5 +32,4 @@ function M.get_file_extension(path)
 end
 
 return M
-
 

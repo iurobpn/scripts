@@ -1,4 +1,5 @@
 local utils = require('utils')
+local tbl = require('dev.lua.tbl')
 local M = {}
 M.month_names = {
     "January", "February", "March", "April", "May", "June",
@@ -115,6 +116,7 @@ function M.draw_calendar_line(h_padding, square_width, t_elem, sep, border_seps)
     return line
 
 end
+
 M.borders = {
     table = {
         top = {
@@ -229,7 +231,6 @@ M.icons = {
     },
 }
 
-
 function M.h_line(h_padding, square_width, sep, border_seps)
     local p_horiz = string.rep(' ', h_padding)
     local lsep, rsep
@@ -263,7 +264,7 @@ end
 M.len = function(str)
     -- count char in string dividing unicode of M.seps by 3
     local total = #str
-    local border = utils.tbl_flatten(M.border)
+    local border = tbl.flatten(M.border)
     -- utils.pprint(border)
     -- print('border: ' .. #border)
     local unicode = 0
@@ -304,7 +305,6 @@ function M.set_hl()
     -- local grid_ns = vim.api.nvim_create_namespace('grid_ns')
     -- vim.api.nvim_set_hl(0, 'Normal', {bg = colors.dark4})
     -- Set the window's highlight namespace to the new one
-
 end
 
 M.set_grid_hl = function(v_padding, h_padding, win_width, grid_height)

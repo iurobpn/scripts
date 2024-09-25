@@ -1,6 +1,7 @@
--- Date: 2020/07/26
-Log = require'dev.lua.log'
+local json = require('cjson')
 local insp = require'inspect'
+
+Log = require'dev.lua.log'
 local fmt = string.format
 
 local M = {}
@@ -127,82 +128,12 @@ function M.qbacktrace ()
     vim.cmd.cfile(f)
 end
 
-function M.ppprint(tbl, indent)
-    print(M.insp(tbl))
-
-    -- indent = indent or 0
-    -- local indent_str = string.rep("  ", indent)
-    --
-    -- if type(tbl) ~= "table" then
-    --     print(indent_str .. tostring(tbl))
-    --     return
-    -- end
-    --
-    -- print(indent_str .. "{")
-    -- indent_str = string.rep("  ", indent)
-    -- for k, v in pairs(tbl) do
-    --     local key
-    --     if type(k) == "string" then
-    --         key = k -- No brackets for string keys
-    --     else
-    --         key = "[" .. tostring(k) .. "]" -- Use brackets for non-string keys
-    --     end
-    --     
-    --     io.write(indent_str .. "  " .. tostring(key) .. " = ")
-    --     
-    --     if type(v) == "table" then
-    --         M.pprint(v, indent + 4)
-    --     else
-    --         print(tostring(v) .. ",")
-    --     end
-    -- end
-    -- print(indent_str .. "}")
-end
-
-function M.contains(tbl, val)
-    for _, v in pairs(tbl) do
-        if v == val then
-            return true
-        end
-    end
-    return false
-end
-
-M.list_extend = function(t1, t2)
-    for _,v in ipairs(t2) do
-        table.insert(t1,v)
-    end
-    return t1
-end
-M.tbl_extend = function(t1, t2)
-    for k,v in pairs(t2) do
-        t1[k] = v
-    end
-    return t1
-end
-
-M.tbl_flatten = function(t,d)
-    if d == nil then
-        d = 5
-    end
-    if d == 0 then
-        return t
-    end
-    local res = {}
-    for _, v in pairs(t) do
-        if type(v) == 'table' then
-            local inner = M.tbl_flatten(v, d-1)
-            res = M.list_extend(res, inner)
-        else
-            table.insert(res, v)
-        end
-    end
-    return res
-end
 
 function M.get_file_line(entry)
     local parts = M.split(entry, ':')
     return parts[1], tonumber(parts[2])
 end
 
+
 return M
+

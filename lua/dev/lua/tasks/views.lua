@@ -172,7 +172,7 @@ end
 function M.format_tasks(tasks_in)
     local tasks = {}
     local files = {}
-    for id, task  in pairs(tasks_in) do
+    for _, task  in pairs(tasks_in) do
         if task.line_number == nil then
             error('task.line_number is nil')
         end
@@ -190,6 +190,7 @@ function M.query_by_tag_and_due(tag)
 
     return tasks
 end
+
 function M.query_by_tag(tag)
     local q = query.Query()
     local tasks = q:select_by_tag(tag)
@@ -222,7 +223,11 @@ function M.fzf_query_due(tag, ...)
     M.fzf_query(tag, opts)
 end
 
-function M.fzf_query(tag, ...)
+M.search = function(tag, ...)
+    return M.query_tag(tag, ...)
+end
+
+M.query_tag = function(tag, ...)
     local opts = {...}
     opts = opts[1] or {}
     local tasks
@@ -235,17 +240,27 @@ function M.fzf_query(tag, ...)
         end
         tasks = M.query_by_tag_and_due(tag, order)
     end
+    return tasks
+end
+
+function M.fzf_query(tag, ...)
+    local tasks = M.query_tag(tag, ...)
     local str_tasks = M.to_lines(tasks)
+    local opts = {...}
+    opts = opts[1] or {}
 
     -- debug
-    local fd = io.open('fzf.log', 'w')
-    if not fd then
-        error('Cannot open fzf.log')
+    local sink = opts.sink or function(selected)
+        if selected then
+            for _, task in ipairs(selected) do
+                local filename, line_nr = utils.get_file_line(task, ':')
+                if filename and line_nr then
+                    vim.cmd.edit(filename)
+                    vim.fn.cursor(line_nr, 1)
+                end
+            end
+        end
     end
-    for _, task in ipairs(str_tasks) do
-        fd:write(task .. '\n')
-    end
-    fd:close()
 
     fzf_lua.fzf_exec(str_tasks, {
         previewer = pv.Previewer,
@@ -257,17 +272,7 @@ function M.fzf_query(tag, ...)
 
         -- actions inherit from 'actions.files' and merge
         actions = {
-            ["default"] = function(selected)
-                if selected then
-                    for _, task in ipairs(selected) do
-                        local filename, line_nr = utils.get_file_line(task, ':')
-                        if filename and line_nr then
-                            vim.cmd.edit(filename)
-                            vim.fn.cursor(line_nr, 1)
-                        end
-                    end
-                end
-            end
+            ["default"] =  sink
         },
     })
     -- require'fzf-lua'.files(str_tasks, task_query_opts)
@@ -287,7 +292,7 @@ function M.open_due_window(tag)
     win:open()
     vim.cmd("set ft=markdown")
     vim.api.nvim_win_set_option(0, 'winhighlight', 'Normal:Normal')
-    for i, file in ipairs(files) do
+    for _, file in ipairs(files) do
         -- M.set_custom_hl(win.buf, i)
         win:set_buf_links(files)
     end
@@ -297,7 +302,6 @@ function M.open_due_window(tag)
     M.highlight_tags(win.buf)
     local opts = vim.api.nvim_win_get_config(win.vid)
 
-
     -- Reapply the configuration to the floating window
     vim.cmd.hi('clear FloatTitle')
     -- win.buffer
@@ -305,7 +309,6 @@ end
 
 -- Function to highlight the pattern
 function M.highlight_tags(bufnr)
-
     local ns_id = vim.api.nvim_create_namespace("highlight_tags")
 
     -- Define the orange highlight group
