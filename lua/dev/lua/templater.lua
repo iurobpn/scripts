@@ -177,6 +177,7 @@ function M.get_expanded_file(template_file)
     end
     return content
 end
+
 function M.expand_file(template_file)
     print('templater.expand_file(' .. template_file .. ')')
     if template_file == nil or template_file == '' then
@@ -207,7 +208,7 @@ function M.expand_file(template_file)
         content = {content}
     end
     if vim then
-        return api.nvim_put(content, 'l', true, false)
+        return vim.api.nvim_put(content, 'l', true, false)
     else
         return content
     end

@@ -60,4 +60,8 @@ function M.recurrent_done()
     return true
 end
 
+M.search = function(tag, ...)
+    return M.views.search(tag, ...)
+end
+
 return M
