@@ -37,11 +37,12 @@ function check_repos
     set n (count $old_repos)
     set repos
     echo "Checking repositories:"
+    set remote_gh git@github.com:iurobpn/
     for i in (seq 1 $n)
         if test -d "$GIT/$old_repos[$i]"; and check_remote $remote "$GIT/$old_repos[$i]"
-
             set -a repos "$GIT/$old_repos[$i]"
         else
+            git clone $remote_gh$old_repos[$i].git $GIT/$old_repos[$i]
             echo "repo $old_repos[$i] not found"
         end
     end
