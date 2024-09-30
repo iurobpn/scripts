@@ -1,9 +1,8 @@
-
-require'dev.lua.log'
+local lg = require'dev.lua.log'
 
 -- log = Log('logger','/dev/pts/1' )
-log = Log('logger', '/dev/pts/1')
-Log.log_level = "debug"
+local log = lg.Log('logger')
+lg.Log.log_level = "debug"
 log:fatal('fatal\n')
 log:info('info\n')
 log:warn('warn\n')
