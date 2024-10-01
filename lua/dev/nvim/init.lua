@@ -3,6 +3,7 @@ local nvim = {
     utils = require('dev.nvim.utils'),
     ui = require('dev.nvim.ui'),
     timer = require('dev.nvim.timer'),
+    runner = require('dev.nvim.runner'),
 }
 nvim.init = function()
     -- nvim.fzf.
