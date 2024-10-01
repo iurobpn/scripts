@@ -3,6 +3,17 @@ local timer_plugin = {
     filename = "tasks.json",
 
 }
+-- Global variables to manage the timer and window
+local countdown = {
+  win = nil,
+  buf = nil,
+  timer = nil,
+  time_left = nil,
+  start_time = nil,
+  duration = nil,
+  description = nil,
+}
+
 
 -- Dependencies
 local json = vim.fn.json_encode and vim.fn.json_decode and true or false
@@ -52,6 +63,7 @@ local function format_time(seconds)
     local secs = seconds % 60
     return string.format("%02d:%02d:%02d", hours, mins, secs)
 end
+
 local format_task = function(task)
     return string.format(
         "%d | %-10s | t_start: %s | t_elapsed: %s | t_est: %s",
@@ -129,6 +141,16 @@ function timer_plugin.TimerCommand(args)
         end
         local task_id = tonumber(task_id_str)
         timer_plugin.TimerStart(task_id)
+    elseif subcommand == 'countdown' then
+        local time
+        if args.fargs[2] then
+            time = args.fargs[2]
+        end
+        if not time then
+            print("Usage: :Timer countdown <time>")
+            return
+        end
+        countdown.start(tonumber(time))
     elseif subcommand == 'pause' then
         timer_plugin.TimerPause()
     elseif subcommand == 'stop' then
@@ -136,10 +158,44 @@ function timer_plugin.TimerCommand(args)
     elseif subcommand == 'toggle' then
         timer_plugin.TimerToggle()
     else
-        print("Invalid Timer command. Usage: :Timer <start|pause|stop|toggle> [task_id]")
+        print("Invalid Timer command. Usage: :Timer <start|pause|stop|toggle|countdown> [task_id]")
     end
 end
 
+function countdown.start(duration_in, description, callback)
+    countdown.duration = duration_in
+    countdown.time_left = duration_in
+    local buf = vim.api.nvim_create_buf(false, true) -- Create a new empty buffer
+    local width = 5
+    local height = 1
+    local row = math.floor((vim.o.lines - height) / 2)
+    local col = math.floor((vim.o.columns - width) / 2)
+
+    vim.api.nvim_set_hl(0, "MyFloatBorder", { fg = dev.color.bright_blue, bg = "None" }) -- bright_red for the border
+    vim.api.nvim_set_hl(0, "FloatContent", { fg = dev.color.bright_blue, bg = "None" }) -- bright_red for the border
+    
+    -- Create a floating window
+    countdown.win = vim.api.nvim_open_win(buf, true, {
+        relative = 'editor',
+        width = width,
+        height = height,
+        row = row,
+        col = col,
+        style = 'minimal',
+        border = 'rounded',
+        focusable = false,
+    }) 
+    vim.api.nvim_win_set_option(countdown.win, 'winblend', 90) -- Set transparency (0-100, 0 is opaque, 100 is fully transparent)
+    vim.api.nvim_win_set_option(countdown.win, 'winhl', 'NormalFloat:FloatContent,FloatBorder:MyFloatBorder') -- Follow main colorscheme
+    -- Define a custom highlight group for the border
+    vim.cmd("wincmd p")
+
+
+    countdown.timer = vim.loop.new_timer()
+    countdown.timer:start(0, 1000, vim.schedule_wrap(function()
+        countdown.update_popup(callback)
+    end))
+end
 -- Timer functions
 function timer_plugin.TimerStart(task_id)
     if not task_id or not tasks[task_id] then
@@ -459,6 +515,69 @@ function timer_plugin.create_popup()
 
     timer_plugin.update_popup()
 end
+local blink_state = false
+function countdown.update_popup(callback)
+    if not countdown.win or not vim.api.nvim_win_is_valid(countdown.win) then
+        return
+    end
+
+    -- local hours = math.floor(time_left / (60*60))
+    local minutes = math.floor(countdown.time_left / 60)
+    local seconds = countdown.time_left % 60
+    local time_str = string.format("%02d:%02d", minutes, seconds)
+
+    local buf = vim.api.nvim_win_get_buf(countdown.win)
+    -- Update buffer with the remaining time
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, { time_str })
+
+    -- Change only the foreground color in the last 30 seconds (blink every half second)
+    if countdown.time_left <= 30 then
+        if blink_state then
+            vim.api.nvim_set_hl(0, "MyFloatText", { fg = dev.color.bright_red, bg = "None" }) -- bright_red for text
+        else
+            vim.api.nvim_set_hl(0, "MyFloatText", { fg = "None", bg = "None" }) -- invisible text
+        end
+        blink_state = not blink_state
+        vim.api.nvim_win_set_option(countdown.win, 'winhl', 'NormalFloat:MyFloatText,FloatBorder:MyFloatBorder')
+    end
+
+    -- Stop the timer when time reaches 0
+    if countdown.time_left <= 0 then
+        countdown.timer:stop()
+        vim.api.nvim_win_close(countdown.win, true)
+        if callback then
+            callback()
+        end
+        -- Log the timer details if a description is provided
+        if countdown.description and countdown.description ~= "" then
+            local log_entry = {
+                start_time = os.date("%Y-%m-%d %H:%M:%S", countdown.start_time),
+                duration = countdown.duration,
+                description = countdown.description,
+            }
+
+            -- Define log file path
+            local log_file = vim.fn.stdpath('data') .. '/.tasks.countdown.json'
+            local logs = {}
+
+            -- Read existing log entries if the file exists
+            if vim.fn.filereadable(log_file) == 1 then
+                local log_content = vim.fn.readfile(log_file)
+                local log_str = table.concat(log_content, '\n')
+                logs = vim.fn.json_decode(log_str) or {}
+            end
+
+            -- Append new log entry
+            table.insert(logs, log_entry)
+
+            -- Write updated logs back to the file
+            local log_json = vim.fn.json_encode(logs)
+            vim.fn.writefile({ log_json }, log_file)
+        end
+    else
+        countdown.time_left = countdown.time_left - 1
+    end
+end
 
 function timer_plugin.update_popup()
     if not popup_win or not vim.api.nvim_win_is_valid(popup_win) then
@@ -524,10 +643,55 @@ function timer_plugin.ShowStats(args)
     end
 end
 
+function timer_plugin.complete_timer_command(arg_lead, cmd_line, cursor_pos)
+    -- These are the valid completions for the command
+    local options = { "new", "list", "del", "done", "import", "export", "countdown" }
+    -- Return all options that start with the current argument lead
+    return vim.tbl_filter(function(option)
+        return vim.startswith(option, arg_lead)
+    end, options)
+end
+
 -- Command registrations
 vim.api.nvim_create_user_command('Timer', function(args)
     timer_plugin.TimerCommand(args)
-end, { nargs = '*' })
+end, { nargs = '*' , complete = timer_plugin.complete_timer_command })
+-- Command to start or control the countdown timer
+vim.api.nvim_create_user_command("Countdown", function(opts)
+    local args = vim.split(opts.args, " ", { plain = true, trimempty = true })
+    if #args >= 1 then
+        local first_arg = args[1]
+        if first_arg == "close" then
+            -- Close the timer window and clean up
+            if countdown.timer then
+                countdown.timer:stop()
+                countdown.timer:close()
+                countdown.timer = nil
+            end
+            if countdown.win and vim.api.nvim_win_is_valid(countdown.win) then
+                vim.api.nvim_win_close(countdown.win, true)
+                countdown.win = nil
+            end
+            if countdown.buf and vim.api.nvim_buf_is_valid(countdown.buf) then
+                vim.api.nvim_buf_delete(countdown.buf, { force = true })
+                countdown.buf = nil
+            end
+            print("Countdown timer closed.")
+        else
+            -- Start a new countdown
+            local duration = tonumber(first_arg)
+            if duration then
+                -- Allow spaces in the description
+                local description = table.concat(vim.list_slice(args, 2), " ")
+                countdown.start(duration, description)
+            else
+                print("Invalid duration. Usage: :Countdown time [description]")
+            end
+        end
+    else
+        print("Usage: :Countdown time [description]")
+    end
+end, { nargs = "*" })
 
 vim.api.nvim_create_user_command('Task', function(args)
     timer_plugin.TaskCommand(args)
@@ -572,6 +736,7 @@ vim.api.nvim_create_autocmd("VimLeavePre", {
     callback = function()
         save_data()
     end,
+
 })
 
 return timer_plugin

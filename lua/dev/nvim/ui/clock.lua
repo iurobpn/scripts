@@ -88,6 +88,8 @@ function Clock.open(t)
     win:add_map('n', ':bnext', ':wincmd p<CR>', { noremap = true, silent = true })
     win:add_map('n', ':bprev', ':wincmd p<CR>', { noremap = true, silent = true })
     win:open()
+    vim.api.nvim_win_set_option(win.vid, 'winblend', 90) -- Set transparency (0-100, 0 is opaque, 100 is fully transparent)
+    vim.api.nvim_win_set_option(win.vid, 'winhl', 'NormalFloat:Normal,FloatBorder:Normal') -- Follow main colorscheme
     vim.cmd('wincmd p') -- clock is not focusable, so we need to focus the previous window
     -- win:params()
     Clock.update(win.buf, t)
