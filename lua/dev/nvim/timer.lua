@@ -150,7 +150,7 @@ function timer_plugin.TimerCommand(args)
             print("Usage: :Timer countdown <time>")
             return
         end
-        countdown.start(tonumber(time))
+        countdown.start(tonumber(time), args.fargs[3], args.fargs[4])
     elseif subcommand == 'pause' then
         timer_plugin.TimerPause()
     elseif subcommand == 'stop' then
@@ -162,9 +162,10 @@ function timer_plugin.TimerCommand(args)
     end
 end
 
-function countdown.start(duration_in, description, callback)
-    countdown.duration = duration_in
-    countdown.time_left = duration_in
+function countdown.start(duration, description, callback)
+    countdown.description = description
+    countdown.duration = duration
+    countdown.time_left = duration
     local buf = vim.api.nvim_create_buf(false, true) -- Create a new empty buffer
     local width = 5
     local height = 1
@@ -534,8 +535,10 @@ function countdown.update_popup(callback)
     if countdown.time_left <= 30 then
         if blink_state then
             vim.api.nvim_set_hl(0, "MyFloatText", { fg = dev.color.bright_red, bg = "None" }) -- bright_red for text
+            vim.api.nvim_set_hl(0, "MyFloatBorder", { fg = dev.color.bright_red, bg = "None" }) -- bright_red for text
         else
             vim.api.nvim_set_hl(0, "MyFloatText", { fg = "None", bg = "None" }) -- invisible text
+            vim.api.nvim_set_hl(0, "MyFloatBorder", { fg = "None", bg = "None" }) -- bright_red for text
         end
         blink_state = not blink_state
         vim.api.nvim_win_set_option(countdown.win, 'winhl', 'NormalFloat:MyFloatText,FloatBorder:MyFloatBorder')
@@ -544,17 +547,25 @@ function countdown.update_popup(callback)
     -- Stop the timer when time reaches 0
     if countdown.time_left <= 0 then
         countdown.timer:stop()
-        vim.api.nvim_win_close(countdown.win, true)
+        countdown.timer:close()
+        countdown.timer = nil
+
+        vim.api.nvim_set_hl(0, "MyFloatText", { fg = dev.color.bright_red, bg = "None" }) -- bright_red for text
+        vim.api.nvim_set_hl(0, "MyFloatBorder", { fg = dev.color.bright_red, bg = "None" }) -- bright_red for text
+        vim.api.nvim_win_set_option(countdown.win, 'winhl', 'NormalFloat:MyFloatText,FloatBorder:MyFloatBorder')
+        -- vim.api.nvim_win_close(countdown.win, true)
         if callback then
             callback()
         end
         -- Log the timer details if a description is provided
         if countdown.description and countdown.description ~= "" then
+            vim.notify("Countdown timer completed: " .. countdown.description)
             local log_entry = {
                 start_time = os.date("%Y-%m-%d %H:%M:%S", countdown.start_time),
                 duration = countdown.duration,
                 description = countdown.description,
             }
+
 
             -- Define log file path
             local log_file = vim.fn.stdpath('data') .. '/.tasks.countdown.json'
@@ -652,6 +663,15 @@ function timer_plugin.complete_timer_command(arg_lead, cmd_line, cursor_pos)
     end, options)
 end
 
+function countdown.complete(arg_lead, cmd_line, cursor_pos)
+    -- These are the valid completions for the command
+    local options = { "start", "close" }
+    -- Return all options that start with the current argument lead
+    return vim.tbl_filter(function(option)
+        return vim.startswith(option, arg_lead)
+    end, options)
+end
+
 -- Command registrations
 vim.api.nvim_create_user_command('Timer', function(args)
     timer_plugin.TimerCommand(args)
@@ -691,7 +711,7 @@ vim.api.nvim_create_user_command("Countdown", function(opts)
     else
         print("Usage: :Countdown time [description]")
     end
-end, { nargs = "*" })
+end, { nargs = "*" , complete = countdown.complete })
 
 vim.api.nvim_create_user_command('Task', function(args)
     timer_plugin.TaskCommand(args)
