@@ -1,3 +1,4 @@
+local lfs = require('lfs')
 local utils = require('utils')
 
 -- Helper function to check if a file exists
@@ -29,6 +30,13 @@ end
 function M.get_file_extension(path)
     local parts = utils.split(path, '.')
     return parts[#parts]
+end
+
+function is_dir(path)
+    return lfs.attributes(path, 'mode') == 'directory'
+end
+function is_file(path)
+    return lfs.attributes(path, 'mode') == 'file'
 end
 
 return M

@@ -7,9 +7,9 @@ local Project = {
     root_dir = nil,
     find_root = {},
     query_user_root = false,
-    main_root = '.root',
+    main_root = '',
     root_files = { -- not tested
-        'root.tex',
+        '.root', 'root.tex',
     },
     tables = {},
 }
@@ -129,7 +129,7 @@ function Project.find_root.root_files(file_list)
 
             if fs.file_exists(root_path) then
                 lfs.chdir(cdir)
-                return root_path:gsub('\n', '')
+                return current_dir:gsub('\n', '')
             end
         end
         -- Move to the parent directory
