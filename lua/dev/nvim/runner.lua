@@ -3,17 +3,24 @@
 -- Usage: :Run tab <command> -- new tab
 
 local M = {}
+M.options = {
+    'float',
+    'close-on-exit',
+    'right',
+    'left',
+    'up',
+    'down',
+    'in-place',
+    'start-suspended'
+}
 -- include directions for new panes
-function M.run_command(opts)
+function M.zellij_run(opts)
     local z_opts = {cmd = '', args = '', win_type = 'pane', dir = 'left'}
-
-
-                -- z_opts.args = ' --floating'
+    -- z_opts.args = ' --floating'
     -- the arguments before a '--' are options for the command
     -- if no '--' is present, the command is assumed to be a pane command
     local res = opts.args:match('%-%-')
     if res ~= nil then
-        print('matched: fargs: ', vim.inspect(opts.fargs))
         for i, opt in ipairs(opts.fargs) do
             if opt == '--' then
                 z_opts.cmd =  table.concat(opts.fargs, ' ', i+1)
@@ -34,38 +41,89 @@ function M.run_command(opts)
             end
         end
     else
-        print('it did not match: ' .. opts.args)
+        z_opts.args = '--floating'
         z_opts.cmd = opts.args
     end
     local cmd = 'zellij run ' .. z_opts.args .. ' -- ' .. z_opts.cmd
     -- if #z_opts.args > 0 then
-        -- cmd = cmd .. ' -- '  .. z_opts.cmd
+    -- cmd = cmd .. ' -- '  .. z_opts.cmd
     -- else
     --     cmd = cmd .. ' ' .. z_opts.cmd
     -- end
 
-    print('cmd: ', cmd)
-    local err, msg = pcall(os.execute, opts.cmd )
-    if err then
-        print('Error running command: ' .. msg)
-    else
-        print('Command ran successfully with: ', msg)
-    end
+    -- local status, err = pcall(os.execute, cmd)
+    local status, msg = M.run(cmd)
+    -- local st = vim.inspect(status)
+    -- local msg = vim.inspect(err)
+
+    -- if status then
+    --     print('Command ran successfully with result: ' .. msg .. ' status: ' .. st)
+    -- else
+    --     print('Error running with err: ' .. st .. ' msg: ' .. msg)
+    -- end
+    return status, msg
+end
+
+function M.input_complete(arg_lead, cmd_line, cursor_pos)
+    -- These are the valid completions for the command
+    -- Return all options that start with the current argument lead
+
+    local opt = vim.tbl_filter(function(option)
+        return vim.startswith(option, arg_lead)
+    end, M.options)
+    return table.concat(opt, ' ')
+end
+function M.complete(arg_lead, cmd_line, cursor_pos)
+    -- These are the valid completions for the command
+    -- Return all options that start with the current argument lead
+    return vim.tbl_filter(function(option)
+        return vim.startswith(option, arg_lead)
+    end, M.options)
+end
+
+M.ask_run = function()
+    vim.ui.input(
+        {
+            prompt = "Run command: ",
+            completion = 'lua,dev.nvim.runner.complete',
+        },
+        function(args)
+            vim.cmd('ZellijRun ' .. args)
+        end)
+
+ 
+
+    -- local args = vim.fn.input({prompt = "Run command: ", completion =  'custom,dev.nvim.runner.input_complete'})
+    -- vim.cmd('ZellijRun ' .. args)
 end
 
 -- create the command
-vim.api.nvim_create_user_command("Run", function(opts) M.run_command(opts) end, {nargs = "+", bang = true, desc = 'run a command iwith zellij in the current pane or a new pane (float or aside)'})
-
-vim.api.nvim_create_user_command(
-    'MyCommand',           -- Command name
-    function(opts)         -- Function to execute
-        -- Handle arguments here
-        print('Arguments received:')
-        for i, arg in ipairs(opts.fargs) do
-            print(string.format('Argument %d: %s', i, arg))
-        end
+vim.api.nvim_create_user_command("ZellijRun",
+    function(opts)
+        M.zellij_run(opts)
     end,
-    { nargs = '+' }        -- '+' means one or more arguments required
-)
+    {
+        nargs = "+",
+        complete = M.complete,
+        bang = true,
+        desc = 'run a command with zellij in the current pane or a new pane (float or aside)'
+    })
+
+vim.api.nvim_set_keymap('n', '<F5>', ':ZellijRun ', {noremap = true, silent = true})
+-- vim.ui.select()
+
+function M.run(cmd)
+    -- Execute the command and capture the output
+    local handle = io.popen(cmd)
+    if not handle then
+        print("Failed to execute command: " .. cmd)
+        return false
+    end
+    local result = handle:read("*a")
+    handle:close()
+
+    -- Return the output, trimming any trailing newlines
+    return true, result --:gsub("%s+$", "")
+end
 
 return M

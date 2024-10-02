@@ -391,11 +391,11 @@ end
 
 -- Example usage
 
-vim.api.nvim_set_keymap('n', '<Tab>',     ':Qtoggle<CR>',     { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<S-Left>',  ':Qprev<CR>',       { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<S-Right>', ':Qnext<CR>',       { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<F3>',      ':QrunCurrent<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<F4>',      ':QrunFzf<CR>',     { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<M-q>',     ':Qtoggle<CR>',     { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '[q',  ':Qprev<CR>',       { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', ']q', ':Qnext<CR>',       { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', '<F3>',      ':QrunCurrent<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', '<F4>',      ':QrunFzf<CR>',     { noremap = true, silent = true })
 
 vim.api.nvim_create_user_command("Qlink",       qfloat.qlink,        {})
 vim.api.nvim_create_user_command("QlinkClose",  qfloat.qclose_link,  {})
