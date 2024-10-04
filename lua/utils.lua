@@ -12,8 +12,8 @@ end
 
 
 function M.is_callable(f)
-    local fmt = getmetatable(f)
-    return type(f) == 'function' or (fmt ~= nil and fmt.__call ~= nil)
+    local fm = getmetatable(f)
+    return type(f) == 'function' or (fm ~= nil and fm.__call ~= nil)
 end
 
 function M.print_table(...)

@@ -169,10 +169,15 @@ function Query.open_context_window(filename, line_nr)
             },
             buffer = nvim.ui.views.get_scratch_opt(),
             border = 'single',
-            modifiable = false,
             content = content,
             options = {
-                winbar = 'file context on line ' .. line_nr,
+                buffer = {
+                    modifiable = false,
+                },
+                window = {
+                    wrap = false,
+                    winbar = 'file context on line ' .. line_nr,
+                },
             },
         }
     )

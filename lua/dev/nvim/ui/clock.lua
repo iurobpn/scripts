@@ -62,7 +62,6 @@ function Clock.open(t)
         {
             name = 'clock',
             focusable = false,
-            modifiable = true,
             style = 'minimal',
             -- unlisted buffer
             buffer = {
@@ -78,10 +77,13 @@ function Clock.open(t)
             border = 'rounded',
             position = 'top-right',
             options = {
-                buftype = 'nofile',
-                bufhidden = 'wipe',
-                buflisted = false,
-                swapfile = false,
+                buffer = {
+                    modifiable = true,
+                    buftype = 'nofile',
+                    bufhidden = 'wipe',
+                    buflisted = false,
+                    swapfile = false,
+                }
             }
         }
     )

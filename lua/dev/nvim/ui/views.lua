@@ -1,12 +1,8 @@
 local Window = require('dev.nvim.ui.float').Window
 local views = {}
 
-function views.new(pos, size)
+function views.new()
     local win = Window()
-    if pos ~= nil and size ~= nil then
-        win:config({position = pos, size = size})
-    end
-    win:open()
     return win
 end
 
@@ -17,44 +13,19 @@ function views.messages()
     win:config(
         {
             content = messages,
-            modifiable = false,
             buffer = {
                 scratch = true,
                 listed = false,
+            },
+            options = {
+                buffer = {
+                    modifiable = false,
+
+                }
             }
         })
     win:open()
     return win
-end
-
-function views.fit()
-    -- Get the lines of the buffer
-    local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-
-    -- Calculate the height (number of lines)
-    local height = #lines
-
-    -- Calculate the width (the length of the longest line)
-    local width = 0
-    for _, line in ipairs(lines) do
-        if #line > width then
-            width = #line
-        end
-    end
-
-    local win = Window.minimal()
-    win:config({
-        size = {
-            absolute = {
-                width = width,
-                height = height,
-            },
-            buffer = views.get_scratch_opt(),
-        },
-        modifiable = false,
-        current = false,
-    })
-
 end
 
 function views.get_scratch_opt()
@@ -94,7 +65,11 @@ function views.popup(...)
         position = 'center',
         anchor = 'NW',
         style = "minimal",
-        modifiable = false,
+        option = {
+            buffer = {
+                modifiable = true,
+            }
+        },
         cursor = false,
         current = false,
     }
@@ -121,7 +96,7 @@ end
 
 vim.api.nvim_create_user_command("WinNew",         'lua dev.nvim.ui.views.new()',          {})
 vim.api.nvim_create_user_command("WinOpenCurrent", 'lua dev.nvim.ui.views.open_current()', {})
-vim.api.nvim_create_user_command("WinMessages",    'lua dev.nvim.ui.views.messages()',     {})
+vim.api.nvim_create_user_command("Messages",    'lua dev.nvim.ui.views.messages()',     {})
 
 vim.api.nvim_set_keymap('n', '<LocalLeader>n', ':WinNew<CR>',         { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', 'gç',             ':WinOpenCurrent<CR>', { noremap = true, silent = true })

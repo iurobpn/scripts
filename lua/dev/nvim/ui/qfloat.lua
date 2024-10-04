@@ -94,7 +94,11 @@ function qfloat.qopen(...)
         row = 0.75,
         col = 0.25,
         current = true,
-        modifiable = false,
+        option = {
+            buffer = {
+                modifiable = false,
+            },
+        }
     })
     -- print('Window: ' .. inspect(win))
     win:add_map('n', '<CR>', ':QlinkClose<CR>', { noremap = true, silent = true })

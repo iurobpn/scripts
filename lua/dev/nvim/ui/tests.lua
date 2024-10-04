@@ -83,7 +83,11 @@ function popup(...)
         col = math.floor((ui_width - 3) / 2),
         style = 'minimal',
         border = 'rounded',
-        modifiable = false,
+        option = {
+            buffer = {
+                modifiable = false,
+            },
+        },
         buffer = {
             listed = false,
             scratch = true,

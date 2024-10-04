@@ -1,6 +1,7 @@
 local json = require('dkjson')
 local utils = require('utils')
 local fs = require('dev.lua.fs')
+
 local Project = {
     root_priority = {'main_root', 'git', 'root_files'},
     settings_file = '.settings.json',
@@ -12,6 +13,8 @@ local Project = {
         '.root', 'root.tex',
     },
     tables = {},
+    excepts = {},
+    initialized = false,
 }
 
 local mt = {}
@@ -72,6 +75,7 @@ function Project.init()
     vim.defer_fn(function()
         Project.save_settings()
     end, t_period)
+    Project.initialized = true
 end
 
 function Project.save_settings()
@@ -82,6 +86,24 @@ function Project.save_settings()
             settings[k] = v
         end
     end
+    local tables = {}
+    for name, tab in pairs(settings.tables) do
+        tables[name] = {}
+        for k, v in pairs(tab) do
+            if not utils.is_callable(k) and not utils.is_callable(v) then
+                tables[name][k] = v
+            end
+        end
+        for i, keys in ipairs(Project.excepts) do
+            for i, k in ipairs(keys) do
+                print(i)
+                utils.pprint(k, 'removing key: ')
+                tables[name][k] = nil
+            end
+        end
+    end
+    settings.tables = tables
+
     local fd = io.open(filename, 'w')
     if fd then
         fd:write(json.encode(settings))
@@ -90,7 +112,6 @@ function Project.save_settings()
         vim.notify('Error saving settings')
     end
 end
-
 
 function Project.find_root.main_root(main_root)
     if main_root then
@@ -141,8 +162,34 @@ function Project.find_root.root_files(file_list)
     return false
 end
 
-function Project.register(name,tab)
+function Project.register(name,tab,except)
     Project.tables[name] = tab
+    Project.excepts[name] = except
+end
+
+function Project.get(name)
+    if Project.tables[name] == nil then
+        if not Project.initialized then
+            Project.init()
+            return Project.get(name)
+        end
+
+        -- check if file exists
+
+        local filename = Project.root_dir .. '/' .. name
+        local fd = io.open(filename, 'r')
+        if fd then
+            local s = fd:read('*a')
+            local tab = json.decode(s)
+            Project.tables = tab
+            fd:close()
+            return Project.tables[name]
+        else
+            return nil
+        end
+    else
+        return Project.tables[name]
+    end
 end
 
 return Project;
