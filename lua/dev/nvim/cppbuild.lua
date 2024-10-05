@@ -3,6 +3,7 @@ local utils = require('utils')
 local cmake = require('dev.nvim.cmake')
 local prj = require('dev.lua.project')
 local fs = require('dev.lua.fs')
+local runner = require('dev.nvim.runner')
 
 local M = {
     configs = nil,
@@ -11,7 +12,9 @@ local M = {
     current = {
         config = nil,
         targets = nil,
-    }
+    },
+
+    cpus = 8,
 }
 
 M.get_config_names = function(configs)
@@ -64,7 +67,6 @@ M.init = function()
     -- and show the selected config and target
 
     if (not fs.file_exists('CMakePresets.json')) and (not fs.file_exists('CMakeUserPresets.json')) and (not fs.file_exists('CMakeLists.txt')) then
-        vim.notify('Not a c++ preject')
         return
     end
 
@@ -101,6 +103,45 @@ M.close = function()
     M.win = nil
 end
 
+M.clean = function()
+    local cmd = 'cmake --build --target clean --preset ' .. M.current.config.configure.name
+    runner.zellij_run(cmd)
+end
+
+M.reset = function()
+    local cmd = "~/git/nmpc-obs/cpp/scripts/reset_conan.fish"
+    runner.zellij_run(cmd)
+end
+
+-- Command selection function
+-- Timer command handler
+M.command = function(args)
+    local subcommand = args.fargs[1]
+    if not subcommand then
+        M.show()
+        return
+    end
+
+    if subcommand == 'build' then
+        M.build()
+    elseif subcommand == 'run' then
+        M.run()
+    elseif subcommand == 'configure' then
+        M.configure()
+    elseif subcommand == 'select' then
+        local this = args.fargs[2]
+        if this == 'config' then
+            M.select_config()
+        elseif this == 'target' then
+            M.select_target()
+        end
+    elseif subcommand == 'cmake' then
+        cmake.get_all()
+    else
+        vim.notify("Invalid command. Usage: :Timer <configure | build | run | select target | config | cmake get")
+    end
+end
+
 -- create a window to show the  selected config and target
 -- also, if the user wants to build (b), run (r) the build command
 -- and show the output in the window created, it can press b to build
@@ -113,17 +154,19 @@ M.show = function()
         config_name = M.current.config.configure.name
     end
     local targets = ''
+    M.current.targets = M.current.targets or {}
     for i, t in ipairs(M.current.targets) do
         targets = targets .. t
         if i < #M.current.targets then
             targets = targets .. ', '
         end
     end
+
     local content = {
-        'Config:  ' .. config_name,
-        'Targets: [' .. targets .. ']',
+        'Con(f)ig :  ' .. config_name,
+        'Targe(t)s: [' .. targets .. ']',
         '',
-        '(b)uild, (r)un, change (c)onfig, change (t)arget r (q)uit'
+        '| (b)uild  |  (r)un   | (c)onfigure | c(l)ean | (q)uit |',
     }
 
     local redraw = M.win ~= nil
@@ -131,6 +174,8 @@ M.show = function()
         M.win = views.new()
         M.win:config({
             content = content,
+            title = 'C++ Build',
+            title_pos = 'center',
             position = 'center',
             option = {
                 buffer = {
@@ -146,25 +191,88 @@ M.show = function()
     end
     M.win:fit()
 
-    vim.api.nvim_buf_set_keymap(0, 'n', 'b', ':lua require("dev.nvim.cmake").show()<CR>', {noremap = true, silent = true})
-    vim.api.nvim_buf_set_keymap(0, 'n', 'r', ':lua require("dev.nvim.cmake").run()<CR>', {noremap = true, silent = true})
-    vim.api.nvim_buf_set_keymap(0, 'n', 'c', ':lua require("dev.nvim.cppbuild").select_config()<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(0, 'n', 's',    ':lua require("dev.nvim.cmake").show()<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(0, 'n', 'r',    ':lua require("dev.nvim.cppbuild").run()<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(0, 'n', 'f', ':lua require("dev.nvim.cppbuild").select_config()<CR>', {noremap = true, silent = true})
     vim.api.nvim_buf_set_keymap(0, 'n', 't', ':lua require("dev.nvim.cppbuild").select_target()<CR>', {noremap = true, silent = true})
-    vim.api.nvim_buf_set_keymap(0, 'n', 'q', ':lua require("dev.nvim.cppbuild").close()<CR>', {noremap = true, silent = true})
-    vim.api.nvim_buf_set_keymap(0, 'n', '<Esc>', ':lua require("dev.nvim.cppbuild").close()<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(0, 'n', 'q',   ':lua require("dev.nvim.cppbuild").close()<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(0, 'n', 'c',    ':lua require("dev.nvim.cppbuild").configure()<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(0, 'n', 'b',    ':lua require("dev.nvim.cppbuild").build()<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(0, 'n', 'l',    ':lua require("dev.nvim.cppbuild").clean()<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(0, 'n', 'a',    ':lua require("dev.nvim.cppbuild").reset()<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(0, 'n', '<Esc>',':lua require("dev.nvim.cppbuild").close()<CR>', {noremap = true, silent = true})
 end
 
-vim.api.nvim_create_user_command("CppShow", 'lua dev.nvim.cppbuild.show()', {})
+M.redraw = function()
+    if M.win == nil then
+        return
+    end
+    M.win:redraw()
+end
+
+vim.api.nvim_create_autocmd("VimResized", {
+  callback = M.redraw
+})
+
+M.configure = function()
+    local cmd = 'cmake --preset ' .. M.current.config.configure.name
+    vim.notify('cmd: ' .. cmd)
+    
+    runner.zellij_run(cmd)
+end
+
+M.build = function()
+    local cmd = 'cmake --build '
+
+    if M.current.targets ~= nil and #M.current.targets >0 then
+        cmd = cmd .. ' --target ' .. table.concat(M.current.targets, ' ')
+    end
+    if M.cpus ~= nil and M.cpus > 1 then
+        cmd = cmd .. ' --parallel ' .. M.cpus
+    end
+    cmd = cmd .. ' --preset ' .. M.current.config.configure.name
+    vim.notify('cmd: ' .. cmd)
+    runner.zellij_run(cmd)
+end
+
+M.run = function()
+    if M.current.targets == nil or #M.current.targets == 0 then
+        M.select_target()
+    end
+
+    local cmd = M.current.config.configure.build_dir .. '/' .. M.current.targets[1]
+    runner.zellij_run(cmd)
+end
+
+M.cmake_get_all = function()
+    M.configs, M.targets = cmake.get_all()
+    M.current.config = M.configs[2]
+    M.current.targets = {}
+end
+function M.complete_command(arg_lead, cmd_line, cursor_pos)
+    -- These are the valid completions for the command
+    local options = { "run", "build", "configure", "cmake", "get", "target", "config", "select" }
+    -- Return all options that start with the current argument lead
+    return vim.tbl_filter(function(option)
+        return vim.startswith(option, arg_lead)
+    end, options)
+end
+
+vim.api.nvim_create_user_command('Cpp', function(args)
+    M.command(args)
+end, { nargs = '*' , complete = M.complete_command })
 
 M.print = function()
     print('Config: ', vim.inspect(M.current.config))
     print('Target: ', vim.inspect(M.current.targets))
 end
+
 -- M.win = views.new()
 -- M.win:config({
 --     content = 'Hello World',
 -- })
 -- M.win:open()
+
 M.init()
 
 

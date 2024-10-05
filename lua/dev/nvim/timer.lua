@@ -676,6 +676,7 @@ end
 vim.api.nvim_create_user_command('Timer', function(args)
     timer_plugin.TimerCommand(args)
 end, { nargs = '*' , complete = timer_plugin.complete_timer_command })
+
 -- Command to start or control the countdown timer
 vim.api.nvim_create_user_command("Countdown", function(opts)
     local args = vim.split(opts.args, " ", { plain = true, trimempty = true })

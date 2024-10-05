@@ -42,7 +42,7 @@ end
 
 function M.get_configure_preset(preset)
     return {
-        name = preset.configurePresets[1].displayName,
+        name = preset.configurePresets[1].name,
         description = preset.configurePresets[1].description,
         build_dir = M.get_build_dir(preset),
         build_type = M.get_build_type(preset),
@@ -61,7 +61,7 @@ M.get_configs = function(source_dir)
     local presets = M.decode(M.get_preset_file(source_dir))
     
     for _, file in ipairs(presets.include) do
-        if file:match('cmake') == nil then
+        if file:match('cmake') == nil and file:match('TracyClient') == nil then
             file = source_dir .. '/' .. file
             local preset = {
                 file = file
@@ -74,6 +74,7 @@ M.get_configs = function(source_dir)
 
             preset.build = M.get_build_preset(js)
             preset.configure = M.get_configure_preset(js)
+            print('Config name: '.. preset.configure.name)
 
             table.insert(configs, preset)
         end

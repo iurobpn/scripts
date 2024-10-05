@@ -97,7 +97,7 @@ local Window = {
             swapfile = true,
             buftype = '', -- set the buffer type prompt and terminal are interesting types
             bufhidden = '',
-            bulisted = true,
+            buflisted = true,
         }
 
     },

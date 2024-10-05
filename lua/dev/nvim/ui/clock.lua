@@ -79,7 +79,7 @@ function Clock.open(t)
             options = {
                 buffer = {
                     modifiable = true,
-                    buftype = 'nofile',
+                    buftype = 'nowrite',
                     bufhidden = 'wipe',
                     buflisted = false,
                     swapfile = false,

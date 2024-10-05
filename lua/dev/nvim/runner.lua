@@ -15,11 +15,15 @@ M.options = {
 }
 -- include directions for new panes
 function M.zellij_run(opts)
+    if type(opts) == 'string' then
+        opts = {args = opts}
+        opts.fargs = vim.split(opts.args, ' ')
+    end
     local z_opts = {cmd = '', args = '', win_type = 'pane', dir = 'left'}
     -- z_opts.args = ' --floating'
     -- the arguments before a '--' are options for the command
     -- if no '--' is present, the command is assumed to be a pane command
-    local res = opts.args:match('%-%-')
+    local res = opts.args:match(' %-%- ')
     if res ~= nil then
         for i, opt in ipairs(opts.fargs) do
             if opt == '--' then
