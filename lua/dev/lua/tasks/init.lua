@@ -6,9 +6,13 @@ local M = {
     views = require('dev.lua.tasks.views'),
 }
 
+local tasks = {
+    json = nil,
+    tab = nil
+}
+M.tasks = tasks
 -- make recurrent taks done and add completion date
 function M.recurrent_done()
-    print('recurrent_done() called')
     local cursor_orig = vim.api.nvim_win_get_cursor(0)
     -- get current line from buffer
     local line = vim.api.nvim_get_current_line()
@@ -63,5 +67,13 @@ end
 M.search = function(tag, ...)
     return M.views.search(tag, ...)
 end
+
+-- Add a command to run index function
+vim.api.nvim_create_user_command('Index', 'lua require"dev.lua.tasks.indexer".index()',
+    {
+        nargs = 0,
+        desc = 'Index note tasks  and save into json file'
+    }
+)
 
 return M

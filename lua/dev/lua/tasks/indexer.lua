@@ -2,12 +2,14 @@ require('class')
 
 local utils = require'utils'
 local Sql = require('dev.lua.sqlite').Sql
+local json = require('cjson')
 
 local parser = require('dev.lua.tasks.parser')
 
 local M = { 
     filename = 'tasks.db',
-    path = '/home/gagarin/sync/obsidian/.tasks',
+    filepath = '.tasks',
+    path = '/home/gagarin/sync/obsidian',
     sql = nil,
 }
 
@@ -29,6 +31,7 @@ CREATE TABLE IF NOT EXISTS tags (
     tag TEXT,
     FOREIGN KEY(task_id) REFERENCES tasks(id)
 );]]
+
     local create_table_parameters = [[
 CREATE TABLE IF NOT EXISTS parameters (
     task_id INTEGER,
@@ -82,7 +85,6 @@ function M:insert(task)
     end
 end
 
-
 -- Example usage
 -- local output = get_command_output("fish -c 'echo Hello from Fish!'")
 -- read and parse tasks from the notes to a lua table
@@ -94,7 +96,6 @@ function M:read_notes(folder)
     end
 
     local raw_tasks = utils.get_command_output("fish -c 'find_tasks.fish --dir=" .. self.path .. "'")
-    self.sql:set_path(self.path)
 
     if raw_tasks == nil then
         print('find_tasks returned nil')
@@ -106,7 +107,38 @@ function M:read_notes(folder)
         print('splitted tasks are nil')
         return
     end
+    print('Found ' .. #raw_tasks .. ' raw tasks')
 
+    local tasks = {}
+    for _, line in ipairs(raw_tasks) do
+        local task = parser.parse(line)
+        if task == nil then
+            print('parser failed to parse the task')
+        else
+            table.insert(tasks, task)
+        end
+    end
+
+    return tasks
+end
+
+function M:to_json(tasks)
+    local json_tasks = json.encode(tasks)
+    local json_file = self.path .. '/' .. self.filepath .. '/tasks.json'
+    local fd = io.open( json_file, 'w')
+    if fd == nil then
+        print('Failed to open ' .. json_file)
+        return
+    end
+    print('Writing tasks to ' .. json_file)
+    print(json_tasks)
+    fd:write(json_tasks)
+    fd:close()
+    print('Tasks have been indexed')
+end
+
+function M:to_sql(raw_tasks)
+    self.sql:set_path(self.path)
     self.sql:connect()
     self:create_table()
 
@@ -127,15 +159,16 @@ local mod = {
 }
 
 Thread = require'thread'
-function mod.tosql()
+function mod.index()
     local thread = Thread(
         function()
-            local indexer = require('dev.lua.tasks.indexer').Indexer()
-            indexer:read_notes()
+            local indexer = require'dev.lua.tasks.indexer'.Indexer()
+            local tasks = indexer:read_notes()
+            print('Indexing ' .. #tasks .. ' tasks')
+            indexer:to_json(tasks)
         end
     )
     thread:start()
-
 end
 
 return mod

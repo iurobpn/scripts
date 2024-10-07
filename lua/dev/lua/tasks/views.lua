@@ -3,6 +3,7 @@ local nvim = {
     utils = require('dev.nvim.utils')
 }
 
+local json = require('cjson')
 local float = require('dev.nvim.ui.float')
 local query = require('dev.lua.tasks.query')
 local utils = require('utils')
@@ -11,6 +12,7 @@ local pv = require('dev.nvim.ui.fzf_previewer')
 require('class')
 
 local M = {
+
 
 }
 
@@ -341,6 +343,23 @@ function M.highlight_tags(bufnr)
             end
         until start_pos == 0 and end_pos == 0  -- Stop if no more matches are found
     end
+end
+
+M.init = function()
+    -- dev.lua.tasks.indexer.index()
+    M.tasks = M.load_tasks()
+end
+
+M.load_tasks = function()
+    local json_file = M.path .. '/' .. M.filepath .. '/tasks.json'
+    local fd = io.open(json_file, 'r')
+    if fd == nil then
+        print('Failed to open ' .. json_file)
+        return
+    end
+    M.json_tasks = fd:read('*a')
+    
+    M.tasks = json.decode(json_tasks)
 end
 
 -- create_command

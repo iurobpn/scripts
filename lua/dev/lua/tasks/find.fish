@@ -21,14 +21,13 @@ function find_tasks
         echo "Usage: search_tasks [-w] [-f] [-n] [-d directory] [search patterns]"
         return
     else
-    # No option specified, search for all tasks
+        # No option specified, search for all tasks
         set pattern '\- *\[ *[ a-z] *\]'
     end
 
     if set -q _flag_d
         # Search in the specified directory
         set nodes_dir $_flag_d
-        echo "Searching in $_flag_d"
     end
     # Any remaining arguments are treated as search patterns (hashtags or other filters)
     set search_args $argv
@@ -36,7 +35,7 @@ function find_tasks
     # Perform the search using ag with the specified pattern and additional arguments
     if test -n "$pattern"
         if test -n "$search_args"
-            ag "$pattern" $nodes_dir | grep $search_args
+            ag "$pattern" -g ".md" $nodes_dir | grep $search_args
         else
             ag "$pattern" $nodes_dir
         end

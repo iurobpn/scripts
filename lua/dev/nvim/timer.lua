@@ -169,7 +169,7 @@ function countdown.start(duration, description, callback)
     local buf = vim.api.nvim_create_buf(false, true) -- Create a new empty buffer
     local width = 5
     local height = 1
-    local row = math.floor((vim.o.lines - height) / 2)
+    local row = math.floor(1) -- vim.o.lines
     local col = math.floor((vim.o.columns - width) / 2)
 
     vim.api.nvim_set_hl(0, "MyFloatBorder", { fg = dev.color.bright_blue, bg = "None" }) -- bright_red for the border
@@ -517,6 +517,7 @@ function timer_plugin.create_popup()
     timer_plugin.update_popup()
 end
 local blink_state = false
+
 function countdown.update_popup(callback)
     if not countdown.win or not vim.api.nvim_win_is_valid(countdown.win) then
         return
@@ -656,7 +657,7 @@ end
 
 function timer_plugin.complete_timer_command(arg_lead, cmd_line, cursor_pos)
     -- These are the valid completions for the command
-    local options = { "new", "list", "del", "done", "import", "export", "countdown" }
+    local options = { "new", "list", "del", "done", "import", "export", "countdown", "toggle" }
     -- Return all options that start with the current argument lead
     return vim.tbl_filter(function(option)
         return vim.startswith(option, arg_lead)
