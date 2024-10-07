@@ -134,15 +134,14 @@ function M.set_custom_hl(buf, line)
 end
 
 function M.to_lines(tasks)
-    local tasks_qf = M.format_tasks(tasks)
+    local _, files_qf = M.format_tasks(tasks)
     local out = {}
-    local path = query.Query.path
-    for _, task in pairs(tasks_qf) do
+    for _, file_qf in pairs(files_qf) do
         -- local file = task.filename:sub(path:len()+1, task.filename:len())
         -- if file[1] == '/' then
         --     file = file.sub(2, file:len())
         -- end
-        table.insert(out, string.format('%s:%d:', task.filename, task.lnum))
+        table.insert(out, string.format('%s:%d:', file_qf.file, file_qf.line))
     end
     vim.cmd('lcd ' .. query.Query.path)
 
@@ -250,9 +249,13 @@ M.query_tag = function(tag, ...)
     return tasks
 end
 
-function M.fzf_query(tag, ...)
-    local tasks = M.query_tag(tag, ...)
-    local str_tasks = M.to_lines(tasks)
+function M.select(query)
+    return M.picker.select_tasks(query)
+end
+
+function M.fzf_query(tasks, ...)
+    -- local tasks = M.query_tag(tag, ...)
+    -- local str_tasks = M.to_lines(tasks)
     local opts = {...}
     opts = opts[1] or {}
 
@@ -269,7 +272,7 @@ function M.fzf_query(tag, ...)
         end
     end
 
-    fzf_lua.fzf_exec(str_tasks, {
+    fzf_lua.fzf_exec(tasks, {
         previewer = pv.Previewer,
         prompt    = 'Tasks❯ ',
         cwd       = query.Query.path,
@@ -361,6 +364,12 @@ M.load_tasks = function()
     
     M.tasks = json.decode(json_tasks)
 end
+M.command = function(args)
+    local cmd = args[1]
+    if cmd == 'open' then
+        M.open_window_by_tag(args[2])
+    end
+end
 
 -- create_command
 vim.api.nvim_create_user_command('TaskOpenTagDue', 'lua dev.lua.tasks.views.open_due_window(<args>)', {
@@ -371,6 +380,9 @@ vim.api.nvim_create_user_command('TaskTagDue', 'lua dev.lua.tasks.views.fzf_quer
 })
 vim.api.nvim_create_user_command('TaskTagSearch', 'lua dev.lua.tasks.views.fzf_query(<args>)', {
     nargs = 1,
+})
+vim.api.nvim_create_user_command('Task', 'lua dev.lua.tasks.views.command(<args>)', {
+    nargs = '*',
 })
 vim.api.nvim_set_keymap('n', '<F11>', ':TaskTagSearch ', {noremap = true, silent = true})
 vim.api.nvim_set_keymap('n', '<F9>', ':TaskTagDue ', {noremap = true, silent = true})

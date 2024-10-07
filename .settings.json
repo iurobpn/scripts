@@ -1,1 +1,1 @@
-{"settings_file":".settings.json","query_user_root":false,"excepts":[],"initialized":true,"tables":[],"root_dir":"/home/gagarin/git/scripts","root_priority":["main_root","git","root_files"],"main_root":".root","root_files":["root.tex"]}
+{"excepts":[],"tables":[],"root_dir":"/home/gagarin/git/scripts","initialized":true,"root_priority":["main_root","git","root_files"],"main_root":".root","root_files":["root.tex"],"settings_file":".settings.json","query_user_root":false}

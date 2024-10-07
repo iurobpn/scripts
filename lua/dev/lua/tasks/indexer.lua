@@ -69,7 +69,6 @@ function M:insert(task)
     -- Get the last inserted task_id
     local task_id = self.sql:query("SELECT last_insert_rowid()")
 
-    utils.pprint(task)
     -- Insert tags
     for _, tag in ipairs(task.tags) do
         local insert_tag_sql = string.format("INSERT INTO tags (task_id, tag) VALUES (%d, '%s');", task_id, tag)
@@ -96,6 +95,7 @@ function M:read_notes(folder)
     end
 
     local raw_tasks = utils.get_command_output("fish -c 'find_tasks.fish --dir=" .. self.path .. "'")
+    local id_counter =  1
 
     if raw_tasks == nil then
         print('find_tasks returned nil')
@@ -107,7 +107,6 @@ function M:read_notes(folder)
         print('splitted tasks are nil')
         return
     end
-    print('Found ' .. #raw_tasks .. ' raw tasks')
 
     local tasks = {}
     for _, line in ipairs(raw_tasks) do
@@ -115,6 +114,8 @@ function M:read_notes(folder)
         if task == nil then
             print('parser failed to parse the task')
         else
+            task.id = id_counter
+            id_counter = id_counter + 1
             table.insert(tasks, task)
         end
     end
@@ -124,6 +125,7 @@ end
 
 function M:to_json(tasks)
     local json_tasks = json.encode(tasks)
+
     local json_file = self.path .. '/' .. self.filepath .. '/tasks.json'
     local fd = io.open( json_file, 'w')
     if fd == nil then
@@ -131,10 +133,9 @@ function M:to_json(tasks)
         return
     end
     print('Writing tasks to ' .. json_file)
-    print(json_tasks)
     fd:write(json_tasks)
     fd:close()
-    print('Tasks have been indexed')
+    print('Tasks indexing completed')
 end
 
 function M:to_sql(raw_tasks)
@@ -164,7 +165,6 @@ function mod.index()
         function()
             local indexer = require'dev.lua.tasks.indexer'.Indexer()
             local tasks = indexer:read_notes()
-            print('Indexing ' .. #tasks .. ' tasks')
             indexer:to_json(tasks)
         end
     )

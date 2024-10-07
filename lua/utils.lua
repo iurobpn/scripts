@@ -23,8 +23,11 @@ function M.print_table(...)
     -- print(inspect(t,{depth=3}))
 end
 
-function M.pprint(obj,s)
-    print(fmt('%s%s', s or '', insp.inspect(obj, {depth=3})))
+function M.pprint(obj,s,...)
+    local opt = {...}
+    opt = opt[1] or {}
+    
+    print(fmt('%s%s', s or '', insp.inspect(obj, {depth = opt.depth or 3})))
 end
 
 function M.numel(t)

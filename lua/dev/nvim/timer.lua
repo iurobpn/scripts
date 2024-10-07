@@ -1,6 +1,6 @@
 -- timer_plugin.lua
 local timer_plugin = {
-    filename = "tasks.json",
+    filename = "tasks_pl.json",
 
 }
 -- Global variables to manage the timer and window

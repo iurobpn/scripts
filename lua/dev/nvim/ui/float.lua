@@ -377,6 +377,14 @@ function Window.get_window(vid)
 end
 function Window.get_win()
     local vid = vim.api.nvim_get_current_win()
+    if not Window.is_floating(vid) then
+        vim.notify("Current window is not a float.")
+        return
+    end
+    if Window.floats[vid] == nil then
+        vim.notify("Current window is not registered as a float.")
+        return
+    end
 
     return Window.floats[vid]
 end
@@ -474,7 +482,7 @@ function Window.open_link()
     local win = Window.get_win()
     local linenr = vim.fn.line('.')
     win:close()
-    Window.floats[win.vid] = nil
+    
     vim.cmd.e(win.map_file_line[linenr].file)
     vim.api.nvim_win_set_cursor(0, {win.map_file_line[linenr].line,0})
 end

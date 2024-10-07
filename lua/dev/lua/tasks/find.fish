@@ -35,9 +35,9 @@ function find_tasks
     # Perform the search using ag with the specified pattern and additional arguments
     if test -n "$pattern"
         if test -n "$search_args"
-            ag "$pattern" -g ".md" $nodes_dir | grep $search_args
+            rg "$pattern" --glob '*.md' -n $nodes_dir | grep $search_args
         else
-            ag "$pattern" $nodes_dir
+            rg "$pattern" --glob '*.md' -n $nodes_dir
         end
     else
         echo "Please specify a valid option: -w (work in progress), -d (done), -n (not started)"

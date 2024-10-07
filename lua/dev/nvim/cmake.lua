@@ -25,7 +25,7 @@ end
 function M.decode(file)
     local fd = io.open(file, 'r')
     if not fd then
-        error(string.format("Could not parse %s", file))
+        error(string.format("Could not open file %s", file))
     end
     local str = fd:read('*a')
     return json.decode(str)
