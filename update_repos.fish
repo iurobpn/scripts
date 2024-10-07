@@ -225,11 +225,18 @@ function sync_repo
 end
 
 function update_ufmg
+    argparse --name=check_repos 'r/remote=' -- $argv
+    set -l remote
+    if set -q _flag_r
+        set remote $_flag_r
+    else
+        set remote origin
+    end
     set -l GIT $HOME/git
     set -l repos CGAL-matlab ProVANT-Simulator_Developer armadillo-pmr cpp_tests data_structures dotfiles matlab-dev nmpc-obs ocpsol pres-research prov_sim_configs pylattes reports papers scripts sets-obs svgs thesis site_macro
     # set repos (echo $repos |  sed -e 's#\([a-zA-Z\._0-9\-]\+\)#/home/gagarin/git/\1#g')
     # echo "updating repos: $repos"
-    check_repos $repos -r origin
+    check_repos $repos -r $remote
 end
 
 
