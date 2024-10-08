@@ -312,6 +312,11 @@ function M.open_window(tag,due)
         size = {
             flex = true,
         },
+        option = {
+            buffer = {
+                modifiable = true,
+            }
+        },
     })
 
     win:open()
@@ -397,9 +402,9 @@ M.init = function()
     M.tasks = M.load_tasks()
 end
 
-function M.open_current_tag()
-    local tag = vim.fn.expand('<cWORD>')
-    tag = tag:match('#(%w+)')
+function M.open_current_tag(tag)
+    local tag = tag or vim.fn.expand('<cWORD>')
+    tag = tag:match('(#%w+)')
     if tag == nil then
         vim.notify('No tag found')
         return
@@ -416,12 +421,12 @@ M.load_tasks = function()
     end
     M.json_tasks = fd:read('*a')
     
-    M.tasks = json.decode(json_tasks)
+    M.tasks = json.decode(M.json_tasks)
 end
 
 function M.complete(arg_lead, cmd_line, cursor_pos)
     -- These are the valid completions for the command
-    local options = { "due", "#main", "#today", "#important", "#res", "#research" }
+    local options = { "due",  "current", "#main", "#today", "#important", "#res", "#research" }
     -- Return all options that start with the current argument lead
     return vim.tbl_filter(function(option)
         return vim.startswith(option, arg_lead)
@@ -432,6 +437,8 @@ M.command = function(args)
     local cmd = args.fargs[1]
     if cmd == 'due' then
         M.open_window(args.fargs[2],true)
+    elseif cmd == 'current' then
+        M.open_current_tag()
     else
         M.open_window(args.fargs[2])
     end
@@ -450,6 +457,7 @@ vim.api.nvim_create_user_command('TaskTagSearch', 'lua dev.lua.tasks.views.fzf_q
 vim.api.nvim_create_user_command('Tasks', function(args)
     M.command(args)
 end, { nargs = '*' , complete = M.complete})
+
 vim.api.nvim_set_keymap('n', '<F11>', ':TaskTagSearch ', {noremap = true, silent = true})
 vim.api.nvim_set_keymap('n', '<F9>', ':TaskTagDue ', {noremap = true, silent = true})
 vim.api.nvim_set_keymap('n', '<F9>', ':Tasks ', {noremap = true, silent = true})

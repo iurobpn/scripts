@@ -124,6 +124,8 @@ M.command = function(args)
 
     if subcommand == 'build' then
         M.build()
+    elseif subcommand == 'debug' then
+        M.debug()
     elseif subcommand == 'run' then
         M.run()
     elseif subcommand == 'configure' then
@@ -235,6 +237,14 @@ M.build = function()
     runner.zellij_run(cmd)
 end
 
+M.debug = function()
+    if M.current.targets == nil or #M.current.targets == 0 then
+        M.select_target()
+    end
+
+    local cmd = 'gdb ' .. M.current.config.configure.build_dir .. '/' .. M.current.targets[1]
+    runner.zellij_run(cmd)
+end
 M.run = function()
     if M.current.targets == nil or #M.current.targets == 0 then
         M.select_target()
@@ -251,7 +261,7 @@ M.cmake_get_all = function()
 end
 function M.complete_command(arg_lead, cmd_line, cursor_pos)
     -- These are the valid completions for the command
-    local options = { "run", "build", "configure", "cmake", "get", "target", "config", "select" }
+    local options = { "run", "build", "configure", "cmake", "get", "target", "config", "select", "debug" }
     -- Return all options that start with the current argument lead
     return vim.tbl_filter(function(option)
         return vim.startswith(option, arg_lead)
@@ -261,6 +271,8 @@ end
 vim.api.nvim_create_user_command('Cpp', function(args)
     M.command(args)
 end, { nargs = '*' , complete = M.complete_command })
+
+vim.api.nvim_set_keymap('n', '<F10>', ':Cpp<CR>', { noremap = true, silent = true })
 
 M.print = function()
     print('Config: ', vim.inspect(M.current.config))
