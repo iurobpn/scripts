@@ -74,7 +74,7 @@ function Query:select_by_tag_and_due(tag, order)
     ORDER BY p.value %s;
 ]], tag, (order or ''))
 
-    return self:select_tasks(query)
+    return self:select(query)
 end
 
 function Query:select_by_tag(tag)
@@ -93,10 +93,10 @@ function Query:select_by_tag(tag)
     if tag ~= nil then
         query = query .. string.format([[ and tg.tag = '%s']], tag)
     end
-    return self:select_tasks(query .. ';')
+    return self:select(query .. ';')
 end
 
-function Query:select_tasks(query)
+function Query:select(query)
     self.sql:connect()
 
     local tasks = {}

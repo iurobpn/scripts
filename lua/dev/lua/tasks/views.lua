@@ -177,18 +177,17 @@ end
 
 function M.format_tasks(tasks_in)
     local tasks = {}
-    local files = {}
-    for _, task  in pairs(tasks_in) do
+    local file_line = {}
+    for _, task  in ipairs(tasks_in) do
         if task.line_number == nil then
             error('task.line_number is nil')
         end
         table.insert(tasks, '- [ ] ' .. (task.description or '') .. ' ' .. M.params_to_string(task.parameters) .. ' ' .. M.tags_to_string(task.tags))
-        table.insert(files, {file = task.filename, line = task.line_number})
+        table.insert(file_line, {file = task.filename, line = task.line_number})
     end
 
-    return tasks, files
+    return tasks, file_line
 end
-
 
 function M.query_by_tag_and_due(tag)
     local q = query.Query()
@@ -250,12 +249,12 @@ M.query_tag = function(tag, ...)
 end
 
 function M.select(query)
-    return M.picker.select_tasks(query)
+    return M.picker.select(query)
 end
 
 function M.fzf_query(tasks, ...)
     -- local tasks = M.query_tag(tag, ...)
-    -- local str_tasks = M.to_lines(tasks)
+    tasks = M.to_lines(tasks)
     local opts = {...}
     opts = opts[1] or {}
 
@@ -288,6 +287,15 @@ function M.fzf_query(tasks, ...)
     -- require'fzf-lua'.files(str_tasks, task_query_opts)
 end
 
+function M.complete(arg_lead, cmd_line, cursor_pos)
+    -- These are the valid completions for the command
+    local options = { "due", "tag", "duetag", "query" }
+    -- Return all options that start with the current argument lead
+    return vim.tbl_filter(function(option)
+        return vim.startswith(option, arg_lead)
+    end, options)
+end
+
 function M.open_due_window(tag)
     local tasks_tb = M.query_by_tag_and_due(tag)
     local tasks_line, files = M.format_tasks(tasks_tb)
@@ -306,6 +314,31 @@ function M.open_due_window(tag)
         -- M.set_custom_hl(win.buf, i)
         win:set_buf_links(files)
     end
+    vim.opt.wrap = false
+    vim.opt.number = false
+    vim.opt.relativenumber = false
+    M.highlight_tags(win.buf)
+    local opts = vim.api.nvim_win_get_config(win.vid)
+
+    -- Reapply the configuration to the floating window
+    vim.cmd.hi('clear FloatTitle')
+    -- win.buffer
+end
+
+function M.open_window(tasks, title)
+    local tasks_str, file_lines = M.format_tasks(tasks)
+    local win = dev.nvim.ui.views.scratch(tasks_str, {
+        title = title,
+        title_pos = 'center',
+        size = {
+            flex = true,
+        },
+    })
+
+    win:open()
+    vim.cmd("set ft=markdown")
+    vim.api.nvim_win_set_option(0, 'winhighlight', 'Normal:Normal')
+    win:set_buf_links(file_lines)
     vim.opt.wrap = false
     vim.opt.number = false
     vim.opt.relativenumber = false
@@ -364,10 +397,56 @@ M.load_tasks = function()
     
     M.tasks = json.decode(json_tasks)
 end
+M.search_and_float = function(tag)
+    local tasks = M.query_by_tag_and_due(tag)
+    M.open_window(tasks, tag .. ' tasks')
+end
+
 M.command = function(args)
-    local cmd = args[1]
-    if cmd == 'open' then
-        M.open_window_by_tag(args[2])
+    local subcommand = args.fargs[1]
+    if not subcommand then
+        print("Usage: :Tasks <float|tag|tagdue>")
+        return
+    end
+    local arg = args.args
+    local due = false
+    if string.match(arg,'due') then
+        arg:gsub('due', '')
+        due = true
+    end
+    arg = utils.split(arg, ' ')
+    if arg == nil then
+        print("Usage: :Tasks <tag> (nil)")
+        return
+    elseif #arg == 0 then
+        print("Usage: :Tasks <tag> (empty)")
+        return
+    else
+        table.remove(arg, 1)
+    end
+
+    if subcommand == 'float' then
+        local tag = arg[1]
+        if not tag then
+            print("Usage: :Timer start <task_id>")
+            return
+        end
+        M.search_and_float(tag, due)
+    elseif subcommand == 'tag' then
+        local tag = arg[1]
+        if not tag then
+            print("Usage: :Tasks tag <tag>")
+            return
+        end
+        M.search_and_float(tag, due)
+    elseif subcommand == 'query' then
+        query.list.select()
+    else
+        local tag = arg[1]
+        if not tag then
+            tag = subcommand
+        end
+        M.search_and_float(tag, due)
     end
 end
 
@@ -381,9 +460,12 @@ vim.api.nvim_create_user_command('TaskTagDue', 'lua dev.lua.tasks.views.fzf_quer
 vim.api.nvim_create_user_command('TaskTagSearch', 'lua dev.lua.tasks.views.fzf_query(<args>)', {
     nargs = 1,
 })
-vim.api.nvim_create_user_command('Task', 'lua dev.lua.tasks.views.command(<args>)', {
-    nargs = '*',
-})
+vim.api.nvim_create_user_command('Tasks',
+    function(args)
+        M.command(args)
+    end,
+    { nargs = '*', complete = M.complete}
+)
 vim.api.nvim_set_keymap('n', '<F11>', ':TaskTagSearch ', {noremap = true, silent = true})
 vim.api.nvim_set_keymap('n', '<F9>', ':TaskTagDue ', {noremap = true, silent = true})
 

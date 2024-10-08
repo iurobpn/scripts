@@ -15,7 +15,7 @@ local Window = {
     -- static ----------------------
     id_count = 0,
     floats = {}, -- list of open floats, indexed by the wim win id
-    hidden = {}, -- list of windows close using toggle, indexed by the idx inner index
+    hidden = {}, -- list of hidden floats, indexed by the wim win id
     --------------------------------
 
     vid = nil, -- vim id
@@ -49,6 +49,7 @@ local Window = {
 
     content = '',
     filename = '',
+
     -- zindex = 50,
     -- external = false,
     title = '',
@@ -107,8 +108,8 @@ local Window = {
 
 function Window.set_link_ns()
     local ns_id = vim.api.nvim_create_namespace('dev_float')
-    if Window.nslink == nil then
-        Window.ns['link'] = { -- highlight namespaces
+    if Window.ns.link == nil then
+        Window.ns.link = { -- highlight namespaces
             id = ns_id,
             name = 'dev_float',
             normal = {
@@ -500,14 +501,16 @@ function Window:set_buf_links(map_file_line)
     local link = Window.ns.link
 
     local cursor_line = vim.api.nvim_win_get_cursor(0)[1] - 1
-    local N = utils.numel(map_file_line)
-    for i=0,N-1 do
-        -- vim.api.nvim_buf_add_highlight(self.buf, link.id, link.normal.group, i, 0, -1)
-        vim.api.nvim_buf_clear_namespace(self.buf, link.id, i, i+1)
-        -- vim.fn.matchadd(link_group, '\\%' .. i .. 'l')
-    end
+
+    -- local N = utils.numel(map_file_line)
+    -- for i=0,N-1 do
+        -- vim.api.nvim_buf_clear_namespace(self.buf, link.id, i, i+1)
+    -- end
+
+    vim.api.nvim_buf_clear_namespace(self.buf, link.id, 0, -1)
 
     vim.api.nvim_buf_add_highlight(self.buf, link.id, link.hover.group, cursor_line, 0, -1)
+
     -- Create an autocommand for updating when cursor moves
     vim.api.nvim_create_autocmd("CursorMoved", {
         buffer = self.buf,
@@ -523,7 +526,6 @@ function Window:set_buf_links(map_file_line)
             for i = 0, line_count - 1 do
                 if i ~= cursor_line then
                     vim.api.nvim_buf_clear_namespace(self.buf, link.id, i, i+1)
-                    -- vim.api.nvim_buf_add_highlight(self.buf, link.id, link.normal.group, i, 0, -1)
                 end
             end
 

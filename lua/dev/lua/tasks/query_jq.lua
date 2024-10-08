@@ -1,6 +1,8 @@
 local utils = require('utils')
 require('class')
-local M = {}
+local M = {
+    list = require('dev.lua.tasks.query_list'),
+}
 
 local Query = {
     filename = 'tasks.json',
@@ -41,7 +43,7 @@ function Query:select_by_id(id)
     id = id or 1
     local query = fmt('jq "[ .[] | select(.id == %d)" %s ]', id, self:file())
 
-    return self:select_tasks(query)
+    return self:select(query)
 end
 
 function Query:select_by_tag_and_due(tag, order)
@@ -51,7 +53,7 @@ function Query:select_by_tag_and_due(tag, order)
     -- local query_tags = fmt('SELECT tag FROM tags WHERE task_id = %s;', tag)
  --    local query_params = fmt('SELECT name, value FROM parameters WHERE task_id = %d;', tag)
     local query = string.format([['[ .[] | select(.status != "done" and .due != null and .tags[] == "%s") ]']], tag)
-    return self:select_tasks(query)
+    return self:select(query)
 end
 
 function Query:select_by_tag(tag)
@@ -62,10 +64,10 @@ function Query:select_by_tag(tag)
  --    local query_params = fmt('SELECT name, value FROM parameters WHERE task_id = %d;', tag)
     local query = string.format([['[ .[] | select(.status != "done" and .tags[] == "%s") ]' ]], tag)
 
-    return self:select_tasks(query)
+    return self:select(query)
 end
 
-function Query:select_tasks(query)
+function Query:select(query)
 
     local tasks = {}
     local str_tasks = utils.get_command_output(string.format('jq %s %s', query, self:file()))
