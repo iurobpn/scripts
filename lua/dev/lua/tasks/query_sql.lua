@@ -30,6 +30,7 @@ function Query.tags_to_string(tags)
     for _,tag in ipairs(tags) do
         str = str ..  tag .. ' '
     end
+
     return str
 end
 

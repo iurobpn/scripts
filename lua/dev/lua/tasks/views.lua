@@ -1,4 +1,5 @@
 local fzf_lua = require('fzf-lua')
+
 local nvim = {
     utils = require('dev.nvim.utils')
 }
@@ -190,6 +191,13 @@ function M.format_tasks(tasks_in)
 end
 
 
+function M.query_by_due()
+    local q = query.Query()
+    local tasks = q:select_by_tag_and_due()
+
+    return tasks
+end
+
 function M.query_by_tag_and_due(tag)
     local q = query.Query()
     local tasks = q:select_by_tag_and_due(tag)
@@ -288,6 +296,42 @@ function M.fzf_query(tasks, ...)
     -- require'fzf-lua'.files(str_tasks, task_query_opts)
 end
 
+function M.open_window(tag,due)
+    local tasks_tb
+    if due == nil then
+        due = false
+        tasks_tb = M.query_by_tag(tag)
+    else
+        tasks_tb = M.query_by_tag_and_due(tag)
+    end
+
+    local tasks_line, files = M.format_tasks(tasks_tb)
+    local win = dev.nvim.ui.views.scratch(tasks_line, {
+        title = (tag or '') .. ' tasks',
+        title_pos = 'center',
+        size = {
+            flex = true,
+        },
+    })
+
+    win:open()
+    vim.cmd("set ft=markdown")
+    vim.api.nvim_win_set_option(0, 'winhighlight', 'Normal:Normal')
+    for _, file in ipairs(files) do
+        -- M.set_custom_hl(win.buf, i)
+        win:set_buf_links(files)
+    end
+    vim.opt.wrap = false
+    vim.opt.number = false
+    vim.opt.relativenumber = false
+    M.highlight_tags(win.buf)
+    local opts = vim.api.nvim_win_get_config(win.vid)
+
+    -- Reapply the configuration to the floating window
+    vim.cmd.hi('clear FloatTitle')
+    -- win.buffer
+end
+
 function M.open_due_window(tag)
     local tasks_tb = M.query_by_tag_and_due(tag)
     local tasks_line, files = M.format_tasks(tasks_tb)
@@ -353,6 +397,16 @@ M.init = function()
     M.tasks = M.load_tasks()
 end
 
+function M.open_current_tag()
+    local tag = vim.fn.expand('<cWORD>')
+    tag = tag:match('#(%w+)')
+    if tag == nil then
+        vim.notify('No tag found')
+        return
+    end
+    M.open_window(tag)
+end
+
 M.load_tasks = function()
     local json_file = M.path .. '/' .. M.filepath .. '/tasks.json'
     local fd = io.open(json_file, 'r')
@@ -364,10 +418,22 @@ M.load_tasks = function()
     
     M.tasks = json.decode(json_tasks)
 end
+
+function M.complete(arg_lead, cmd_line, cursor_pos)
+    -- These are the valid completions for the command
+    local options = { "due", "#main", "#today", "#important", "#res", "#research" }
+    -- Return all options that start with the current argument lead
+    return vim.tbl_filter(function(option)
+        return vim.startswith(option, arg_lead)
+    end, options)
+end
+
 M.command = function(args)
-    local cmd = args[1]
-    if cmd == 'open' then
-        M.open_window_by_tag(args[2])
+    local cmd = args.fargs[1]
+    if cmd == 'due' then
+        M.open_window(args.fargs[2],true)
+    else
+        M.open_window(args.fargs[2])
     end
 end
 
@@ -381,11 +447,12 @@ vim.api.nvim_create_user_command('TaskTagDue', 'lua dev.lua.tasks.views.fzf_quer
 vim.api.nvim_create_user_command('TaskTagSearch', 'lua dev.lua.tasks.views.fzf_query(<args>)', {
     nargs = 1,
 })
-vim.api.nvim_create_user_command('Task', 'lua dev.lua.tasks.views.command(<args>)', {
-    nargs = '*',
-})
+vim.api.nvim_create_user_command('Tasks', function(args)
+    M.command(args)
+end, { nargs = '*' , complete = M.complete})
 vim.api.nvim_set_keymap('n', '<F11>', ':TaskTagSearch ', {noremap = true, silent = true})
 vim.api.nvim_set_keymap('n', '<F9>', ':TaskTagDue ', {noremap = true, silent = true})
+vim.api.nvim_set_keymap('n', '<F9>', ':Tasks ', {noremap = true, silent = true})
 
 function M.open_window_by_tag(tag)
     local tasks_qf = M.query_by_tag(tag)
