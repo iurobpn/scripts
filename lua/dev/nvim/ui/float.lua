@@ -75,8 +75,6 @@ local Window = {
     },
     fullscreem = false,
 
-    hidden = false,
-
     focusable = true,
     close_current = false, -- close current window when it is being floated
     option = {
@@ -341,7 +339,10 @@ function Window:open()
     if self.current then
         vim.api.nvim_win_set_config(self.vid, opts)
     else
-        self.vid = vim.api.nvim_open_win(self.buf, true, opts)
+        print('opts: ' .. vim.inspect(opts))
+        print('open win: bufnr: ', self.buf)
+        self.vid = vim.api.nvim_open_win(0, true, opts)
+        vim.api.nvim_win_set_buf(self.vid, self.buf)
     end
 
     if vid ~= nil and self.close_current or opts.close_current then

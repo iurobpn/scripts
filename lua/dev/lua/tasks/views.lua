@@ -179,7 +179,7 @@ end
 function M.format_tasks(tasks_in)
     local tasks = {}
     local file_line = {}
-    for _, task  in ipairs(tasks_in) do
+    for _, task  in pairs(tasks_in) do
         if task.line_number == nil then
             error('task.line_number is nil')
         end
@@ -237,8 +237,8 @@ function M.fzf_query_due(tag, ...)
     M.fzf_query(tag, opts)
 end
 
-M.search = function(tag, ...)
-    return M.query_tag(tag, ...)
+M.search = function(opts)
+    return M.select(opts)
 end
 
 M.query_tag = function(tag, ...)
@@ -255,10 +255,6 @@ M.query_tag = function(tag, ...)
         tasks = M.query_by_tag_and_due(tag, order)
     end
     return tasks
-end
-
-function M.select(query)
-    return M.picker.select(query)
 end
 
 function M.fzf_query(tasks, ...)
@@ -342,20 +338,30 @@ function M.open_window(tasks, title)
         size = {
             flex = true,
         },
+
+        options = {
+            buffer = {
+                modifiable = true,
+            },
+            window = {
+                wrap = false,
+                number = false,
+                relativenumber = false,
+                signcolumn = 'no',
+
+            },
+        },
     })
 
     win:open()
-    vim.cmd("set ft=markdown")
     vim.api.nvim_win_set_option(0, 'winhighlight', 'Normal:Normal')
+    vim.cmd("set ft=markdown")
     win:set_buf_links(file_lines)
-    vim.opt.wrap = false
-    vim.opt.number = false
-    vim.opt.relativenumber = false
     M.highlight_tags(win.buf)
-    local opts = vim.api.nvim_win_get_config(win.vid)
+    -- local opts = vim.api.nvim_win_get_config(win.vid)
 
     -- Reapply the configuration to the floating window
-    vim.cmd.hi('clear FloatTitle')
+    -- vim.cmd.hi('clear FloatTitle')
     -- win.buffer
 end
 
@@ -396,13 +402,19 @@ M.init = function()
 end
 
 function M.open_current_tag(tag)
-    local tag = tag or vim.fn.expand('<cWORD>')
+    tag = tag or vim.fn.expand('<cWORD>')
     tag = tag:match('(#%w+)')
     if tag == nil then
         vim.notify('No tag found')
         return
     end
-    M.open_window(tag)
+    local q = query.Query()
+    local opts = {
+        tags = {tag}
+    }
+    local tasks = q:select(opts)
+
+    M.open_window(tasks, tag .. ' tasks')
 end
 
 M.load_tasks = function()
@@ -416,9 +428,23 @@ M.load_tasks = function()
     
     M.tasks = json.decode(M.json_tasks)
 end
-M.search_and_float = function(tag)
-    local tasks = M.query_by_tag_and_due(tag)
-    M.open_window(tasks, tag .. ' tasks')
+M.search = function(...)
+    local opts = {...}
+    opts = opts[1] or {}
+
+    local q = query.Query()
+    local tasks = q:select(opts)
+
+    local title = ''
+    if opts.tag then
+        title = title .. ' ' .. opts.tag
+    elseif opts.due then
+        title = title .. ' Due tasks'
+    elseif opts.status then
+        title = title .. ' ' .. opts.status 
+    end
+
+    M.open_window(tasks, title .. ' tasks')
 end
 
 M.command = function(args)
@@ -427,46 +453,37 @@ M.command = function(args)
         print("Usage: :Tasks <float|tag|tagdue>")
         return
     end
-    local arg = args.args
-    local due = false
-    if string.match(arg,'due') then
-        arg:gsub('due', '')
-        due = true
-    end
-    arg = utils.split(arg, ' ')
-    if arg == nil then
-        print("Usage: :Tasks <tag> (nil)")
-        return
-    elseif #arg == 0 then
-        print("Usage: :Tasks <tag> (empty)")
-        return
-    else
-        table.remove(arg, 1)
-    end
+    local arg = args.fargs
+    local opts = {}
 
-    if subcommand == 'float' then
-        local tag = arg[1]
-        if not tag then
-            print("Usage: :Timer start <task_id>")
+    local tag_pattern = '#%w+'
+
+    local opts = {
+        due = false,
+        zellij = {},
+        float = nil,
+        status = "undone",
+        tags = {}
+    }
+
+    while arg ~= nil and #arg > 0 do
+        if arg[1]:match(tag_pattern) then
+            table.insert(opts.tags,arg[1])
+            table.remove(arg, 1)
+        elseif arg[1] == 'status' then
+            arg.status = arg[2]
+            table.remove(arg, 1)
+            table.remove(arg, 1)
+        elseif arg[1] == 'due' then
+            print('due')
+            opts.due = true
+            table.remove(arg, 1)
+        elseif arg[1] == 'query' then
+            query.list.select()
             return
         end
-        M.search_and_float(tag, due)
-    elseif subcommand == 'tag' then
-        local tag = arg[1]
-        if not tag then
-            print("Usage: :Tasks tag <tag>")
-            return
-        end
-        M.search_and_float(tag, due)
-    elseif subcommand == 'query' then
-        query.list.select()
-    else
-        local tag = arg[1]
-        if not tag then
-            tag = subcommand
-        end
-        M.search_and_float(tag, due)
     end
+    M.search(opts)
 end
 
 -- create_command
