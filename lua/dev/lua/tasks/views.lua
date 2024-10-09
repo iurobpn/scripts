@@ -94,7 +94,7 @@ function M.open_context_window(filename, line_nr)
     vim.api.nvim_win_set_cursor(win.vid, {line_nr, 0})
 end
 
-function M.tostring(tasks)
+function M.to_qfix(tasks)
     local tasks_qf = M.format_tasks(tasks)
     local out = ''
     for _, task in pairs(tasks_qf) do
@@ -176,14 +176,19 @@ function M.format_tasks_short(tasks)
     return tasks_qf
 end
 
+
 function M.format_tasks(tasks_in)
     local tasks = {}
     local file_line = {}
+    if tasks_in == nil then
+        vim.notify('tasks_in is nil', vim.notify.ERROR)
+        return
+    end
     for _, task  in pairs(tasks_in) do
         if task.line_number == nil then
             error('task.line_number is nil')
         end
-        table.insert(tasks, '- [ ] ' .. (task.description or '') .. ' ' .. M.params_to_string(task.parameters) .. ' ' .. M.tags_to_string(task.tags))
+        table.insert(tasks, dev.lua.tasks.tostring(task))
         table.insert(file_line, {file = task.filename, line = task.line_number})
     end
 
@@ -432,8 +437,15 @@ M.search = function(...)
     local opts = {...}
     opts = opts[1] or {}
 
+    local tasks
+
     local q = query.Query()
-    local tasks = q:select(opts)
+    if opts.cmd == nil then
+        tasks = q:select(opts)
+    else
+        print('search: ' .. opts.cmd)
+        tasks = q:select(opts.cmd)
+    end
 
     local title = ''
     if opts.tag then

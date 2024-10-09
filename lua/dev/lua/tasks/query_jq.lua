@@ -67,11 +67,9 @@ end
 
 function Query.select_by_due(due)
     -- local query = string.format([['[ .[] | select(.status != "done" and .tags[] == "%s") ]' ]], tag)
-    print('due', due)
     if due == nil then
         return nil
     end
-    print('due after check', due)
     if due then
         return '.due != null'
     else
@@ -92,27 +90,30 @@ end
 
 function Query:select(option)
     option = option or {}
-    local query = '[ .[] | select('
+    local cmd
+    if type(option) == 'string' then
+        cmd = option
+    else
+        local query = '[ .[] | select('
 
-    if option.id ~= nil then
-        query = query .. self.select_by_id(option.id)
-    end
-    if option.status ~= nil then
-        query = query .. self.select_by_status(option.status)
-    end
-    if option.due ~= nil then
-        print('query:select due', option.due)
-        query = query .. ' and ' .. self.select_by_due(option.due)
-    end
-    if option.tags ~= nil and #option.tags and option.tags[1] ~= nil then
-        utils.pprint(option.tags, 'tags')
-        query = query .. ' and ' .. self.select_by_tags(option.tags)
-    end
-    query = query .. ')]'
-    -- '.status != "done" and .due != null) ]']])
+        if option.id ~= nil then
+            query = query .. self.select_by_id(option.id)
+        end
+        if option.status ~= nil then
+            query = query .. self.select_by_status(option.status)
+        end
+        if option.due ~= nil then
+            query = query .. ' and ' .. self.select_by_due(option.due)
+        end
+        if option.tags ~= nil and #option.tags and option.tags[1] ~= nil then
+            query = query .. ' and ' .. self.select_by_tags(option.tags)
+        end
+        query = query .. ')]'
+        -- '.status != "done" and .due != null) ]']])
 
-    local cmd = string.format("jq '%s' %s", query, self:file())
-    local str_tasks = utils.get_command_output(cmd)
+        cmd = string.format("jq '%s'", query, self:file())
+    end
+    local str_tasks = self:run(cmd)
     local tasks
     if str_tasks == '' then
         tasks = {}
@@ -123,8 +124,13 @@ function Query:select(option)
     return tasks
 end
 
+function Query:run(cmd)
+    local str_tasks = utils.get_command_output(cmd .. ' ' .. self:file())
+    return str_tasks
+end
+
 function Query.open_context_window(filename, line_nr)
-    
+
     local context_width = math.floor(vim.o.columns * 0.4)
     local context_height = math.floor(vim.o.lines * 0.5)
     local context_row = math.floor((vim.o.lines - context_height) / 4)

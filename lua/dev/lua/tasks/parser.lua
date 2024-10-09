@@ -6,8 +6,8 @@ local M = {
         line_number = ':(%d+):',
         description = '%-%s*%[%s*[a-z ]%s*%]%s*(.*)',
         tag = '(#[a-zA-Z_%-]+)',
-        parameter = '%[([a-zA-Z_]+)%s*::%s*([a-zA-Z0-9:%-]*)%]',
-        metatag = {'%[', '%s*::%s*([a-zA-Z0-9:%-]*)%]'} -- a specific metatag
+        parameter = '%[([a-zA-Z_]+)%s*::%s*([a-zA-Z0-9:%s%-]*)%]',
+        metatag = {'%[', '%s*::%s*([a-zA-Z0-9:%- ]*)%]'} -- a specific metatag
     }
 }
 local json = require("dkjson") -- Assumes you have dkjson installed for JSON serialization
@@ -24,7 +24,6 @@ end
 
 function M.get_param_value(task,metatag)
     local pattern = '%[' .. metatag .. '%s*::%s*([a-zA-Z0-9:%- ]*)%]'
-    print()
     return task:match(pattern)
 end
 
@@ -59,7 +58,7 @@ function M.parse(task)
     local k = 0
     for param, value in task:gmatch(M.pattern.parameter) do
         parameters[param] = value
-        description = description:gsub(M.pattern.parameter, '') --.' *%[' .. param .. ':: *' .. value .. ' *%]', '')
+        description = description:gsub(M.pattern.parameter .. '%s*', '') --.' *%[' .. param .. ':: *' .. value .. ' *%]', '')
         k = k + 1
     end
 
@@ -71,12 +70,12 @@ function M.parse(task)
         filename = filename,
         line_number = line_number,
         status = status,
-        description = description,
-        tags = tags
+        description = description:match('^%s*(.*)%s*$'),
+        tags = tags,
+        due = parameters.due,
+        metatags = parameters
     }
-    for key, val in pairs(parameters) do
-        task_t[key] = val
-    end
+    parameters.due = nil
 
     return task_t
 end

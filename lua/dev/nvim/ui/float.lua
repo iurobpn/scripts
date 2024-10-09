@@ -321,6 +321,7 @@ function Window:open()
             Buffer.load(self.buf,self.filename)
         elseif self.content ~= nil and #self.content > 0 then -- create a buffer and load the content into it
             vim.api.nvim_buf_set_option(self.buf, 'modifiable', true)
+            -- print('content type: ' .. type(self.content))
             -- print('set content buf: ' .. self.buf)
             vim.api.nvim_buf_set_lines(self.buf, 0,  -1, false, self.content) -- write to buffer
         end
@@ -339,8 +340,8 @@ function Window:open()
     if self.current then
         vim.api.nvim_win_set_config(self.vid, opts)
     else
-        print('opts: ' .. vim.inspect(opts))
-        print('open win: bufnr: ', self.buf)
+        -- print('opts: ' .. vim.inspect(opts))
+        -- print('open win: bufnr: ', self.buf)
         self.vid = vim.api.nvim_open_win(0, true, opts)
         vim.api.nvim_win_set_buf(self.vid, self.buf)
     end
@@ -545,6 +546,10 @@ end
 
 -- Function to calculate the max width of the content
 function Window.get_max_content_width(lines)
+    if (type(lines) == 'string') then
+        vim.notify("Lines must be a list of strings", vim.log.levels.ERROR)
+        error("Lines must be a list of strings")
+    end
     if lines == nil or lines == 0 then
         lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
     end

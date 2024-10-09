@@ -9,7 +9,11 @@ end
 function views.messages()
     local win = views.minimal()
     -- get the messages from nvim
+
     local messages = vim.api.nvim_exec('messages', true)
+    if type(messages) == 'string' then
+        messages = vim.split(messages, '\n')
+    end
     win:config(
         {
             content = messages,

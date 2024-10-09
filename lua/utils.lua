@@ -30,6 +30,14 @@ function M.pprint(obj,s,...)
     print(fmt('%s%s', s or '', insp.inspect(obj, {depth = opt.depth or 3})))
 end
 
+function M.map(t, f)
+    local res = {}
+    for k,v in pairs(t) do
+        res[k] = f(v)
+    end
+    return res
+end
+
 function M.numel(t)
     local n = 0
     for _,_ in pairs(t) do
