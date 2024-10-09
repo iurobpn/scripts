@@ -417,7 +417,16 @@ function M.open_current_tag(tag)
     local opts = {
         tags = {tag}
     }
+    -- get windows options
+    local opt = vim.api.nvim_win_get_config(0)
+    utils.pprint(opt, 'opt:')
+    print('tag: ' .. vim.inspect(tag))
     local tasks = q:select(opts)
+    if tasks == nil or #tasks == 0 then
+        vim.notify('No tasks found')
+        return
+    end
+    print('tasks: ' .. #tasks)
 
     M.open_window(tasks, tag .. ' tasks')
 end
@@ -456,6 +465,8 @@ M.search = function(...)
         title = title .. ' ' .. opts.status 
     end
 
+    utils.pprint(opts, 'opts:')
+    print('tasks: ' .. #tasks)
     M.open_window(tasks, title .. ' tasks')
 end
 

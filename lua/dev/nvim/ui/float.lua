@@ -272,18 +272,25 @@ function Window:get_config()
 
     return {
         relative = self.relative,
-        row = self.row,
-        col = self.col,
         width = self.width,
         height = self.height,
-        title = self.title,
-        title_pos = self.title_pos,
-        style = self.style,
-        border = self.border,
+        anchor = self.anchor,
+        row = self.row,
+        col = self.col,
         focusable = self.focusable,
         zindex = self.zindex,
         external = self.external,
-        anchor = self.anchor,
+        style = self.style,
+        border = self.border,
+
+        title = self.title,
+        title_pos = self.title_pos,
+        footer = self.footer,
+        footer_pos = self.footer_pos,
+        hide = self.hide,
+        -- for open_win
+        -- vertical = self.vertical,
+        -- split = self.split,
     }
 end
 
@@ -303,22 +310,31 @@ function Window:open()
     -- end
 
     if self.current then -- use current buffer
+        print('get current win')
         self.vid, self.buf, self.filename = Window.get_current()
+        print('current win: ', self.vid)
     elseif self.buf then -- use the buffer already set
 
     elseif self.vid ~= nil then -- use the window id already set. It must be a float
+        print('get a specific window')
         self.buf, self.filename = Window.get_window(self.vid)
+        print('vid: ', self.vid)
     else
         if not self.buf then
-            -- create new buffer
+            print('create new buffer: ')
             -- self.buf = Buffer.new(self.buffer.listed, self.buffer.scratch)
             self.buf = vim.api.nvim_create_buf(false, true)
             -- print('create buf: ' .. self.buf)
         end
         -- print('bufnr>', self.buf)
+        print('File: ', self.filename)
+        print('Content: ', vim.inspect(self.content))
         if self.filename ~= nil and #self.filename > 0 then -- create a buffer to load the file
+            vim.api.nvim_buf_set_option(self.buf, 'modifiable', true)
+            print('load new buffer with content from a file: ')
             Buffer.load(self.buf,self.filename)
         elseif self.content ~= nil and #self.content > 0 then -- create a buffer and load the content into it
+            print('load new buffer with internal: ')
             vim.api.nvim_buf_set_option(self.buf, 'modifiable', true)
             -- print('content type: ' .. type(self.content))
             -- print('set content buf: ' .. self.buf)
@@ -341,7 +357,7 @@ function Window:open()
     else
         -- print('opts: ' .. vim.inspect(opts))
         -- print('open win: bufnr: ', self.buf)
-        self.vid = vim.api.nvim_open_win(0, true, opts)
+        self.vid = vim.api.nvim_open_win(self.buf, true, opts)
         vim.api.nvim_win_set_buf(self.vid, self.buf)
     end
 
