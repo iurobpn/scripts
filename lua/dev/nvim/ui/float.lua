@@ -314,12 +314,17 @@ function Window:open()
     else
         if not self.buf then
             -- create new buffer
-            self.buf = Buffer.new(self.buffer.listed, self.buffer.scratch)
+            -- self.buf = Buffer.new(self.buffer.listed, self.buffer.scratch)
+            self.buf = vim.api.nvim_create_buf(false, true)
+            -- print('create buf: ' .. self.buf)
         end
+        -- print('bufnr>', self.buf)
         if self.filename ~= nil and #self.filename > 0 then -- create a buffer to load the file
             Buffer.load(self.buf,self.filename)
         elseif self.content ~= nil and #self.content > 0 then -- create a buffer and load the content into it
-            Buffer.set_lines(self.buf, 0,  -1, self.content) -- write to buffer
+            vim.api.nvim_buf_set_option(self.buf, 'modifiable', true)
+            -- print('set content buf: ' .. self.buf)
+            vim.api.nvim_buf_set_lines(self.buf, 0,  -1, false, self.content) -- write to buffer
         end
     end
 

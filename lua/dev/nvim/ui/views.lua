@@ -89,6 +89,11 @@ function views.scratch(content, ...)
     local win = Window()
     opts.buffer = views.get_scratch_opt()
     opts.content = content
+    opts.option = {
+        buffer = {
+            modifiable = true,
+        }
+    }
 
     win:config(opts)
     return win

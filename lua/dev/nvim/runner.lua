@@ -77,6 +77,7 @@ function M.input_complete(arg_lead, cmd_line, cursor_pos)
     end, M.options)
     return table.concat(opt, ' ')
 end
+
 function M.complete(arg_lead, cmd_line, cursor_pos)
     -- These are the valid completions for the command
     -- Return all options that start with the current argument lead
@@ -94,9 +95,6 @@ M.ask_run = function()
         function(args)
             vim.cmd('ZellijRun ' .. args)
         end)
-
- 
-
     -- local args = vim.fn.input({prompt = "Run command: ", completion =  'custom,dev.nvim.runner.input_complete'})
     -- vim.cmd('ZellijRun ' .. args)
 end
