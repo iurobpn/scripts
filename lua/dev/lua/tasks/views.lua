@@ -181,7 +181,7 @@ function M.format_tasks(tasks_in)
     local tasks = {}
     local file_line = {}
     if tasks_in == nil then
-        vim.notify('tasks_in is nil', vim.notify.ERROR)
+        vim.notify('tasks_in is nil', vim.log.levels.ERROR)
         return
     end
     for _, task  in pairs(tasks_in) do
@@ -319,7 +319,7 @@ function M.open_due_window(tag)
 
     win:open()
     vim.cmd("set ft=markdown")
-    vim.api.nvim_win_set_option(0, 'winhighlight', 'Normal:Normal')
+    vim.api.nvim_set_option_value('winhighlight', 'Normal:Normal', {win = 0, scope = "local"})
     for _, file in ipairs(files) do
         -- M.set_custom_hl(win.buf, i)
         win:set_buf_links(files)
@@ -359,7 +359,7 @@ function M.open_window(tasks, title)
     })
 
     win:open()
-    vim.api.nvim_win_set_option(0, 'winhighlight', 'Normal:Normal')
+    vim.api.nvim_set_option_value('winhighlight', 'Normal:Normal', {win = 0, scope = "local"})
     vim.cmd("set ft=markdown")
     win:set_buf_links(file_lines)
     M.highlight_tags(win.buf)
@@ -418,10 +418,11 @@ function M.open_current_tag(tag)
         tags = {tag}
     }
     -- get windows options
-    local opt = vim.api.nvim_win_get_config(0)
-    utils.pprint(opt, 'opt:')
-    print('tag: ' .. vim.inspect(tag))
+    -- local opt = vim.api.nvim_win_get_config(0)
+    -- utils.pprint(opt, 'opt:')
+    -- print('tag: ' .. vim.inspect(tag))
     local tasks = q:select(opts)
+    print('tasks: ' .. (vim.inspect(tasks) or 'nil'))
     if tasks == nil or #tasks == 0 then
         vim.notify('No tasks found')
         return

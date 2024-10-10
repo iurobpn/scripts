@@ -208,13 +208,13 @@ function M.UpdateJqFloat()
                 jq.bufnr = vim.api.nvim_create_buf(false, true)  -- Create a scratch buffer
 
                 -- Set buffer options
-                vim.api.nvim_buf_set_option(jq.bufnr, 'bufhidden', 'wipe')
+                vim.api.nvim_set_option_value('bufhidden', 'wipe', {buf = jq.bufnr, scope = "local"})
 
                 -- Set the lines of the buffer to the output
                 vim.api.nvim_buf_set_lines(jq.bufnr, 0, -1, false, tasks_str)
 
                 -- Optionally set syntax highlighting if the output is JSON
-                vim.api.nvim_buf_set_option(jq.bufnr, 'filetype', 'markdown')
+                vim.api.nvim_set_option_value('filetype', 'markdown', {buf = jq.bufnr, scope = "local"})
                 -- Calculate the maximum line length from the output
                 local max_line_length = 0
                 for _, line in ipairs(tasks_str) do
@@ -256,12 +256,12 @@ function M.UpdateJqFloat()
                 jq.vid = vim.api.nvim_open_win(jq.bufnr, false, opts)
 
                 -- Set window options to remove line numbers, signcolumn, etc.
-                vim.api.nvim_win_set_option(jq.vid, 'number', false)
-                vim.api.nvim_win_set_option(jq.vid, 'relativenumber', false)
-                vim.api.nvim_win_set_option(jq.vid, 'signcolumn', 'no')
-                vim.api.nvim_win_set_option(jq.vid, 'foldcolumn', '0')
-                vim.api.nvim_win_set_option(jq.vid, 'cursorline', false)
-                vim.api.nvim_win_set_option(jq.vid, 'winhl', 'NormalFloat:Normal')
+                vim.api.nvim_set_option_value('number', false, { scope = "local", win = jq.vid })
+                vim.api.nvim_set_option_value('relativenumber', false, { scope = "local", win = jq.vid })
+                vim.api.nvim_set_option_value('signcolumn', 'no', { scope = "local", win = jq.vid })
+                vim.api.nvim_set_option_value('foldcolumn', '0', { scope = "local", win = jq.vid })
+                vim.api.nvim_set_option_value('cursorline', false, { scope = "local", win = jq.vid })
+                vim.api.nvim_set_option_value('winhl', 'NormalFloat:Normal', { scope = "local", win = jq.vid })
             else
                 -- Handle error (optional)
                 print("Error executing command: " .. line_content)

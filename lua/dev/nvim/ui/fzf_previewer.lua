@@ -39,7 +39,7 @@ function Previewer:populate_preview_buf(entry_str)
     -- set cursor and cursorline
     local winid = self.win.preview_winid
     vim.api.nvim_win_set_cursor(winid, {line_nr, 0})
-    vim.api.nvim_win_set_option(winid, 'cursorline', true)
+    vim.api.nvim_set_option_value('cursorline', true, {win = winid, scope = "local"})
     if self.has_custom_hl then
         print('entry_str: ', entry_str)
         self:set_custom_hl(tmpbuf, line_nr)
@@ -80,7 +80,8 @@ function Previewer.set_syntax(winid,file)
     if ft == 'md' then
         ft = 'markdown'
     end
-    vim.api.nvim_win_set_option(winid, 'filetype', ft)
+    -- vim.api.nvim_win_set_option(winid, 'filetype', ft)
+    vim.api.nvim_set_option_value('filetype', ft, {win = winid, scope = "local"})
 end
 
 

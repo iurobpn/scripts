@@ -186,8 +186,9 @@ function countdown.start(duration, description, callback)
         border = 'rounded',
         focusable = false,
     }) 
-    vim.api.nvim_win_set_option(countdown.win, 'winblend', 90) -- Set transparency (0-100, 0 is opaque, 100 is fully transparent)
-    vim.api.nvim_win_set_option(countdown.win, 'winhl', 'NormalFloat:FloatContent,FloatBorder:MyFloatBorder') -- Follow main colorscheme
+    vim.api.nvim_set_option_value('winblend', 90, { scope = "local", win = countdown.win }) -- Set transparency (0-100, 0 is opaque, 100 is fully transparent)
+    vim.api.nvim_set_option_value('winhl', 'NormalFloat:FloatContent,FloatBorder:MyFloatBorder', { scope = "local", win = countdown.win }) 
+    -- Follow main colorscheme
     -- Define a custom highlight group for the border
     vim.cmd("wincmd p")
 
@@ -489,7 +490,7 @@ function timer_plugin.create_popup()
     end
 
     local buf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
+    vim.api.nvim_set_option_value('bufhidden', 'wipe', {buf = buf, scope = "local"})
 
     local elapsed = os.time() - timer_start_time + (current_task.time_worked or 0)
     local time_str = format_time(elapsed)
@@ -542,7 +543,7 @@ function countdown.update_popup(callback)
             vim.api.nvim_set_hl(0, "MyFloatBorder", { fg = "None", bg = "None" }) -- bright_red for text
         end
         blink_state = not blink_state
-        vim.api.nvim_win_set_option(countdown.win, 'winhl', 'NormalFloat:MyFloatText,FloatBorder:MyFloatBorder')
+        vim.api.nvim_set_option_value('winhl', 'NormalFloat:MyFloatText,FloatBorder:MyFloatBorder', { scope = "local", win = countdown.win })
     end
 
     -- Stop the timer when time reaches 0
@@ -553,7 +554,7 @@ function countdown.update_popup(callback)
 
         vim.api.nvim_set_hl(0, "MyFloatText", { fg = dev.color.bright_red, bg = "None" }) -- bright_red for text
         vim.api.nvim_set_hl(0, "MyFloatBorder", { fg = dev.color.bright_red, bg = "None" }) -- bright_red for text
-        vim.api.nvim_win_set_option(countdown.win, 'winhl', 'NormalFloat:MyFloatText,FloatBorder:MyFloatBorder')
+        vim.api.nvim_set_option_value('winhl', 'NormalFloat:MyFloatText,FloatBorder:MyFloatBorder', { scope = "local", win = countdown.win })
         -- vim.api.nvim_win_close(countdown.win, true)
         if callback then
             callback()

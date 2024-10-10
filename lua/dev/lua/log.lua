@@ -86,12 +86,12 @@ function Log:format(message, level, color)
     local log_suffix = fmt(" %s%s", message, gruvbox.reset)
     local info = debug.getinfo(3)
     local utils = require'utils'
-    filename = utils.split(info.short_src, '/')
+    local filename = utils.split(info.short_src, '/')
     filename = filename[#filename]
     local log_debug = fmt(' %s[%s:%d] %s', self.colors["debug"], filename , info.currentline, gruvbox.reset)
 
     if self.module then
-        logout = log_preffix .. log_mod
+        local logout = log_preffix .. log_mod
         logout = logout .. log_debug .. log_suffix
         return logout
         -- return string.format(log_preffix .. log_mod .. log_suffix

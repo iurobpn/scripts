@@ -18,7 +18,7 @@ end
 function M.draw_calendar(year, month)
     -- Create a new buffer for the calendar
     local buf = api.nvim_create_buf(true, false)  -- regular buffer, listed
-    api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
+    api.nvim_set_option_value('bufhidden', 'wipe', {buf = buf, scope = "local"})
 
     -- Open a new split window with the calendar
     api.nvim_command("vsplit")
@@ -70,7 +70,7 @@ function M.draw_calendar(year, month)
     end
 
     -- Optionally, set the buffer to be unmodifiable
-    api.nvim_buf_set_option(buf, 'modifiable', false)
+    api.nvim_set_option_value('modifiable', false, {buf = buf, scope = "local"})
     -- api.nvim_buf_set_option(buf, 'listed', false)
 
     vim.cmd('set nonumber')

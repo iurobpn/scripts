@@ -1,8 +1,8 @@
 if vim == nil then
     return
 end
+local Object = require('classic')
 local utils = require('utils')
-require('class')
 -- local Log = require('dev.lua.log').Log
 
 local Buffer = require('dev.nvim.utils').Buffer
@@ -10,19 +10,19 @@ local Buffer = require('dev.nvim.utils').Buffer
 local fmt = string.format
 
 -- local log = Log('float')
-
-local Window = {
-    -- static ----------------------
-    id_count = 0,
-    floats = {}, -- list of open floats, indexed by the wim win id
-    hidden = {}, -- list of hidden floats, indexed by the wim win id
+local Window = Object:extend()
+  ----- static ----------------------
+Window.id_count = 0
+Window.floats = {} -- list of open floats, indexed by the wim win id
+Window.hidden = {} -- list of hidden floats, indexed by the wim win id
     --------------------------------
 
-    vid = nil, -- vim id
-    idx = -1,  -- index of the window inside the module
+function Window:new(...)
+    self.vid = nil -- vim id
+    self.idx = -1  -- index of the window inside the module
 
-    relative = 'editor',
-    size = {
+    self.relative = 'editor'
+    self.size = {
         relative = {
             width = 0.5,
             height = 0.5,
@@ -32,8 +32,8 @@ local Window = {
         --     height = 0,
         -- },
         flex = false
-    },
-    position = 'center',
+    }
+    self.position = 'center'
         -- {
          --    relative = {
          --    row = 0.5,
@@ -45,15 +45,15 @@ local Window = {
         -- },
     -- },
     -- style = 'minimal',
-    border = 'rounded',
+    self.border = 'rounded'
 
-    content = '',
-    filename = '',
+    self.content = ''
+    self.filename = ''
 
-    -- zindex = 50,
-    -- external = false,
-    title = '',
-    maps = {
+    -- self.-- zindex = 50,
+    -- self.-- external = false,
+    self.title = ''
+    self.maps = {
         n = {
                 -- keys = 'q',
                 -- cmd = ':lua Window.close()<CR>',
@@ -61,23 +61,23 @@ local Window = {
         },
         i = {},
         v = {},
-    },
-    close_map = {
+    }
+    self.close_map = {
         mode = 'n',
         key = 'q',
         cmd = ':WinToggle<CR>',
         opts = { noremap = true, silent = true }
-    },
-    current = false, --get current windows buffer
-    buffer = {
+    }
+    self.current = false --get current windows buffer
+    self.buffer = {
         listed = true,
         scratch = false,
-    },
-    fullscreem = false,
+    }
+    self.fullscreem = false
 
-    focusable = true,
-    close_current = false, -- close current window when it is being floated
-    option = {
+    self.focusable = true
+    self.close_current = false -- close current window when it is being floated
+    self.option = {
         window = {
             wrap = nil,
             number = nil,
@@ -98,10 +98,23 @@ local Window = {
             bufhidden = '',
             buflisted = true,
         }
-    },
-    colors = require('config.gruvbox-colors').get_colors(),
-    ns = {},
-}
+    }
+    self.colors = require('config.gruvbox-colors').get_colors()
+    self.ns = {}
+
+    local opts = {...}
+    opts = opts[1]
+    if opts then
+        for k, v in pairs(opts) do
+            if k ~= 'maps' then
+                self[k] = v
+            end
+        end
+    end
+    self.idx = Window.new_id()
+
+    return self
+end
 
 function Window.set_link_ns()
     local ns_id = vim.api.nvim_create_namespace('dev_float')
@@ -330,12 +343,12 @@ function Window:open()
         print('File: ', self.filename)
         print('Content: ', vim.inspect(self.content))
         if self.filename ~= nil and #self.filename > 0 then -- create a buffer to load the file
-            vim.api.nvim_buf_set_option(self.buf, 'modifiable', true)
+            vim.api.nvim_set_option_value('modifiable', true, {buf = self.buf, scope = "local"})
             print('load new buffer with content from a file: ')
             Buffer.load(self.buf,self.filename)
         elseif self.content ~= nil and #self.content > 0 then -- create a buffer and load the content into it
             print('load new buffer with internal: ')
-            vim.api.nvim_buf_set_option(self.buf, 'modifiable', true)
+            vim.api.nvim_set_option_value('modifiable', true, {buf = self.buf, scope = "local"})
             -- print('content type: ' .. type(self.content))
             -- print('set content buf: ' .. self.buf)
             vim.api.nvim_buf_set_lines(self.buf, 0,  -1, false, self.content) -- write to buffer
@@ -640,26 +653,6 @@ function Window.handle_link()
     end
 end
 
-
-Window = class(
-    Window,
-    {
-        constructor = function(self, ...)
-            local opts = {...}
-            opts = opts[1]
-            if opts then
-                for k, v in pairs(opts) do
-                    if k ~= 'maps' then
-                        self[k] = v
-                    end
-                end
-            end
-            self.idx = Window.new_id()
-
-            return self
-        end
-    }
-)
 
 function Window.new_id()
     Window.id_count = Window.id_count + 1

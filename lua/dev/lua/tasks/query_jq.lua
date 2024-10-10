@@ -1,22 +1,26 @@
 local utils = require('utils')
-require('class')
+local Object = require('classic')
 local M = {
     list = require('dev.lua.tasks.query_list'),
 }
 
-local Query = {
-    filename = 'tasks.json',
-    mod_dir = '.tasks',
-    path = '/home/gagarin/sync/obsidian',
-}
 
 
-Query = class(Query, {constructor = function(self, filename)
+local Query = Object:extend()
+
+-- static variables
+Query.filename = 'tasks.json'
+Query.mod_dir = '.tasks'
+Query.path = '/home/gagarin/sync/obsidian'
+
+--constructor
+Query.new = function(self, filename)
     if filename ~= nil then
         self.filename = filename
     end
     return self
-end})
+end
+
 
 Query.file = function(self)
     return self.path .. '/' .. self.mod_dir .. '/' .. self.filename

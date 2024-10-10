@@ -67,5 +67,17 @@ M.to_json = function(tbl)
     return json.encode(out)
 end
 
+M.deepcopy = function(tbl)
+    local copy = {}
+    for k, v in pairs(tbl) do
+        if type(v) == 'table' then
+            copy[k] = M.deepcopy(v)
+        else
+            copy[k] = v
+        end
+    end
+    return copy
+end
+
 return M
 

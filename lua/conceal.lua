@@ -3,7 +3,7 @@
 local ns_id = vim.api.nvim_create_namespace('my_namespace')
 
 -- Enable conceallevel in buffer
-vim.api.nvim_buf_set_option(0, 'conceallevel', 2)
+vim.api.nvim_set_option_value('conceallevel', 2, {buf = 0, scope = "local"})
 
 -- Set virtual text inline, shifting original line content
 vim.api.nvim_buf_set_extmark(0, ns_id, 1, 0, {

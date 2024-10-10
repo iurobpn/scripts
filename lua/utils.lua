@@ -1,7 +1,6 @@
 local json = require('cjson')
 local insp = require'inspect'
 
-Log = require'dev.lua.log'
 local fmt = string.format
 
 local M = {}
@@ -51,6 +50,8 @@ function M.argparse(arg)
         print('Usage: lua launch_tserver.lua [host] [port]')
         os.exit()
     end
+    local Log = require'log'.Log
+
     if arg == 'debug' then
         Log.log_level = Log.Level.debug
         Log:info('log level set to DEBUG')
