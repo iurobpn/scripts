@@ -345,6 +345,19 @@ vim.api.nvim_exec([[
 -- vim.api.nvim_create_user_command('Jq', M.UpdateJqResult, {})
 -- vim.api.nvim_create_user_command('Jqc', M.ClearJqResult, {})
 
+vim.api.nvim_set_keymap('n', '<LocalLeader>f', ':TasksOpenTag<CR>', { noremap = true, silent = true })
+vim.api.nvim_create_user_command('TasksOpenTag', 
+    function()
+        local cur = vim.fn.expand('<cWORD>')
+        if cur:match("#%w+") then
+            return dev.lua.tasks.views.open_current_tag(cur)
+        end
+    end,
+    {
+        nargs = 0,
+        desc = 'Search for the tag under the cursor and open in a floating window'
+    }
+)
 -- Or map to a keybinding (e.g., pressing <leader>jr runs the function)
 vim.api.nvim_set_keymap('n', '<LocalLeader>j', ':JqFix<CR>', { noremap = true, silent = true })
 

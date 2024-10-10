@@ -83,7 +83,7 @@ end
 
 function Query.select_by_status(status)
     local query = nil
-    if status == 'undone' then
+    if status == 'undone' or status == 'not done' then
         query = '.status != "done"'
     elseif status == 'done' then
         query = '.status == "done"'
@@ -95,26 +95,31 @@ end
 function Query:select(option)
     option = option or {}
     local cmd
+    local andstr = ''
     if type(option) == 'string' then
         cmd = option
     else
         local query = '[ .[] | select('
 
         if option.id ~= nil then
-            query = query .. self.select_by_id(option.id)
+            query = query .. andstr .. self.select_by_id(option.id)
+            andstr = ' and '
         end
         if option.status ~= nil then
-            query = query .. self.select_by_status(option.status)
+            query = query .. andstr .. self.select_by_status(option.status)
+            andstr = ' and '
         end
         if option.due ~= nil then
-            query = query .. ' and ' .. self.select_by_due(option.due)
+            query = query .. andstr .. self.select_by_due(option.due)
+            andstr = ' and '
         end
-        if option.tags ~= nil and #option.tags and option.tags[1] ~= nil then
-            query = query .. ' and ' .. self.select_by_tags(option.tags)
+        if option.tags ~= nil and #option.tags > 0 and option.tags[1] ~= nil then
+            query = query .. andstr .. self.select_by_tags(option.tags)
         end
         query = query .. ')]'
         -- '.status != "done" and .due != null) ]']])
 
+        print(query)
         cmd = string.format("jq '%s'", query, self:file())
     end
     local str_tasks = self:run(cmd)

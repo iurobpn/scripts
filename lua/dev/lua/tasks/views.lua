@@ -416,7 +416,8 @@ function M.open_current_tag(tag)
     end
     local q = query.Query()
     local opts = {
-        tags = {tag}
+        tags = {tag},
+        status = 'not done'
     }
     -- get windows options
     -- local opt = vim.api.nvim_win_get_config(0)

@@ -45,7 +45,6 @@ end
 
 function M.select()
     local list = {}
-    utils.pprint(M.list, 'list: ')
     for i, q in ipairs(M.list) do
         table.insert(list, tostring(i) .. '| ' .. q.description .. '|' .. q.query)
     end
