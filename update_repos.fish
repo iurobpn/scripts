@@ -39,8 +39,10 @@ function check_repos
     echo "Checking repositories:"
     set remote_gh git@github.com:iurobpn/
     for i in (seq 1 $n)
-        if test -d "$GIT/$old_repos[$i]"; and check_remote $remote "$GIT/$old_repos[$i]"
-            set -a repos "$GIT/$old_repos[$i]"
+        if test -d "$GIT/$old_repos[$i]"
+            if check_remote $remote "$GIT/$old_repos[$i]"
+                set -a repos "$GIT/$old_repos[$i]"
+            end
         else
             git clone $remote_gh$old_repos[$i].git $GIT/$old_repos[$i]
             echo "repo $old_repos[$i] not found"
@@ -68,7 +70,7 @@ function check_repos
         end
 
         echo ''
-        echo "-------- Checking repo $repo  ----------"
+        echo "-------- Checking repo $remote/"(basename $repo)"  ----------"
 
         git fetch $remote --quiet
         set -l bstatus (branch_status)
@@ -154,6 +156,10 @@ function check_remote
         return 1
     end
     cd "$repo"
+    if not test -d ".git"
+        echo (basename $repo)" is not a git repository"
+        return 1
+    end
     git remote | grep $remote > /dev/null
 end
 
