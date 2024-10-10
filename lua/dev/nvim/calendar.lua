@@ -392,7 +392,7 @@ function M.draw_calendar(year, month, border, win_width, win_height)
 
     -- Create a new buffer or use the current one
     local buf = vim.api.nvim_create_buf(false, true)  -- regular buffer, listed
-    vim.api.nvim_set_option_value('bufhidden', 'wipe', {buf = buf, scope = "local"})
+    vim.api.nvim_set_option_value('bufhidden', 'wipe', {buf = buf})
     -- Clear the buffer before redrawing
     -- vim.api.nvim_buf_set_lines(buf, 0, -1, false, {})
 
@@ -496,7 +496,7 @@ function M.draw_calendar(year, month, border, win_width, win_height)
     vim.api.nvim_win_set_buf(0, buf)
 
     -- Set the buffer to be unmodifiable
-    vim.api.nvim_set_option_value('modifiable', false, {buf = buf, scope = "local"})
+    vim.api.nvim_set_option_value('modifiable', false, {buf = buf})
     M.set_grid_hl(vertical_padding, horizontal_padding, win_width, #cal - 2*vertical_padding )
 end
 

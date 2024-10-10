@@ -10,6 +10,6 @@ function ui.init()
     ui.views.clock.open()
 end
 
-ui.init()
+-- ui.init()
 
 return ui

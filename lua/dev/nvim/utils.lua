@@ -118,7 +118,7 @@ function Buffer.load_file(buf,filename,is_saved)-- Check if the file exists
         end
 
         -- Set the filetype (optional, if you need it)
-        vim.api.nvim_set_option_value('filetype', vim.fn.fnamemodify(filename, ":e"), {buf = buf, scope = "local"})
+        vim.api.nvim_set_option_value('filetype', vim.fn.fnamemodify(filename, ":e"), {buf = buf})
 
         return buf -- Return the buffer number
     else

@@ -108,7 +108,5 @@ function Clock.close()
 end
 
 vim.api.nvim_create_user_command("Clock", function () Clock.toggle() end, {})
-vim.api.nvim_create_user_command("ClockOpen", function() Clock.open() end, {})
-vim.api.nvim_create_user_command("ClockClose", function() Clock.close() end, {})
 
 return Clock

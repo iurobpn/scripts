@@ -393,7 +393,7 @@ function timer_plugin.create_popup()
 
     local buf = vim.api.nvim_create_buf(false, true)
 
-    vim.api.nvim_set_option_value('bufhidden', 'wipe', {buf = buf, scope = "local"})
+    vim.api.nvim_set_option_value('bufhidden', 'wipe', {buf = buf})
 
     local elapsed = os.time() - timer_start_time + (current_task.time_worked or 0)
     local time_str = format_time(elapsed)

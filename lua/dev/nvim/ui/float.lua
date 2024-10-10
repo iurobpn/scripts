@@ -1,6 +1,7 @@
 if vim == nil then
     return
 end
+local tbl = require('tbl')
 local Object = require('classic')
 local utils = require('utils')
 -- local Log = require('dev.lua.log').Log
@@ -15,6 +16,76 @@ local Window = Object:extend()
 Window.id_count = 0
 Window.floats = {} -- list of open floats, indexed by the wim win id
 Window.hidden = {} -- list of hidden floats, indexed by the wim win id
+Window.ns = {}
+Window.size = {
+    relative = {
+        width = 0.5,
+        height = 0.5,
+    },
+    -- absolute = {
+    --     height = 0,
+    --     height = 0,
+    -- },
+    flex = false
+}
+Window.position = "center"
+
+Window.border = 'rounded'
+
+Window.content = ''
+Window.filename = ''
+
+-- Window.-- zindex = 50,
+-- Window.-- external = false,
+Window.title = ''
+Window.maps = {
+    n = {
+        -- keys = 'q',
+        -- cmd = ':lua Window.close()<CR>',
+        -- opts = { noremap = true, silent = true }
+    },
+    i = {},
+    v = {},
+}
+Window.close_map = {
+    mode = 'n',
+    key = 'q',
+    cmd = ':WinToggle<CR>',
+    opts = { noremap = true, silent = true }
+}
+Window.current = false --get current windows buffer
+Window.buffer = {
+    listed = true,
+    scratch = false,
+}
+Window.fullscreem = false
+
+Window.focusable = true
+Window.close_current = false -- close current window when it is being floated
+Window.option = {
+    window = {
+        wrap = nil,
+        number = nil,
+        relativenumber = nil,
+        cursorline = nil,
+        signcolumn = nil,
+        foldcolumn = nil,
+        winhighlight = nil,
+        winblend = nil,
+        winfixwidth = nil,
+        winfixheight = nil,
+
+    },
+    buffer = {
+        modifiable = true,
+        swapfile = true,
+        buftype = '', -- set the buffer type prompt and terminal are interesting types
+        bufhidden = '',
+        buflisted = true,
+    }
+}
+Window.colors = require('config.gruvbox-colors').get_colors()
+
     --------------------------------
 
 function Window:new(...)
@@ -99,8 +170,6 @@ function Window:new(...)
             buflisted = true,
         }
     }
-    self.colors = require('config.gruvbox-colors').get_colors()
-    self.ns = {}
 
     local opts = {...}
     opts = opts[1]
@@ -155,9 +224,7 @@ function Window:config(...)
     local opts = {...}
     opts = opts[1]
     if opts then
-        for k, v in pairs(opts) do
-            self[k] = v
-        end
+        tbl.merge(self, opts)
     end
 end
 
@@ -174,7 +241,8 @@ function Window:get_size()
         width = self.size.absolute.width
         height = self.size.absolute.height
     elseif self.size.flex then
-        height = ui_height*Window.size.relative.height
+        utils.pprint(self, 'win: ')
+        height = ui_height*(self.size.relative.height or Window.size.relative.height)
         local tmp_width = self.get_max_content_width(self.content)+2
         if tmp_width > ui_width or tmp_width <= 1 then
             tmp_width = ui_width
@@ -323,32 +391,32 @@ function Window:open()
     -- end
 
     if self.current then -- use current buffer
-        print('get current win')
+        -- print('get current win')
         self.vid, self.buf, self.filename = Window.get_current()
-        print('current win: ', self.vid)
+        -- print('current win: ', self.vid)
     elseif self.buf then -- use the buffer already set
 
     elseif self.vid ~= nil then -- use the window id already set. It must be a float
-        print('get a specific window')
+        -- print('get a specific window')
         self.buf, self.filename = Window.get_window(self.vid)
-        print('vid: ', self.vid)
+        -- print('vid: ', self.vid)
     else
         if not self.buf then
-            print('create new buffer: ')
+            -- print('create new buffer: ')
             -- self.buf = Buffer.new(self.buffer.listed, self.buffer.scratch)
             self.buf = vim.api.nvim_create_buf(false, true)
             -- print('create buf: ' .. self.buf)
         end
         -- print('bufnr>', self.buf)
-        print('File: ', self.filename)
-        print('Content: ', vim.inspect(self.content))
+        -- print('File: ', self.filename)
+        -- print('Content: ', vim.inspect(self.content))
         if self.filename ~= nil and #self.filename > 0 then -- create a buffer to load the file
-            vim.api.nvim_set_option_value('modifiable', true, {buf = self.buf, scope = "local"})
-            print('load new buffer with content from a file: ')
+            vim.api.nvim_set_option_value('modifiable', true, {buf = self.buf})
+            -- print('load new buffer with content from a file: ')
             Buffer.load(self.buf,self.filename)
         elseif self.content ~= nil and #self.content > 0 then -- create a buffer and load the content into it
-            print('load new buffer with internal: ')
-            vim.api.nvim_set_option_value('modifiable', true, {buf = self.buf, scope = "local"})
+            -- print('load new buffer with internal: ')
+            vim.api.nvim_set_option_value('modifiable', true, {buf = self.buf})
             -- print('content type: ' .. type(self.content))
             -- print('set content buf: ' .. self.buf)
             vim.api.nvim_buf_set_lines(self.buf, 0,  -1, false, self.content) -- write to buffer
@@ -530,7 +598,7 @@ function Window:set_buf_links(map_file_line)
         { noremap = true, silent = true }
     )
 
-    if Window.ns.link == nil then
+    if Window.ns == nil or Window.ns.link == nil then
         Window.set_link_ns()
     end
     local link = Window.ns.link

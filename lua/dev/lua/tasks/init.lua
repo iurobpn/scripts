@@ -14,8 +14,8 @@ local tasks = {
     ns_id = nil,
     jq_line = nil,
     inserted_lines = nil
-
 }
+
 local jq_fix = {
     ns_id = nil,
     vid = nil,  -- Variable to store the floating window ID,
@@ -28,6 +28,7 @@ local jq = {
     bufnr = nil,   -- Variable to store the buffer number for the floating window,
     line = nil,          -- Variable to store the line number with the jq command,
 }
+
 M.tasks = tasks
 M.jq = jq
 M.jq_fix = jq_fix
@@ -100,6 +101,9 @@ end
 
 function M.get_jq_lines()
     local cmd = M.get_cmd()
+    if cmd == nil then
+        return
+    end
     local q = M.query.Query()
     local lines = q:run(cmd)
     -- M.jq.line = vim.api.nvim_win_get_cursor(0)[1]
@@ -160,7 +164,8 @@ function M.tostring(task)
         due = string.format('[%s:: %s]', 'due', task.due)
     end
     local tags = table.concat(task.tags,' ')
-    local line = string.format('- [%s] %s %s %s %s', status, task.description, tags, due, mtags)
+    local file = '| ' .. task.filename .. ':' .. task.line_number
+    local line = string.format('- [%s] %s %s %s %s %s', status, task.description, tags, due, mtags, file)
     return line
 end
 
@@ -180,7 +185,7 @@ function M.UpdateJqFloat()
 
 
     -- Check if the line contains your jq command
-    if line_content and line_content:match('jq') then
+    if line_content and line_content:match('{{jq:%s.*}}') then
         -- Extract the command from the line starting from 'jq'
         local cmd_start_col = line_content:find('jq') + 5
         -- If we are on the jq line and haven't already shown the float
@@ -197,6 +202,9 @@ function M.UpdateJqFloat()
 
             -- Extract the command from the line (adjust as needed)
             local lines = M.get_jq_lines()
+            if lines == nil or lines == '' then
+                return
+            end
             local taskss = json.decode(lines)
             local tasks_str = {}
 
@@ -208,13 +216,13 @@ function M.UpdateJqFloat()
                 jq.bufnr = vim.api.nvim_create_buf(false, true)  -- Create a scratch buffer
 
                 -- Set buffer options
-                vim.api.nvim_set_option_value('bufhidden', 'wipe', {buf = jq.bufnr, scope = "local"})
+                vim.api.nvim_set_option_value('bufhidden', 'wipe', {buf = jq.bufnr})
 
                 -- Set the lines of the buffer to the output
                 vim.api.nvim_buf_set_lines(jq.bufnr, 0, -1, false, tasks_str)
 
                 -- Optionally set syntax highlighting if the output is JSON
-                vim.api.nvim_set_option_value('filetype', 'markdown', {buf = jq.bufnr, scope = "local"})
+                vim.api.nvim_set_option_value('filetype', 'markdown', {buf = jq.bufnr})
                 -- Calculate the maximum line length from the output
                 local max_line_length = 0
                 for _, line in ipairs(tasks_str) do
@@ -239,6 +247,12 @@ function M.UpdateJqFloat()
                 if float_height > height - current_line - 2 then  -- Subtract 2 for padding
                     float_height = height - current_line - 2
                 end
+                if float_height < 1 then
+                    float_height = 1
+                end
+                if float_width < 5 then
+                    float_width = 5
+                end
 
                 -- Configure floating window options
                 local opts = {
@@ -251,6 +265,7 @@ function M.UpdateJqFloat()
                     border = nil,
                     noautocmd = true,
                 }
+                utils.pprint(opts,'opts: ')
 
                 -- Open the floating window
                 jq.vid = vim.api.nvim_open_win(jq.bufnr, false, opts)
@@ -262,6 +277,10 @@ function M.UpdateJqFloat()
                 vim.api.nvim_set_option_value('foldcolumn', '0', { scope = "local", win = jq.vid })
                 vim.api.nvim_set_option_value('cursorline', false, { scope = "local", win = jq.vid })
                 vim.api.nvim_set_option_value('winhl', 'NormalFloat:Normal', { scope = "local", win = jq.vid })
+                -- call matchadd to set the highlight group for the line number for the jq window
+                vim.fn.matchadd('LineNr', "| .*$", 1, -1, { window = jq.vid})
+                
+
             else
                 -- Handle error (optional)
                 print("Error executing command: " .. line_content)
@@ -327,7 +346,7 @@ vim.api.nvim_exec([[
 -- vim.api.nvim_create_user_command('Jqc', M.ClearJqResult, {})
 
 -- Or map to a keybinding (e.g., pressing <leader>jr runs the function)
-vim.api.nvim_set_keymap('n', '<leader>jq', ':lua M.ShowJqResult()<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<LocalLeader>j', ':JqFix<CR>', { noremap = true, silent = true })
 
 -- Add a command to run index function
 vim.api.nvim_create_user_command('Index', 'lua require"dev.lua.tasks.indexer".index()',

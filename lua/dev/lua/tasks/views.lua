@@ -314,7 +314,7 @@ function M.open_due_window(tag)
         title_pos = 'center',
         size = {
             flex = true,
-        },
+        }
     })
 
     win:open()
@@ -361,6 +361,7 @@ function M.open_window(tasks, title)
     win:open()
     vim.api.nvim_set_option_value('winhighlight', 'Normal:Normal', {win = 0, scope = "local"})
     vim.cmd("set ft=markdown")
+    vim.cmd([[call matchadd("LineNr", "| .*$")]])
     win:set_buf_links(file_lines)
     M.highlight_tags(win.buf)
     -- local opts = vim.api.nvim_win_get_config(win.vid)
@@ -422,12 +423,12 @@ function M.open_current_tag(tag)
     -- utils.pprint(opt, 'opt:')
     -- print('tag: ' .. vim.inspect(tag))
     local tasks = q:select(opts)
-    print('tasks: ' .. (vim.inspect(tasks) or 'nil'))
+    -- print('tasks: ' .. (vim.inspect(tasks) or 'nil'))
     if tasks == nil or #tasks == 0 then
         vim.notify('No tasks found')
         return
     end
-    print('tasks: ' .. #tasks)
+    -- print('tasks: ' .. #tasks)
 
     M.open_window(tasks, tag .. ' tasks')
 end
@@ -453,7 +454,7 @@ M.search = function(...)
     if opts.cmd == nil then
         tasks = q:select(opts)
     else
-        print('search: ' .. opts.cmd)
+        -- print('search: ' .. opts.cmd)
         tasks = q:select(opts.cmd)
     end
 
@@ -466,8 +467,8 @@ M.search = function(...)
         title = title .. ' ' .. opts.status 
     end
 
-    utils.pprint(opts, 'opts:')
-    print('tasks: ' .. #tasks)
+    -- utils.pprint(opts, 'opts:')
+    -- print('tasks: ' .. #tasks)
     M.open_window(tasks, title .. ' tasks')
 end
 
@@ -499,7 +500,7 @@ M.command = function(args)
             table.remove(arg, 1)
             table.remove(arg, 1)
         elseif arg[1] == 'due' then
-            print('due')
+            -- print('due')
             opts.due = true
             table.remove(arg, 1)
         elseif arg[1] == 'query' then
