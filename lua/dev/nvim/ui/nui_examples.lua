@@ -81,9 +81,9 @@ end
 function layout_popup()
     local popup_one, popup_two = Popup({
         enter = true,
-        border = "single",
+        border = "rounded",
     }), Popup({
-        border = "double",
+        border = "rounded",
     })
 
     local layout = Layout(
