@@ -169,21 +169,21 @@ function M.log_task(args)
     local new_entry = current_time .. " - " .. task_description
 
     -- Check if last entry was on a different day
-    local last_entry = get_last_log_entry()
+    local last_entry = M.get_last_log_entry()
     if last_entry then
         local last_date = last_entry:match("^(%d%d%d%d%-%d%d%-%d%d)")
         local current_date = os.date("%Y-%m-%d")
         if last_date and last_date ~= current_date then
-            append_log_entry("")  -- Insert empty line for new day
+            M.append_log_entry("")  -- Insert empty line for new day
         end
     end
 
-    append_log_entry(new_entry)
+    M.append_log_entry(new_entry)
     print("Task logged: " .. new_entry)
 end
 
 -- Helper functions
-local function get_last_log_entry()
+function M.get_last_log_entry()
     local lines = {}
     if vim.fn.filereadable(tasks_log_file) == 1 then
         lines = vim.fn.readfile(tasks_log_file)
@@ -191,7 +191,7 @@ local function get_last_log_entry()
     return lines[#lines]
 end
 
-local function append_log_entry(entry)
+function M.append_log_entry(entry)
     local file = io.open(tasks_log_file, "a")
     if file then
         file:write(entry .. "\n")
