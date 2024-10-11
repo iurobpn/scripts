@@ -208,7 +208,7 @@ end
 function timer_plugin.TaskCommand(args)
     local subcommand = args.fargs[1]
     if not subcommand then
-        print("Usage: :Task <new|list|del|done> [arguments]")
+        print("Usage: :Task <new|list|del|done|log> [arguments]")
         return
     end
 
@@ -237,6 +237,8 @@ function timer_plugin.TaskCommand(args)
         end
         local task_id = tonumber(task_id_str)
         timer_plugin.TaskDone(task_id)
+    elseif subcommand == 'log' then
+        vim.command('Timerlog ' .. args.args)
     else
         print("Invalid Task command. Usage: :Task <new|list|del|done> [arguments]")
     end

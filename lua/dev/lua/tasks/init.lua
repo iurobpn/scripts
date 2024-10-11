@@ -6,6 +6,7 @@ local M = {
     Indexer = require('dev.lua.tasks.indexer').Indexer,
     fzf = require('dev.lua.tasks.fzf'),
     views = require('dev.lua.tasks.views'),
+    timelog = require('dev.lua.tasks.timelog'),
 }
 
 local tasks = {

@@ -3,6 +3,7 @@ local timer_plugin = {
     filename = "tasks_pl.json",
 
 }
+require'dev.lua.tasks.timelog'
 -- Global variables to manage the timer and window
 local countdown = {
   win = nil,
@@ -284,7 +285,7 @@ end
 function timer_plugin.TaskCommand(args)
     local subcommand = args.fargs[1]
     if not subcommand then
-        print("Usage: :Task <new|list|del|done|import|export> [arguments]")
+        print("Usage: :Task <new|list|del|done|import|export|log> [arguments]")
         return
     end
 
@@ -313,6 +314,8 @@ function timer_plugin.TaskCommand(args)
         end
         local task_id = tonumber(task_id_str)
         timer_plugin.TaskDone(task_id)
+    elseif subcommand == 'log' then
+        vim.cmd('Tasklog ' .. args.args)
     elseif subcommand == 'import' then
         local tag = args.fargs[2] -- Optional tag
         timer_plugin.ImportTasks(tag)
@@ -664,6 +667,14 @@ function timer_plugin.complete_timer_command(arg_lead, cmd_line, cursor_pos)
         return vim.startswith(option, arg_lead)
     end, options)
 end
+function timer_plugin.complete_task_command(arg_lead, cmd_line, cursor_pos)
+    -- These are the valid completions for the command
+    local options = { "new", "list", "del", "done", "import", "export", "log", "summary", "day", "month", "edit" }
+    -- Return all options that start with the current argument lead
+    return vim.tbl_filter(function(option)
+        return vim.startswith(option, arg_lead)
+    end, options)
+end
 
 function countdown.complete(arg_lead, cmd_line, cursor_pos)
     -- These are the valid completions for the command
@@ -718,7 +729,7 @@ end, { nargs = "*" , complete = countdown.complete })
 
 vim.api.nvim_create_user_command('Task', function(args)
     timer_plugin.TaskCommand(args)
-end, { nargs = '*' })
+end, { nargs = '*', complete = timer_plugin.complete_task_command })
 
 vim.api.nvim_create_user_command('ShowLogs', function()
     timer_plugin.ShowLogs()
