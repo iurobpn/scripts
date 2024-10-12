@@ -322,7 +322,7 @@ function timer_plugin.TaskCommand(args)
     elseif subcommand == 'export' then
         timer_plugin.ExportTasks()
     else
-        print("Invalid Task command. Usage: :Task <new|list|del|done|import|export> [arguments]")
+        print("Invalid Task command. Usage: :Task <new|list|del|done|add|import|export> [arguments]")
     end
 end
 

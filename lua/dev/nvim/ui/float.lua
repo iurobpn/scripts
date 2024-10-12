@@ -234,10 +234,7 @@ function Window:get_size()
 
     local width = 0
     local height = 0
-    if self.size.relative then
-        width = ui_width*self.size.relative.width
-        height = ui_height*self.size.relative.height
-    elseif self.size.absolute then
+    if self.size.absolute then
         width = self.size.absolute.width
         height = self.size.absolute.height
     elseif self.size.flex then
@@ -248,6 +245,9 @@ function Window:get_size()
             tmp_width = ui_width
         end
         width = tmp_width
+    elseif self.size.relative then
+        width = ui_width*self.size.relative.width
+        height = ui_height*self.size.relative.height
     else
         error('Size not set size')
     end
@@ -350,7 +350,6 @@ function Window:set_options()
 end
 
 function Window:get_config()
-
     return {
         relative = self.relative,
         width = self.width,

@@ -1,5 +1,6 @@
 local utils = require'utils'
 local prj = require 'dev.lua.project'
+
 local M = {
     list = {
         {
@@ -61,4 +62,5 @@ function M.select()
     })
 end
 M.init()
+
 return M
