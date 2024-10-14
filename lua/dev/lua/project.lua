@@ -1,8 +1,9 @@
-local json = require('dkjson')
+local json = require('cjson')
+local tbl = require('tbl')
 local utils = require('utils')
 local fs = require('dev.lua.fs')
 
-local Project = {
+Project = {
     root_priority = {'main_root', 'git', 'root_files'},
     settings_file = '.settings.json',
     root_dir = nil,
@@ -73,12 +74,12 @@ function Project.init()
     local t_period = 30000
     -- save the settings every 30 s
     vim.defer_fn(function()
-        Project.save_settings()
+        Project.save()
     end, t_period)
     Project.initialized = true
 end
 
-function Project.save_settings()
+function Project.save()
     local filename = Project.root_dir .. '/' .. Project.settings_file
     local settings = {}
     for k, v in pairs(Project) do
@@ -106,7 +107,8 @@ function Project.save_settings()
 
     local fd = io.open(filename, 'w')
     if fd then
-        fd:write(json.encode(settings))
+        vim.notify('saving settings at ' .. filename)
+        fd:write(tbl.to_json(settings))
         fd:close()
     else
         vim.notify('Error saving settings')
@@ -192,4 +194,4 @@ function Project.get(name)
     end
 end
 
-return Project;
+return Project

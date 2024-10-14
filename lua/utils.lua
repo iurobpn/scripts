@@ -146,6 +146,5 @@ function M.get_file_line(entry)
     return parts[1], tonumber(parts[2])
 end
 
-
 return M
 
