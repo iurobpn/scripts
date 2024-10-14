@@ -1,14 +1,17 @@
 local fzf_lua = require('fzf-lua')
+local glyphs = require('git-icons')
 
 local nvim = {
     utils = require('dev.nvim.utils')
 }
 
 local json = require('cjson')
-local float = require('dev.nvim.ui.float')
+local ui = require('dev.nvim.ui')
+local float = ui.float
 local query = require('dev.lua.tasks.query')
 local utils = require('utils')
 local pv = require('dev.nvim.ui.fzf_previewer')
+local Buffer = require('dev.nvim.utils').Buffer
 
 require('class')
 
@@ -176,6 +179,35 @@ function M.format_tasks_short(tasks)
     return tasks_qf
 end
 
+function M.format_timeline(tasks_in)
+    local tasks = {}
+    local file_line = {}
+    if tasks_in == nil then
+        vim.notify('tasks_in is nil', vim.log.levels.ERROR)
+        return
+    end
+    local first = true
+    local last_due = ''
+    for _, task  in pairs(tasks_in) do
+        if task.line_number == nil then
+            error('task.line_number is nil')
+        end
+        if last_due ~= task.due then
+            if not first then
+                table.insert(tasks, glyphs.horizontal_bar)
+                table.insert(tasks, glyphs.horizontal_bar)
+            end
+            table.insert(tasks, glyphs.circle .. ' '.. task.due)
+            first = false
+        end
+        table.insert(tasks, glyphs.horizontal_bar)
+        last_due = task.due
+        table.insert(tasks, glyphs.horizontal_bar .. '   ' .. dev.lua.tasks.toshortstring(task))
+        table.insert(file_line, {file = task.filename, line = task.line_number})
+    end
+
+    return tasks, file_line
+end
 
 function M.format_tasks(tasks_in)
     local tasks = {}
@@ -334,10 +366,51 @@ function M.open_due_window(tag)
     vim.cmd.hi('clear FloatTitle')
     -- win.buffer
 end
+function M.create_buf_timeline(tasks)
+    vim.notify('create_buf_timeline')
+    -- Create a new empty buffer
 
-function M.open_window(tasks, title)
-    local tasks_str, file_lines = M.format_tasks(tasks)
-    local win = dev.nvim.ui.views.scratch(tasks_str, {
+    local buf = vim.api.nvim_create_buf(false, true)  -- (listed = false, scratch = true)
+
+    -- Set buffer options if needed
+    vim.api.nvim_buf_set_option(buf, 'bufhidden', 'wipe')
+    vim.api.nvim_buf_set_option(buf, 'filetype', 'markdown')  -- Replace 'your_filetype' as needed
+
+    local tasks_str, file_lines = M.format_timeline(tasks)
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, tasks_str)
+    Buffer.set_buf_links(buf,file_lines)
+
+    return buf
+end
+
+
+function M.open_right(buf, title)
+    ui.views.open_fixed_right(buf)
+    vim.cmd([[call matchadd("WarningMsg", "]] .. glyphs.horizontal_bar .. '")')
+    vim.cmd([[call matchadd("WarningMsg", "]] .. glyphs.circle ..  '")')
+    vim.cmd([[call matchadd("LineNr", "| .*$")]])
+
+    vim.cmd([[call matchadd("DiagnosticInfo", "")]])
+    vim.cmd([[match ModeMsg /\d\d\d\d-\d\d-\d\d/]])
+    vim.cmd('set nowrap')
+    M.highlight_tags(buf)
+    vim.cmd('set nonumber')
+    vim.cmd('set norelativenumber')
+    vim.cmd([[call matchadd('Define', "#\w\+")]])
+    local ns_id = vim.api.nvim_create_namespace('tags')
+
+    -- create a hl goup for the tags
+    vim.api.nvim_set_hl(0, 'tags', {fg = '#FFA500'})
+
+    --set the highlight for the tags
+    vim.api.nvim_buf_add_highlight(buf, ns_id, 'tags', 0, 0, -1)
+
+    -- vim.cmd([[match Changed /#\w\+/]])
+end
+function M.open_window(buf, title)
+    vim.notify('open_window')
+
+    local win = dev.nvim.ui.views.scratch({}, {
         title = title,
         title_pos = 'center',
         size = {
@@ -358,10 +431,16 @@ function M.open_window(tasks, title)
         },
     })
 
+    win.buf = buf
     win:open()
     vim.api.nvim_set_option_value('winhighlight', 'Normal:Normal', {win = 0, scope = "local"})
-    vim.cmd("set ft=markdown")
+    -- vim.cmd("set ft=markdown")
     vim.cmd([[call matchadd("LineNr", "| .*$")]])
+    vim.cmd([[call matchadd("WarningMsg", "]] .. glyphs.horizontal_bar .. '")')
+    vim.cmd([[call matchadd("WarningMsg", "]] .. glyphs.circle .. '")')
+    vim.cmd([[match ModeMsg /\d\d\d\d-\d\d-\d\d/]])
+    vim.cmd('set nowrap')
+
     win:set_buf_links(file_lines)
     M.highlight_tags(win.buf)
     -- local opts = vim.api.nvim_win_get_config(win.vid)
@@ -470,7 +549,12 @@ M.search = function(...)
 
     -- utils.pprint(opts, 'opts:')
     -- print('tasks: ' .. #tasks)
-    M.open_window(tasks, title .. ' tasks')
+    local buf = M.create_buf_timeline(tasks)
+    if opts.float then
+        M.open_window(buf, title .. ' tasks')
+    else
+        M.open_right(buf, title .. ' tasks')
+    end
 end
 
 M.command = function(args)

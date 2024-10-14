@@ -32,6 +32,54 @@ function views.messages()
     return win
 end
 
+views.fixed_id = nil
+function views.close_fixed_right()
+    -- Close the rightmost window with 'winfixwidth' set
+    if vim.api.nvim_win_get_option(views.fixed_id, 'winfixwidth') then
+        vim.api.nvim_win_close(views.fixed_id, true)
+        vim.notify("Fixed right window closed.")
+    else
+        vim.notify("No fixed right window found.")
+    end
+    views.fixed_id = nil
+end
+
+function views.toggle_fixed_right()
+    if views.fixed_id ~= nil then
+        views.close_fixed_right()
+    else
+        views.open_fixed_right()
+    end
+end
+
+-- Map the function to a command for easy access
+function views.open_fixed_right(buf)
+
+    if buf ~= nil then
+        -- Open a vertical split with the buffer
+        vim.cmd('vertical sbuffer ' .. buf)
+    else
+        -- Open a vertical split
+        vim.cmd('vertical vsplit')
+    end
+    -- Move it to the far right
+    vim.cmd('wincmd L')
+    -- Fix its width
+    vim.cmd('setlocal winfixwidth')
+    -- Ensure splits open to the right
+    vim.o.splitright = true
+    -- Calculate 25% of the current screen width
+    local total_width = vim.o.columns
+    local new_width = math.floor(total_width * 0.25)
+    -- Set the window width
+    vim.cmd('vertical resize ' .. new_width)
+    
+    -- Save the window ID for later
+    views.fixed_id = vim.api.nvim_get_current_win()
+end
+-- Map the function to a command or keybinding if desired
+vim.api.nvim_create_user_command('FixedRight', views.toggle_fixed_right, {})
+
 function views.get_scratch_opt()
     return {
         scratch = true,

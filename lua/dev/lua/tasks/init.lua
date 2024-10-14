@@ -1,5 +1,7 @@
+local fs = require('dev.lua.fs')
 local json = require('cjson')
 local utils = require('utils')
+
 local M = {
     query = require('dev.lua.tasks.query'),
     parser = require('dev.lua.tasks.parser'),
@@ -23,6 +25,7 @@ local jq_fix = {
     bufnr = nil,   -- Variable to store the buffer number for the floating window,
     line = nil,          -- Variable to store the line number with the jq command,
 }
+
 local jq = {
     ns_id = nil,
     vid = nil,  -- Variable to store the floating window ID,
@@ -33,6 +36,7 @@ local jq = {
 M.tasks = tasks
 M.jq = jq
 M.jq_fix = jq_fix
+
 -- make recurrent taks done and add completion date
 function M.recurrent_done()
     local cursor_orig = vim.api.nvim_win_get_cursor(0)
@@ -136,6 +140,39 @@ function M.ShowJqResult()
             })
         end
     end
+end
+
+function M.toshortstring(task)
+-- description = "ver inicio de capitulos ",
+--   filename = "/home/gagarin/sync/obsidian/Thesis.md",
+--   id = 27,
+--   line_number = 53,
+--   status = "not started",
+--   tags = { "#today" }
+    local status
+    if task.status == 'not started' then
+        status = ' '
+    elseif task.status == 'in progress' then
+        status = '.'
+    elseif task.status == 'done' then
+        status = 'x'
+    end
+
+    local mtags = ''
+    if task.metatags then
+        for k,v in pairs(task.metatags) do
+            mtags = mtags .. string.format('[%s:: %s]', k, v)
+        end
+    end
+    local due = ''
+    if task.due ~= nil then
+        due = string.format('[%s:: %s]', 'due', task.due)
+    end
+    local tags = table.concat(task.tags,' ')
+    local filename = fs.basename(task.filename)
+    local file = '| ' .. filename .. ':' .. task.line_number
+    local line = string.format('%s %s %s', task.description, tags, file)
+    return line
 end
 
 function M.tostring(task)

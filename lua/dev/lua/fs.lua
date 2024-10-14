@@ -22,6 +22,9 @@ function M.get_current_file()
     end
 end
 
+function M.basename(path)
+    return M.get_filename(path)
+end
 function M.get_filename(path)
     local parts = utils.split(path, '/')
     return parts[#parts]

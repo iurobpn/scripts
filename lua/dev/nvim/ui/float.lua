@@ -590,6 +590,7 @@ function Window.open_link()
     vim.api.nvim_win_set_cursor(0, {win.map_file_line[linenr].line,0})
 end
 
+-- should be a buffer function, not window
 function Window:set_buf_links(map_file_line)
     self.map_file_line = map_file_line
     vim.api.nvim_buf_set_keymap(self.buf, 'n', '<CR>',
@@ -884,6 +885,54 @@ function Window.toggle()
             Window.floats[win.vid] = win
         end
     end
+end
+
+function Buffer.set_buf_links(buf,map_file_line)
+    vim.api.nvim_buf_set_keymap(buf, 'n', '<CR>',
+        ':lua dev.nvim.ui.float.Window.open_link()<CR>',
+        { noremap = true, silent = true }
+    )
+
+    if Window.ns == nil or Window.ns.link == nil then
+        Window.set_link_ns()
+    end
+    -- local link = Window.ns.link
+
+    -- local cursor_line = vim.api.nvim_win_get_cursor(0)[1] - 1
+
+    -- local N = utils.numel(map_file_line)
+    -- for i=0,N-1 do
+        -- vim.api.nvim_buf_clear_namespace(self.buf, link.id, i, i+1)
+    -- end
+
+    -- vim.api.nvim_buf_clear_namespace(self.buf, link.id, 0, -1)
+
+    -- vim.api.nvim_buf_add_highlight(self.buf, link.id, link.hover.group, cursor_line, 0, -1)
+
+    -- Create an autocommand for updating when cursor moves
+    vim.api.nvim_create_autocmd("CursorMoved", {
+        buffer = buf,
+        callback = function()
+            local link = Window.ns.link
+            -- Clear all highlights first
+            vim.api.nvim_buf_clear_namespace(buf, link.id, 0, -1)
+
+            local line_count = vim.api.nvim_buf_line_count(buf)
+
+            local cursor_line = vim.api.nvim_win_get_cursor(0)[1] - 1
+            -- Reapply without cursor highlights
+            for i = 0, line_count - 1 do
+                if i ~= cursor_line then
+                    vim.api.nvim_buf_clear_namespace(buf, link.id, i, i+1)
+                end
+            end
+
+            -- Get current cursor line
+
+            -- Apply the highlight with cursor on the current line
+            vim.api.nvim_buf_add_highlight(buf, link.id, link.hover.group, cursor_line, 0, -1)
+        end,
+    })
 end
 
 vim.api.nvim_create_user_command("WinUp",               ':lua dev.nvim.ui.float.Window.up()',                {})
