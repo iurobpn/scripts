@@ -15,18 +15,25 @@ function M.init()
     local list = {
         {
             query = '[ .[] | select(.id == %d) ]',
-            description = 'select by id',
+            description = [[jq 'select by id']],
             inputs = { 'id' },
         },
         {
-            query = '[ .[] | select(.status != "done" and .due != null and .tags[] == "%s") ]',
+            query = [[jq '[ .[] | select(.status != "done" and .due != null and .tags[] == "%s") ]']],
             description = 'select by tag with due date (undone)',
             inputs = { 'tag' },
         },
         {
-            query = '[ .[] | select(.status != "done" and .tags[] == "%s") ]',
+            query = [[jq '[ .[] | select(.status != "done" and .tags[] == "%s") ]']],
             description = 'select by tag (undone)',
             inputs = { 'tag' },
+        },
+
+        {
+            query = [[jq '[ .[] | select((.status!="done" and .due!=null) and ((.tags[] == "#today") and (.tags[] == "#important") )) ] | sort_by(.due) ']],
+            description = 'select by tags #today or #important and sort by due date',
+            inputs = {}
+            
         },
     }
     local Msaved = vim.g.proj.get('query_list')

@@ -25,7 +25,7 @@ end
 function M.pprint(obj,s,...)
     local opt = {...}
     opt = opt[1] or {}
-    
+
     print(fmt('%s%s', s or '', insp.inspect(obj, {depth = opt.depth or 3})))
 end
 
@@ -100,6 +100,23 @@ function M.split(inputstr, sep)
     return t
 end
 
+function M.is_before(date_str)
+    -- Extract year, month, and day from the input string
+    local year, month, day = date_str:match("(%d+)-(%d+)-(%d+)")
+
+    -- Convert extracted values to numbers
+    year, month, day = tonumber(year), tonumber(month), tonumber(day)
+
+    -- Create a table representing the input date
+    local input_date = os.time({year = year, month = month, day = day, hour = 0, min = 0, sec = 0})
+
+    -- Get the current date as a table and set the time to 00:00:00 for comparison
+    local today = os.time({year = os.date("*t").year, month = os.date("*t").month, day = os.date("*t").day, hour = 0, min = 0, sec = 0})
+
+    -- Compare the two dates
+    return input_date <= today
+end
+
 function M.get_command_output(cmd)
     -- Execute the Fish shell command and capture the output
     local handle = io.popen(cmd)
@@ -109,9 +126,16 @@ function M.get_command_output(cmd)
     end
     local result = handle:read("*a")
     handle:close()
+    -- print('cmd: ' .. cmd)
+    -- print('result size: ' .. #result)
+    -- print('result: ' ..  result)
 
     -- Return the output, trimming any trailing newlines
     return result --:gsub("%s+$", "")
+end
+
+M.trim = function(s)
+    return (s:gsub("^%s*(.-)%s*$", "%1"))
 end
 
 function M.traceback()

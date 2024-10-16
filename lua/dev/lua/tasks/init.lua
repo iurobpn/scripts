@@ -170,7 +170,7 @@ function M.toshortstring(task)
     end
     local tags = table.concat(task.tags,' ')
     local filename = fs.basename(task.filename)
-    local file = '| ' .. filename .. ':' .. task.line_number
+    local file = '' -- '| ' .. filename .. ':' .. task.line_number
     local line = string.format('%s %s %s', task.description, tags, file)
     return line
 end

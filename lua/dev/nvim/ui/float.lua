@@ -584,7 +584,9 @@ end
 function Window.open_link()
     local win = Window.get_win()
     local linenr = vim.fn.line('.')
-    win:close()
+    if win ~= nil then
+        win:close()
+    end
     
     vim.cmd.e(win.map_file_line[linenr].file)
     vim.api.nvim_win_set_cursor(0, {win.map_file_line[linenr].line,0})
@@ -888,14 +890,11 @@ function Window.toggle()
 end
 
 function Buffer.set_buf_links(buf,map_file_line)
-    vim.api.nvim_buf_set_keymap(buf, 'n', '<CR>',
-        ':lua dev.nvim.ui.float.Window.open_link()<CR>',
-        { noremap = true, silent = true }
-    )
 
     if Window.ns == nil or Window.ns.link == nil then
         Window.set_link_ns()
     end
+
     -- local link = Window.ns.link
 
     -- local cursor_line = vim.api.nvim_win_get_cursor(0)[1] - 1

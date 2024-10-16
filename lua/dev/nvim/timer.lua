@@ -147,6 +147,13 @@ function timer_plugin.TimerCommand(args)
         if args.fargs[2] then
             time = args.fargs[2]
         end
+        if args.fargs[3] ~= nil then
+            local unit = args.fargs[3]
+            if unit == 'min' then
+                time = tonumber(time)*60
+            end
+            table.remove(args.fargs, 3)
+        end
         if not time then
             print("Usage: :Timer countdown <time>")
             return
@@ -714,6 +721,13 @@ vim.api.nvim_create_user_command("Countdown", function(opts)
         else
             -- Start a new countdown
             local duration = tonumber(first_arg)
+            if args[2] then
+                local unit = args[2]
+                if unit == 'min' then
+                    duration = duration*60
+                end
+                table.remove(args, 2)
+            end
             if duration then
                 -- Allow spaces in the description
                 local description = table.concat(vim.list_slice(args, 2), " ")

@@ -116,11 +116,12 @@ function Query:select(option)
         if option.tags ~= nil and #option.tags > 0 and option.tags[1] ~= nil then
             query = query .. andstr .. self.select_by_tags(option.tags)
         end
-        query = query .. ')]'
+        query = query .. ')] | sort_by(.due)'
+        -- {{jq: '[ .[] | select(.status!="done" and .due!=null ) ] | sort_by(.due)' }}
+
         -- '.status != "done" and .due != null) ]']])
 
-        print(query)
-        cmd = string.format("jq '%s'", query, self:file())
+        cmd = string.format("jq '%s'", query)
     end
     local str_tasks = self:run(cmd)
     local tasks
