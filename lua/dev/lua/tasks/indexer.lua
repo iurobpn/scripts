@@ -132,7 +132,6 @@ function M:to_json(tasks)
         print('Failed to open ' .. json_file)
         return
     end
-    print('Writing tasks to ' .. json_file)
     fd:write(json_tasks)
     fd:close()
     print('Tasks indexing completed')
@@ -161,6 +160,7 @@ local mod = {
 
 Thread = require'thread'
 function mod.index()
+    print('Indexing tasks ...')
     local thread = Thread(
         function()
             local indexer = require'dev.lua.tasks.indexer'.Indexer()

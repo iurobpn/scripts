@@ -2,6 +2,7 @@ local utils = require('utils')
 local Object = require('classic')
 local M = {
     list = require('dev.lua.tasks.query_list'),
+    hist = {}
 }
 
 
@@ -135,6 +136,7 @@ function Query:select(option)
 end
 
 function Query:run(cmd)
+    table.insert(Query.hist, cmd)
     local str_tasks = utils.get_command_output(cmd .. ' ' .. self:file())
     return str_tasks
 end
@@ -186,5 +188,31 @@ function Query.open_context_window(filename, line_nr)
     vim.api.nvim_win_set_cursor(win.vid, {line_nr, 0})
 end
 M.Query = Query
+
+function Query.history()
+    require'fzf-lua'.fzf_exec(Query.hist, {
+        prompt = 'Select a query>',
+        actions = {
+            ["default"] = function(selected)
+                local query = selected[1]
+                vim.notify(string.format('Query: %s', query))
+                dev.lua.tasks.views.search(query)
+            end
+        }
+    })
+end
+
+function Query.init()
+    local Msaved = vim.g.proj.get('query_history')
+    if Msaved then
+        Query.hist = Msaved
+    else
+        Query.hist = {}
+    end
+    vim.g.proj.register('query_history', Query.hist)
+end
+-- create a keymap to open the query history
+vim.api.nvim_set_keymap('n', '<localleader>q', ':lua require("dev.lua.tasks.query_jq").Query.history()<CR>', { noremap = true, silent = true })
+Query.init()
 
 return M

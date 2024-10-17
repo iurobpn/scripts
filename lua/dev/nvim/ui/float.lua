@@ -341,11 +341,11 @@ end
 function Window:set_options()
     local buffer = self.option.buffer or {}
     for k, v in pairs(buffer) do
-        vim.api.nvim_set_option_value(k, v, { scope = "local", buf = self.buf })
+        vim.api.nvim_set_option_value(k, v, { buf = self.buf })
     end 
     local window = self.option.window or {}
     for k, v in pairs(window) do
-        vim.api.nvim_set_option_value(k, v, { scope = "local", win = self.vid })
+        vim.api.nvim_set_option_value(k, v, { win = self.vid })
     end
 end
 

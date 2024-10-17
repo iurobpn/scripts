@@ -149,7 +149,7 @@ qfloat.qrun_file = function(filename, is_nvim)
     is_nvim = is_nvim or true
     local cmd = qfloat.qchoose(filename,is_nvim)
     if is_nvim then
-        print('cmd: ' .. cmd)
+        -- print('cmd: ' .. cmd)
         require(filename:sub(30,-5)) -- remove ~/git/scripts/lua/ and .lua
         qfloat.qmessage()
     else

@@ -94,8 +94,11 @@ M.search = function(tag, ...)
     return M.views.search(tag, ...)
 end
 
-function M.get_cmd()
-    local line = vim.api.nvim_get_current_line()
+function M.get_cmd_from_line(linenr)
+    if linenr == nil then
+        linenr = vim.fn.line('.')
+    end
+    local line = vim.fn.getline(linenr)
     local cmd = line:match('%{%{%s*jq: (.*)%}%}')
     if not cmd then
         return
@@ -105,7 +108,7 @@ function M.get_cmd()
 end
 
 function M.get_jq_lines()
-    local cmd = M.get_cmd()
+    local cmd = M.get_cmd_from_line()
     if cmd == nil then
         return
     end
@@ -118,7 +121,7 @@ end
 function M.ShowJqResult()
     -- Create a namespace for your extmarks
     if not M.ns_id then
-        M.ns_id = vim.api.nvim_create_namespace('JqResultNamespace')
+        M.ns_id = vim.api.nvim_create_namespace('JqResultNs')
     end
     local lines = M.get_jq_lines()
     if lines == nil then
@@ -218,6 +221,9 @@ function M.UpdateJqFloat()
     local cursor_pos = vim.api.nvim_win_get_cursor(0)
     local current_line = cursor_pos[1]  -- Lua uses 1-indexing for lines
 
+
+
+    -- create hl group for current line
     -- Get the content of the current line
     local line_content = vim.api.nvim_buf_get_lines(bufnr, current_line - 1, current_line, false)[1]
 
@@ -303,8 +309,16 @@ function M.UpdateJqFloat()
                     border = nil,
                     noautocmd = true,
                 }
-                utils.pprint(opts,'opts: ')
 
+                -- create a name space for highlightinh current line
+                if M.jq.ns_line_id == nil then
+                    M.jq.ns_line_id = vim.api.nvim_create_namespace('JqFloatCur')
+                    vim.api.nvim_set_hl(0, 'ClearCmd', { fg = dev.color.dark0_hard })
+                end
+                local ns_l_id = M.jq.ns_line_id
+                -- clear namespace highlights
+                vim.api.nvim_buf_clear_namespace(bufnr, ns_l_id, 0, -1)
+                vim.api.nvim_buf_add_highlight(bufnr, ns_l_id, 'ClearCmd', current_line-1, 0, -1)
                 -- Open the floating window
                 jq.vid = vim.api.nvim_open_win(jq.bufnr, false, opts)
 
@@ -315,9 +329,10 @@ function M.UpdateJqFloat()
                 vim.api.nvim_set_option_value('foldcolumn', '0', { scope = "local", win = jq.vid })
                 vim.api.nvim_set_option_value('cursorline', false, { scope = "local", win = jq.vid })
                 vim.api.nvim_set_option_value('winhl', 'NormalFloat:Normal', { scope = "local", win = jq.vid })
+                vim.api.nvim_set_option_value('wrap', false, { scope = "local", win = jq.vid })
                 -- call matchadd to set the highlight group for the line number for the jq window
                 vim.fn.matchadd('LineNr', "| .*$", 1, -1, { window = jq.vid})
-                
+
 
             else
                 -- Handle error (optional)
@@ -335,11 +350,11 @@ function M.UpdateJqFloat()
     end
 end
 
-function M.JqFix()
+function M.run_jq_cmd_from_current_line()
     if M.jq.vid then
         M.CloseJqFloat()
     end
-    local cmd = M.get_cmd()
+    local cmd = M.get_cmd_from_line()
     if not cmd then
         return
     end
@@ -360,7 +375,7 @@ function M.CloseJqFloat()
 end
 
 -- Create the :JqFix command
-vim.api.nvim_create_user_command('JqFix', M.JqFix, {})
+vim.api.nvim_create_user_command('JqCurrent', M.run_jq_cmd_from_current_line, {})
 -- Set up autocommands
 vim.api.nvim_exec([[
   augroup JqFloatAutocmd
@@ -383,28 +398,52 @@ vim.api.nvim_exec([[
 -- vim.api.nvim_create_user_command('Jq', M.UpdateJqResult, {})
 -- vim.api.nvim_create_user_command('Jqc', M.ClearJqResult, {})
 
-vim.api.nvim_set_keymap('n', '<LocalLeader>f', ':TasksOpenTag<CR>', { noremap = true, silent = true })
-vim.api.nvim_create_user_command('TasksOpenTag', 
-    function()
-        local cur = vim.fn.expand('<cWORD>')
-        if cur:match("#%w+") then
-            return dev.lua.tasks.views.open_current_tag(cur)
-        end
-    end,
-    {
-        nargs = 0,
-        desc = 'Search for the tag under the cursor and open in a floating window'
-    }
-)
 -- Or map to a keybinding (e.g., pressing <leader>jr runs the function)
-vim.api.nvim_set_keymap('n', '<LocalLeader>j', ':JqFix<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<LocalLeader>j', ':JqCurrent<CR>', { noremap = true, silent = true })
 
 -- Add a command to run index function
-vim.api.nvim_create_user_command('Index', 'lua require"dev.lua.tasks.indexer".index()',
+vim.api.nvim_create_user_command('TasksIndex', 'lua require"dev.lua.tasks.indexer".index()',
     {
         nargs = 0,
         desc = 'Index note tasks  and save into json file'
     }
 )
+-- Define the autocommand to trigger on saving a markdown file
+vim.api.nvim_create_autocmd("BufWritePost", {
+    pattern = "*.md",     -- Only apply to markdown files
+    callback = function()
+        vim.cmd("TasksIndex")  -- Execute the 'TasksIndex' command
+    end,
+})
+
+-- Helper function to get today's date in "YYYY-MM-DD" format
+local function get_current_date()
+    return os.date("%Y-%m-%d")
+end
+
+-- Function to check and run TasksIndex only once per day
+local function run_tasks_index_once_per_day()
+    local today = get_current_date()
+    local last_run_file = vim.fn.stdpath("data") .. "/.last_tasks_index_run.txt"
+
+    -- Check if the file exists
+    local last_run_date = ""
+    if vim.fn.filereadable(last_run_file) == 1 then
+        last_run_date = vim.fn.readfile(last_run_file)[1]
+    end
+
+    -- If the last run date is different from today, run TasksIndex and update the file
+    if last_run_date ~= today then
+        vim.cmd("TasksIndex")
+        vim.fn.writefile({today}, last_run_file)
+    end
+end
+
+-- Autocommand to run on VimEnter
+vim.api.nvim_create_autocmd("VimEnter", {
+    callback = function()
+        run_tasks_index_once_per_day()
+    end,
+})
 
 return M

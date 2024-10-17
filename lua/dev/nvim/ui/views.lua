@@ -37,13 +37,19 @@ function views.close_fixed_right()
     -- Close the rightmost window with 'winfixwidth' set
     if vim.api.nvim_win_get_option(views.fixed_id, 'winfixwidth') then
         vim.api.nvim_win_close(views.fixed_id, true)
-        vim.notify("Fixed right window closed.")
     else
         vim.notify("No fixed right window found.")
     end
     views.fixed_id = nil
 end
 
+function views.toggle_fixed_left()
+    if views.fixed_id ~= nil then
+        views.close_fixed_left()
+    else
+        views.open_fixed_left()
+    end
+end
 function views.toggle_fixed_right()
     if views.fixed_id ~= nil then
         views.close_fixed_right()
@@ -52,6 +58,36 @@ function views.toggle_fixed_right()
     end
 end
 
+function views.close_fixed_left()
+    -- Close the rightmost window with 'winfixwidth' set
+    if vim.api.nvim_win_get_option(views.lfixed_id, 'winfixwidth') then
+        vim.api.nvim_win_close(views.lfixed_id, true)
+    else
+        vim.notify("No fixed right window found.")
+    end
+    views.lfixed_id = nil
+end
+
+-- Map the function to a command for easy access
+function views.open_fixed_left(buf)
+    buf = buf or ''
+    -- Open a vertical split with the buffer
+    vim.cmd('vertical sbuffer ' .. (buf or ''))
+
+    -- Move it to the far right
+    vim.cmd('wincmd H')
+    -- Fix its width
+    vim.cmd('setlocal winfixwidth')
+    -- Calculate 25% of the current screen width
+    local total_width = vim.o.columns
+    local new_width = math.floor(total_width * 0.25)
+
+    -- Set the window width
+    vim.cmd('vertical resize ' .. new_width)
+    
+    -- Save the window ID for later
+    views.lfixed_id = vim.api.nvim_get_current_win()
+end
 -- Map the function to a command for easy access
 function views.open_fixed_right(buf)
 

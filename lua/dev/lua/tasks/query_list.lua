@@ -74,14 +74,18 @@ function M.select()
                 local sel = utils.split(selected[1], '│')
                 local id = tonumber(sel[1])
                 local query = M.list[id]
+                if query == nil then
+                    vim.notify('Query not found')
+                    return
+                end
                 local inputs = {}
                 for _, input in ipairs(query.inputs) do
                     local input_val = vim.fn.input('Enter ' .. input .. ': ')
                     table.insert(inputs, input_val)
                 end
-                local q = string.format(query.query, table.unpack(inputs))
-                local tasks = M.select(q)
-                dev.lua.tasks.views.open_window(tasks, 'Custom query')
+                local q = string.format(query.query, unpack(inputs))
+                vim.notify(string.format('Query: %s', q))
+                dev.lua.tasks.views.search(q)
             end
         }
     })
