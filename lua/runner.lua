@@ -49,13 +49,7 @@ function M.zellij_run(opts)
         z_opts.cmd = opts.args
     end
     local cmd = 'zellij run ' .. z_opts.args .. ' -- ' .. z_opts.cmd
-    -- if #z_opts.args > 0 then
-    -- cmd = cmd .. ' -- '  .. z_opts.cmd
-    -- else
-    --     cmd = cmd .. ' ' .. z_opts.cmd
-    -- end
 
-    -- local status, err = pcall(os.execute, cmd)
     local status, msg = M.run(cmd)
     -- local st = vim.inspect(status)
     -- local msg = vim.inspect(err)
@@ -90,12 +84,11 @@ M.ask_run = function()
     vim.ui.input(
         {
             prompt = "Run command: ",
-            completion = 'lua,dev.nvim.runner.complete',
+            completion = 'lua,runner.complete',
         },
         function(args)
             vim.cmd('ZellijRun ' .. args)
         end)
-    -- local args = vim.fn.input({prompt = "Run command: ", completion =  'custom,dev.nvim.runner.input_complete'})
     -- vim.cmd('ZellijRun ' .. args)
 end
 
@@ -125,7 +118,7 @@ function M.run(cmd)
     handle:close()
 
     -- Return the output, trimming any trailing newlines
-    return true, result --:gsub("%s+$", "")
+    return result --:gsub("%s+$", "")
 end
 
 return M
