@@ -87,6 +87,7 @@ function M.recurrent_done()
     -- set the cursor back to the original line
     vim.api.nvim_win_set_cursor(0, cursor_orig)
     vim.notify('Task marked as done')
+
     return true
 end
 
