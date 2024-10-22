@@ -18,6 +18,7 @@
     "tables": {
         "query_history": [
             "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
+            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
             "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '"
         ],
         "query_list": [

@@ -381,6 +381,9 @@ end
 function M.add_virtual_line(i, buf, ns_id, line, glyph, grp)
     vim.api.nvim_buf_set_lines(buf, i, -1, false, line)
     if glyph ~= nil then
+        print('line: ' .. vim.inspect(line))
+        print('glyph: ' .. vim.inspect(glyph))
+        print('grp: ' .. vim.inspect(grp))
         assert(#line == #glyph, 'line and glyph must have the same length')
         assert(#line == #grp, 'line and grp must have the same length')
         assert(ns_id ~= nil, 'ns_id is nil')
@@ -508,7 +511,7 @@ function M.populate_buf_timeline(buf, tasks)
         if task.line_number == nil then
             error('task.line_number is nil')
         end
-        if last_due ~= task.due then
+        if task.due ~= nil and last_due ~= task.due then
             if not first then
                 M.add_virtual_line(i, buf, ns_id, {''}, {glyphs.horizontal_bar}, {grp})
                 i = i + 1
@@ -518,8 +521,8 @@ function M.populate_buf_timeline(buf, tasks)
             local date = os.time({year = task.due:sub(1,4), month = task.due:sub(6,7), day = task.due:sub(9,10), hour = 0, min = 0, sec = 0})
             date = os.date('%A, %d de %B de %Y', date)
             date = date:sub(1,1):upper() ..  date:sub(2)
-
             local is_late = utils.is_before(task.due)
+
             if is_late then
                 grp = grp_late
             else
@@ -533,7 +536,9 @@ function M.populate_buf_timeline(buf, tasks)
             first = false
         end
 
-        last_due = task.due
+        if task.due ~= nil then
+            last_due = task.due
+        end
 
         local task_lines = M.split_lines(task.description)
         if task.tags ~= nil then
