@@ -381,9 +381,6 @@ end
 function M.add_virtual_line(i, buf, ns_id, line, glyph, grp)
     vim.api.nvim_buf_set_lines(buf, i, -1, false, line)
     if glyph ~= nil then
-        print('line: ' .. vim.inspect(line))
-        print('glyph: ' .. vim.inspect(glyph))
-        print('grp: ' .. vim.inspect(grp))
         assert(#line == #glyph, 'line and glyph must have the same length')
         assert(#line == #grp, 'line and grp must have the same length')
         assert(ns_id ~= nil, 'ns_id is nil')
@@ -486,15 +483,20 @@ function M.populate_buffer(buf, tasks)
 
     return buf
 end
+
 function M.populate_buf_timeline(buf, tasks)
     local colors = dev.color
     local ns_id = vim.api.nvim_create_namespace('dueHl')
     local grp_late = 'TaskLate'
     local grp_ontime = 'TaskOnTime'
     local grp_date = 'DateHl'
+    local grp_today = 'TodayHl'
+    local grp_today_txt = 'TodayWordHl'
     vim.api.nvim_set_hl(0, grp_late, {fg = colors.faded_red})
     vim.api.nvim_set_hl(0, grp_ontime, {fg = colors.faded_blue})
     vim.api.nvim_set_hl(0, grp_date, {fg = colors.neutral_yellow})
+    vim.api.nvim_set_hl(0, grp_today, {fg = colors.bright_orange})
+    vim.api.nvim_set_hl(0, grp_today_txt, {fg = colors.bright_yellow})
      
     -- create timeline as virtual text
     local file_line = {}
@@ -503,10 +505,24 @@ function M.populate_buf_timeline(buf, tasks)
         return
     end
 
+    -- get today
+
     local first = true
     local last_due = ''
     local i = 0
-    local grp
+
+    local today = os.time()
+    today = os.date('%A, %d de %B de %Y', today)
+    today = today:sub(1,1):upper() ..  today:sub(2)
+    vim.api.nvim_buf_set_lines(buf, i, -1, false, {'Today', ''})
+    vim.api.nvim_buf_add_highlight(buf, ns_id, grp_today_txt, i, 0, -1)
+    i = i + 2
+    vim.api.nvim_buf_set_lines(buf, i, -1, false, {today, '', ''})
+    vim.api.nvim_buf_add_highlight(buf, ns_id, grp_today, i, 0, -1)
+    i = i + 3
+
+
+    local grp = grp_ontime
     for _, task  in pairs(tasks) do
         if task.line_number == nil then
             error('task.line_number is nil')
@@ -525,8 +541,6 @@ function M.populate_buf_timeline(buf, tasks)
 
             if is_late then
                 grp = grp_late
-            else
-                grp = grp_ontime
             end
 
             -- get window size
@@ -836,7 +850,6 @@ M.search = function(...)
 
     if tasks == nil or #tasks == 0 then
         vim.notify('No tasks found')
-        vim.notify('cmd:' .. vim.inspect(opts))
         return
     end
     local buf
@@ -858,16 +871,17 @@ M.command = function(args)
         vim.notify("Usage: :Tasks [float|tag|due|tagdue|list|help] tag1 tag2 ...")
         return
     end
+
     local arg = args.fargs
     local opts = {}
 
     local tag_pattern = '#%w+'
 
     local opts = {
-        due = false,
+        due = nil,
         zellij = {},
         float = nil,
-        status = "undone",
+        status = "not done",
         tags = {},
         args = {},
     }

@@ -232,11 +232,9 @@ function M.UpdateJqFloat()
     local current_jfile = M.query.Query.jsonfiles.current
     local jsonfile = nil
     for k, val in pairs(M.query.Query.jsonfiles) do
-        print('val ' .. val.prefix)
         if line_content ~= nil and line_content:match('{{' .. val.prefix .. ':%s.*}}') then
             M.query.Query.jsonfiles.current = val
             jsonfile=val
-            print('query: ' .. k)
             break
         end
     end

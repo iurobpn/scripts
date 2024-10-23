@@ -36,9 +36,17 @@ end
 
 
 Query.file = function(self,jsonfile)
-    if jsonfile == nil then
+    if jsonfile == nil and Query.jsonfiles.current == nil then
+        jsonfile = Query.jsonfiles.tasks
+    elseif jsonfile == nil then
         jsonfile = Query.jsonfiles.current
+    else
+        if type(jsonfile) == 'string' then
+            jsonfile = Query.jsonfiles[jsonfile]
+        end
     end
+
+        
     return self.path .. '/' .. jsonfile.mod_dir .. '/' .. jsonfile.filename
 end
 
@@ -152,7 +160,8 @@ end
 
 function Query:run(cmd)
     table.insert(Query.hist, cmd)
-    local str_tasks = utils.get_command_output(cmd .. ' ' .. self:file())
+    local file = self:file()
+    local str_tasks = utils.get_command_output(cmd .. ' ' .. file)
     return str_tasks
 end
 
