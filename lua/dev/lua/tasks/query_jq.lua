@@ -10,12 +10,24 @@ local M = {
 local Query = Object:extend()
 
 -- static variables
-Query.filename = 'tasks.json'
-Query.mod_dir = '.tasks'
 Query.path = '/home/gagarin/sync/obsidian'
-
+Query.jsonfiles = {
+    tasks = {
+        filename = 'tasks.json',
+        mod_dir = '.tasks',
+        prefix = 'jq',
+    },
+    -- markdowndb static variables
+    mddb = {
+        filename = 'files.json',
+        mod_dir = '.markdowndb',
+        prefix = 'jqf',
+    },
+    
+}
+Query.current = Query.tasks
 --constructor
-Query.new = function(self, filename)
+Query.new = function(self, options)
     if filename ~= nil then
         self.filename = filename
     end
@@ -23,8 +35,11 @@ Query.new = function(self, filename)
 end
 
 
-Query.file = function(self)
-    return self.path .. '/' .. self.mod_dir .. '/' .. self.filename
+Query.file = function(self,jsonfile)
+    if jsonfile == nil then
+        jsonfile = Query.jsonfiles.current
+    end
+    return self.path .. '/' .. jsonfile.mod_dir .. '/' .. jsonfile.filename
 end
 
 function Query.params_to_string(parameters)
@@ -141,52 +156,6 @@ function Query:run(cmd)
     return str_tasks
 end
 
-function Query.open_context_window(filename, line_nr)
-
-    local context_width = math.floor(vim.o.columns * 0.4)
-    local context_height = math.floor(vim.o.lines * 0.5)
-    local context_row = math.floor((vim.o.lines - context_height) / 4)
-    local context_col = math.floor(vim.o.columns * 0.55)
-
-    local content = nvim.utils.get_context(filename, line_nr)
-
-    local win = nvim.ui.views.fit()
-    win:config(
-        {
-            -- relative = 'editor',
-            -- size = {
-            --     absolute = {
-            --         width = context_width,
-            --         height = context_height,
-            --     },
-            -- },
-            position = {
-                absolute = {
-                    row = context_row,
-                    col = context_col,
-                },
-            },
-            buffer = nvim.ui.views.get_scratch_opt(),
-            border = 'single',
-            content = content,
-            options = {
-                buffer = {
-                    modifiable = false,
-                },
-                window = {
-                    wrap = false,
-                    winbar = 'file context on line ' .. line_nr,
-                },
-            },
-        }
-    )
-
-    win:open()
-    -- vim.cmd('set ft=markdown')
-    --get last line nr
-    line_nr = math.floor(#content/2)
-    vim.api.nvim_win_set_cursor(win.vid, {line_nr, 0})
-end
 M.Query = Query
 
 function Query.history()

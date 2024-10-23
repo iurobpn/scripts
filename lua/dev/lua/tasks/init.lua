@@ -229,10 +229,22 @@ function M.UpdateJqFloat()
     local line_content = vim.api.nvim_buf_get_lines(bufnr, current_line - 1, current_line, false)[1]
 
 
+    local current_jfile = M.query.Query.jsonfiles.current
+    local jsonfile = nil
+    for k, val in pairs(M.query.Query.jsonfiles) do
+        print('val ' .. val.prefix)
+        if line_content ~= nil and line_content:match('{{' .. val.prefix .. ':%s.*}}') then
+            M.query.Query.jsonfiles.current = val
+            jsonfile=val
+            print('query: ' .. k)
+            break
+        end
+    end
+    if jsonfile ==nil then return end
     -- Check if the line contains your jq command
-    if line_content and line_content:match('{{jq:%s.*}}') then
+    if line_content and line_content:match('{{' .. jsonfile.prefix .. ':%s.*}}') then
         -- Extract the command from the line starting from 'jq'
-        local cmd_start_col = line_content:find('jq') + 5
+        local cmd_start_col = line_content:find(jsonfile.prefix) + 5
         -- If we are on the jq line and haven't already shown the float
         if jq.line ~= current_line then
             -- Close previous floating window if any
@@ -340,6 +352,8 @@ function M.UpdateJqFloat()
                 print("Error executing command: " .. line_content)
             end
         end
+
+        M.query.Query.jsonfiles.current = current_jfile
     else
         -- If we move away from the jq line, close the floating window
         if jq.vid and vim.api.nvim_win_is_valid(jq.vid) then
@@ -385,7 +399,7 @@ vim.api.nvim_exec([[
     autocmd BufLeave,BufUnload,BufWinLeave * lua require'dev.lua.tasks'.CloseJqFloat()
   augroup END
 ]], false)
-
+--
 -- -- Set up autocommands
 -- vim.api.nvim_exec([[
 --   augroup JqResultAutocmd
