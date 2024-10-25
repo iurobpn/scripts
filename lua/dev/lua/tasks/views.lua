@@ -20,6 +20,7 @@ require('class')
 local M = {
     map_file_line = {},
     default_query = [[jq '[ .[] | select((.status!="done" and .due!=null) and ((.tags[] == "#today") or (.tags[] == "#important") )) ] | sort_by(.due) ']],
+    last_query = nil,
 }
 
 -- M = class(M, {constructor = function(self, filename)
@@ -245,6 +246,7 @@ end
 function M.query_by_due()
     local q = query.Query()
     local tasks = q:select_by_tag_and_due()
+    M.tasks = tasks
 
     return tasks
 end
@@ -252,6 +254,7 @@ end
 function M.query_by_tag_and_due(tag)
     local q = query.Query()
     local tasks = q:select_by_tag_and_due(tag)
+    M.tasks = tasks
 
     return tasks
 end
@@ -259,6 +262,7 @@ end
 function M.query_by_tag(tag)
     local q = query.Query()
     local tasks = q:select_by_tag(tag)
+    M.tasks = tasks
 
     return tasks
 end
@@ -301,12 +305,14 @@ M.query_tag = function(tag, ...)
         end
         tasks = M.query_by_tag_and_due(tag, order)
     end
+    M.tasks = tasks
     return tasks
 end
 
 function M.fzf_query(tasks, ...)
     -- local tasks = M.query_tag(tag, ...)
     tasks = M.to_lines(tasks)
+    M.tasks = tasks
     local opts = {...}
     opts = opts[1] or {}
 
@@ -341,7 +347,16 @@ end
 
 function M.complete(arg_lead, cmd_line, cursor_pos)
     -- These are the valid completions for the command
-    local options = { "due", "tag", "duetag", "query", "list", "help", "current" }
+    local options = { 
+        "due",
+        "tag",
+        "duetag",
+        "query",
+        "list",
+        "help",
+        "current",
+        "last"
+    }
     -- Return all options that start with the current argument lead
     return vim.tbl_filter(function(option)
         return vim.startswith(option, arg_lead)
@@ -426,7 +441,6 @@ function M.populate_buffer(buf, tasks)
     local last_due = ''
     local i = 0
     local grp
-    print('tasks: ', #tasks)
     for _, task  in pairs(tasks) do
         if task.line_number == nil then
             error('task.line_number is nil')
@@ -485,7 +499,6 @@ function M.populate_buffer(buf, tasks)
 end
 
 function M.populate_buf_timeline(buf, tasks)
-    print('populate_buf_timeline')
     local colors = dev.color
     local ns_id = vim.api.nvim_create_namespace('dueHl')
     local grp_late = 'TaskLate'
@@ -524,7 +537,6 @@ function M.populate_buf_timeline(buf, tasks)
     i = i + 3
 
 
-    print('tasks: ', #tasks)
     local grp = grp_ontime
     for _, task  in pairs(tasks) do
         if task.line_number == nil then
@@ -596,9 +608,6 @@ function M.populate_buf_timeline(buf, tasks)
     )
 
     lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
-    print('buf: ', buf)
-    print('n lines: ', #lines)
-    print('end of populate_buf_timeline')
     return buf
 end
 
@@ -634,8 +643,7 @@ function M.open_link()
     local win = float.Window.get_win()
     if win ~= nil then
         win:close()
-    end
-    if M.vid ~= nil then
+    elseif M.vid_r ~= nil then
         M.close_right()
     end
     if M.map_file_line[linenr] == nil then
@@ -646,8 +654,11 @@ function M.open_link()
     -- get current window id
     vim.cmd('normal! zR')
     vim.api.nvim_win_set_cursor(0, {M.map_file_line[linenr].line, 0})
-    M.vid = nil
-    -- create autocommand to set nil to vid in case the window is closed
+    if win ~= nil then
+        M.vid = nil
+    else
+        M.vid_r = nil
+    end
 end
 
 M.set_hl = function()
@@ -670,24 +681,24 @@ function M.open_right(buf, title)
 
     -- M.highlight_tags(buf)
 
-    vim.api.nvim_buf_set_keymap(buf, 'n', '<ESC>', ':bd<CR>', {noremap = true, silent = true})
-    vim.api.nvim_buf_set_keymap(buf, 'n', 'q', ':bd<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(buf, 'n', '<ESC>', ':wincmd c<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(buf, 'n', 'q', ':wincmd c<CR>', {noremap = true, silent = true})
     -- get current window id
-    M.vid = vim.fn.win_getid()
+    M.vid_r = vim.fn.win_getid()
 end
 
 function M.toggle_right(...)
-    if M.vid ~= nil then
+    if M.vid_r ~= nil then
         M.close_right()
-        M.vid = nil
+        M.vid_r = nil
     else
         -- open the window
         local opts = {...}
         opts = opts[1] or {}
         opts.toggle = true
         M.search(opts)
-        M.vid = vim.fn.win_getid()
-        assert(M.vid ~= nil, 'M.vid is nil')
+        M.vid_r = vim.fn.win_getid()
+        assert(M.vid_r ~= nil, 'M.vid_r is nil')
     end
 end
 
@@ -695,10 +706,10 @@ end
 
 function M.close_right()
     -- check if vid is defined and is a window
-    if M.vid ~= nil and vim.api.nvim_win_is_valid(M.vid) then
+    if M.vid_r ~= nil and vim.api.nvim_win_is_valid(M.vid_r) then
         -- close the window
-        vim.api.nvim_win_close(M.vid, true)
-        M.vid = nil
+        vim.api.nvim_win_close(M.vid_r, true)
+        M.vid_r = nil
     end
 end
 
@@ -710,11 +721,11 @@ function M.open_window(buf, title)
     -- M.highlight_tags(buf)
 
     M.vid = vim.fn.win_getid()
-    vim.api.nvim_buf_set_keymap(buf, 'n', '<ESC>', ':bd<CR>', {noremap = true, silent = true})
-    vim.api.nvim_buf_set_keymap(buf, 'n', 'q', ':bd<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(buf, 'n', '<ESC>', ':wincmd c<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(buf, 'n', 'q', ':wincmd c<CR>', {noremap = true, silent = true})
 
     -- get current window id
-    local win = dev.nvim.ui.views.scratch({}, {
+    local win = dev.nvim.ui.views.scratch(nil, {
         title = title,
         title_pos = 'center',
         size = {
@@ -735,7 +746,6 @@ function M.open_window(buf, title)
         },
     })
 
-    print('buf: ' .. buf)
     win.buf = buf
     win:open()
     vim.api.nvim_set_option_value('winhighlight', 'Normal:Normal', {win = 0, scope = "local"})
@@ -788,7 +798,6 @@ M.init = function()
 end
 
 function M.open_current_tag(tag)
-    print('open current tag')
     tag = tag or vim.fn.expand('<cWORD>')
     tag = tag:match('(#%w+)')
     if tag == nil then
@@ -803,6 +812,7 @@ function M.open_current_tag(tag)
     -- get windows options
     -- local opt = vim.api.nvim_win_get_config(0)
     local tasks = q:select(opts)
+    M.tasks = tasks
     if tasks == nil or #tasks == 0 then
         vim.notify('No tasks found')
         return
@@ -811,11 +821,8 @@ function M.open_current_tag(tag)
     -- create a buffer
     local buf = M.create_buf()
     M.populate_buf_timeline(buf,tasks)
-    print('buf: ', buf)
-
-    print('open window')
-    M.open_window(buf, tag .. ' tasks')
-    print('end of open current tag')
+    M.title = tag .. ' tasks'
+    M.open_window(buf, M.title)
 end
 
 M.load_tasks = function()
@@ -856,14 +863,15 @@ M.search = function(...)
         end
         M.tasks = tasks
     end
+    M.tasks = tasks
 
     local title = ''
     if opts.tag then
-        title = title .. ' ' .. opts.tag
+        title = title .. ' ' .. opts.tag .. ' tasks'
     elseif opts.due then
         title = title .. ' Due tasks'
     elseif opts.status then
-        title = title .. ' ' .. opts.status
+        title = title .. ' ' .. opts.status .. ' tasks'
     end
 
     if tasks == nil or #tasks == 0 then
@@ -871,16 +879,27 @@ M.search = function(...)
         return
     end
     local buf
+    M.title = title
     if opts.float then
         buf = M.create_buf()
-        M.open_window(buf, title .. ' tasks')
+        M.open_window(buf, M.title)
         M.populate_buffer(tasks)
     else
         buf = M.create_buf()
-        M.open_right(buf, title .. ' tasks')
+        M.open_right(buf, M.title)
         M.populate_buf_timeline(buf, tasks)
     end
     M.tasks = tasks
+end
+
+M.open_last_window = function()
+    if M.tasks == nil then
+        vim.notify('No tasks found (open_last_window)')
+        return
+    end
+    local buf = M.create_buf()
+    M.populate_buf_timeline(buf, M.tasks)
+    M.open_window(buf, M.title)
 end
 
 M.command = function(args)
@@ -928,6 +947,9 @@ M.command = function(args)
         elseif arg[1] == 'default' then
             opts.default = true
             table.remove(arg, 1)
+        elseif arg[1] == 'last' then
+            M.open_last_window()
+            return
         elseif arg[1] == 'list' then
             query.list.select()
             return
@@ -953,7 +975,7 @@ vim.api.nvim_create_user_command('Tasks',
 )
 vim.api.nvim_set_keymap('n', '<F9>', ':Tasks toggle default<CR>', {noremap = true, silent = true})
 vim.api.nvim_set_keymap('n', '<LocalLeader>t', ':Tasks current<CR>', {noremap = true, silent = true})
-
+vim.api.nvim_set_keymap('n', '<LocalLeader>l', ':Tasks last<CR>', {noremap = true, silent = true})
 function M.open_window_by_tag(tag)
     local tasks_qf = M.query_by_tag(tag)
     float.qset(tasks_qf)
