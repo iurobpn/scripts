@@ -49,11 +49,18 @@ M.flatten = function(tbl, d)
     return res
 end
 
-M.merge = function(t1, t2)
+M.merge = function(t1, t2, depth)
+    if depth == nil then
+        depth = 1
+    end
     for k, v in pairs(t2) do
         if type(v) == 'table' then
             if type(t1[k] or false) == 'table' then
-                M.merge(t1[k] or {}, t2[k] or {})
+                if depth > 0 then
+                    M.merge(t1[k] or {}, t2[k] or {}, depth - 1)
+                else
+                    t1[k] = v
+                end
             else
                 t1[k] = v
             end

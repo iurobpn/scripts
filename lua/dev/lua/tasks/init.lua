@@ -108,6 +108,7 @@ function M.get_cmd_from_line(linenr)
     return cmd
 end
 
+-- Function to run the jq command from the current line
 function M.get_jq_lines()
     local cmd = M.get_cmd_from_line()
     if cmd == nil then
@@ -147,45 +148,21 @@ function M.ShowJqResult()
 end
 
 function M.toshortstring(task)
--- description = "ver inicio de capitulos ",
---   filename = "/home/gagarin/sync/obsidian/Thesis.md",
---   id = 27,
---   line_number = 53,
---   status = "not started",
---   tags = { "#today" }
-    local status
-    if task.status == 'not started' then
-        status = ' '
-    elseif task.status == 'in progress' then
-        status = '.'
-    elseif task.status == 'done' then
-        status = 'x'
-    end
-
     local mtags = ''
     if task.metatags then
         for k,v in pairs(task.metatags) do
             mtags = mtags .. string.format('[%s:: %s]', k, v)
         end
     end
-    local due = ''
-    if task.due ~= nil then
-        due = string.format('[%s:: %s]', 'due', task.due)
-    end
+
     local tags = table.concat(task.tags,' ')
-    local filename = fs.basename(task.filename)
+    -- local filename = fs.basename(task.filename)
     local file = '' -- '| ' .. filename .. ':' .. task.line_number
     local line = string.format('%s %s %s', task.description, tags, file)
     return line
 end
 
 function M.tostring(task)
--- description = "ver inicio de capitulos ",
---   filename = "/home/gagarin/sync/obsidian/Thesis.md",
---   id = 27,
---   line_number = 53,
---   status = "not started",
---   tags = { "#today" }
     local status
     if task.status == 'not started' then
         status = ' '
@@ -231,14 +208,17 @@ function M.UpdateJqFloat()
 
     local current_jfile = M.query.Query.jsonfiles.current
     local jsonfile = nil
-    for k, val in pairs(M.query.Query.jsonfiles) do
+    for _, val in pairs(M.query.Query.jsonfiles) do
         if line_content ~= nil and line_content:match('{{' .. val.prefix .. ':%s.*}}') then
             M.query.Query.jsonfiles.current = val
             jsonfile=val
             break
         end
     end
-    if jsonfile ==nil then return end
+    if jsonfile ==nil then
+        M.CloseJqFloat()
+        return
+    end
     -- Check if the line contains your jq command
     if line_content and line_content:match('{{' .. jsonfile.prefix .. ':%s.*}}') then
         -- Extract the command from the line starting from 'jq'
@@ -246,11 +226,7 @@ function M.UpdateJqFloat()
         -- If we are on the jq line and haven't already shown the float
         if jq.line ~= current_line then
             -- Close previous floating window if any
-            if jq.vid and vim.api.nvim_win_is_valid(jq.vid) then
-                vim.api.nvim_win_close(jq.vid, true)
-                jq.vid = nil
-                jq.bufnr = nil
-            end
+            M.CloseJqFloat()
 
             -- Update jq.line
             jq.line = current_line
@@ -354,25 +330,25 @@ function M.UpdateJqFloat()
         M.query.Query.jsonfiles.current = current_jfile
     else
         -- If we move away from the jq line, close the floating window
-        if jq.vid and vim.api.nvim_win_is_valid(jq.vid) then
-            vim.api.nvim_win_close(jq.vid, true)
-            jq.vid = nil
-            jq.bufnr = nil
-            jq.line = nil
-        end
+        --
+        M.CloseJqFloat()
     end
 end
 
 function M.run_jq_cmd_from_current_line()
+    vim.notify('Running jq command from current line')
     if M.jq.vid then
+        vim.notify('Jq window is open')
         M.CloseJqFloat()
     end
     local cmd = M.get_cmd_from_line()
     if not cmd then
+        vim.notify('No jq command found in current line')
         return
     end
     local taskss, title = M.views.search(cmd)
     if not taskss then
+        vim.notify('No tasks found')
         return
     end
     M.views.open_window(taskss, title)
@@ -393,8 +369,8 @@ vim.api.nvim_create_user_command('JqCurrent', M.run_jq_cmd_from_current_line, {}
 vim.api.nvim_exec([[
   augroup JqFloatAutocmd
     autocmd!
-    autocmd CursorMoved,CursorMovedI * lua require'dev.lua.tasks'.UpdateJqFloat()
-    autocmd BufLeave,BufUnload,BufWinLeave * lua require'dev.lua.tasks'.CloseJqFloat()
+    autocmd CursorMoved *.md lua require'dev.lua.tasks'.UpdateJqFloat()
+    autocmd BufLeave *md lua require'dev.lua.tasks'.CloseJqFloat()
   augroup END
 ]], false)
 --

@@ -234,17 +234,43 @@ function Window:get_size()
 
     local width = 0
     local height = 0
-    if self.size.absolute then
+
+    if self.size == 'fit' then
+        local lines = vim.api.nvim_buf_get_lines(self.buf, 0, -1, false)
+
+        -- Calculate the height (number of lines)
+        local height = #lines
+
+        -- Calculate the width (the length of the longest line)
+        local width = 0
+        for _, line in ipairs(lines) do
+            if #line > width then
+                width = #line
+            end
+        end
+        print('width: ', width)
+        print('height: ', height)
+        if width == 0 then
+            width = 1
+        end
+        if height == 0 then
+            height = 1
+        end
+    elseif self.size.absolute then
         width = self.size.absolute.width
         height = self.size.absolute.height
     elseif self.size.flex then
-        utils.pprint(self, 'win: ')
+        print('win (get_size(flex)): ')
         height = ui_height*(self.size.relative.height or Window.size.relative.height)
-        local tmp_width = self.get_max_content_width(self.content)+2
+        utils.pprint(self.content, 'content: ')
+        local tmp_width = self:get_max_content_width(self.content)+2
+        print('tmp_width: ', tmp_width)
         if tmp_width > ui_width or tmp_width <= 1 then
             tmp_width = ui_width
         end
         width = tmp_width
+        print('flex width: ', width)
+        print('flex height: ', height)
     elseif self.size.relative then
         width = ui_width*self.size.relative.width
         height = ui_height*self.size.relative.height
@@ -388,20 +414,22 @@ function Window:open()
     -- --     vim.opt.guicursor = vim.o.background
     --     vim.cmd(fmt('highlight Cursor guifg=%s guibg=%s', vim.o.background, vim.o.background))
     -- end
+    print('win:open() buf: ' .. self.buf)
 
     if self.current then -- use current buffer
-        -- print('get current win')
+        print('get current win and buf')
         self.vid, self.buf, self.filename = Window.get_current()
         -- print('current win: ', self.vid)
     elseif self.buf then -- use the buffer already set
+        print('get a specific buffer: ' .. (vim.inspect(self.buf) or 'nil'))
 
     elseif self.vid ~= nil then -- use the window id already set. It must be a float
-        -- print('get a specific window')
+        print('get a specific window and buffer')
         self.buf, self.filename = Window.get_window(self.vid)
         -- print('vid: ', self.vid)
     else
         if not self.buf then
-            -- print('create new buffer: ')
+            print('create new buffer: ')
             -- self.buf = Buffer.new(self.buffer.listed, self.buffer.scratch)
             self.buf = vim.api.nvim_create_buf(false, true)
             -- print('create buf: ' .. self.buf)
@@ -411,10 +439,10 @@ function Window:open()
         -- print('Content: ', vim.inspect(self.content))
         if self.filename ~= nil and #self.filename > 0 then -- create a buffer to load the file
             vim.api.nvim_set_option_value('modifiable', true, {buf = self.buf})
-            -- print('load new buffer with content from a file: ')
+            print('load new buffer with content from a file: ')
             Buffer.load(self.buf,self.filename)
         elseif self.content ~= nil and #self.content > 0 then -- create a buffer and load the content into it
-            -- print('load new buffer with internal: ')
+            print('load new buffer with internal: ')
             vim.api.nvim_set_option_value('modifiable', true, {buf = self.buf})
             -- print('content type: ' .. type(self.content))
             -- print('set content buf: ' .. self.buf)
@@ -643,25 +671,47 @@ function Window:set_buf_links(map_file_line)
 end
 
 -- Function to calculate the max width of the content
-function Window.get_max_content_width(lines)
+function Window:get_max_content_width(lines)
+    print('get_max_content_width')
     if (type(lines) == 'string') then
         vim.notify("Lines must be a list of strings", vim.log.levels.ERROR)
         error("Lines must be a list of strings")
     end
-    if lines == nil or lines == 0 then
-        lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+    if lines == nil or #lines == 0 then
+        print('lines == nil or 0')
+        print('self.buf : ', self.buf)
+        local buf
+        if self.buf == nil then
+            buf = 0
+        else
+            buf = self.buf
+        end
+        print('buf: ', buf)
+        if lines == nil or lines == 0 then
+            lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+        end
+        print('lines: ', #lines)
+        print('end of lines == nil or 0')
     end
     local max_width = 0
+    print('lines: ', #lines)
     for _, line in ipairs(lines) do
         local len = vim.fn.strdisplaywidth(line) -- Handles wide characters too
+        print('len: ', len)
         if len > max_width then
             max_width = len
         end
     end
     max_width = max_width + 5
-    if max_width > vim.api.nvim_get_option("columns") then
-        max_width = vim.api.nvim_get_option("columns")
+    -- get total number of columns of the neovim
+
+
+
+    if max_width > vim.o.columns then
+        max_width = vim.o.columns
     end
+
+    print('end of get_max_content_width')
     return math.floor(max_width)
 end
 
@@ -823,10 +873,7 @@ function Window:fit()
     self:config({
         style = 'minimal',
         size = {
-            absolute = {
-                width = width,
-                height = height,
-            },
+            flex =  true,
         },
         current = false,
         buffer = {
@@ -835,7 +882,20 @@ function Window:fit()
         }
     })
     self:redraw()
-    vim.cmd('set signcolumn=no')
+end
+
+function Window.flex()
+    local win = Window()
+    if win == nil then
+        vim.notify("Current window is not a float to be toggled.")
+        return
+    end
+    win:config({
+        size = {
+            flex = true,
+        }
+    })
+    return win
 end
 
 function Window.toggle_fullscreen()

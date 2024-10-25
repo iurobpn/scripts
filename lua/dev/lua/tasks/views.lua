@@ -60,7 +60,7 @@ function M.open_context_window(filename, line_nr)
 
     local content = nvim.utils.get_context(filename, line_nr)
 
-    local win = nvim.ui.views.fit()
+    local win = nvim.ui.float.Window.flex()
     win:config(
         {
             -- relative = 'editor',
@@ -89,7 +89,6 @@ function M.open_context_window(filename, line_nr)
                 }
             },
         }
-        
     )
 
     win:open()
@@ -342,7 +341,7 @@ end
 
 function M.complete(arg_lead, cmd_line, cursor_pos)
     -- These are the valid completions for the command
-    local options = { "due", "tag", "duetag", "query", "list", "help" }
+    local options = { "due", "tag", "duetag", "query", "list", "help", "current" }
     -- Return all options that start with the current argument lead
     return vim.tbl_filter(function(option)
         return vim.startswith(option, arg_lead)
@@ -427,6 +426,7 @@ function M.populate_buffer(buf, tasks)
     local last_due = ''
     local i = 0
     local grp
+    print('tasks: ', #tasks)
     for _, task  in pairs(tasks) do
         if task.line_number == nil then
             error('task.line_number is nil')
@@ -439,7 +439,7 @@ function M.populate_buffer(buf, tasks)
             end
             local date = os.time({year = task.due:sub(1,4), month = task.due:sub(6,7), day = task.due:sub(9,10), hour = 0, min = 0, sec = 0})
             date = os.date('%A, %d de %B de %Y', date)
-            date = date:sub(1,1):toupper() ..  date:sub(2)
+            date = date:sub(1,1):upper() ..  date:sub(2)
 
             local is_late = utils.is_before(task.due)
             if is_late then
@@ -485,6 +485,7 @@ function M.populate_buffer(buf, tasks)
 end
 
 function M.populate_buf_timeline(buf, tasks)
+    print('populate_buf_timeline')
     local colors = dev.color
     local ns_id = vim.api.nvim_create_namespace('dueHl')
     local grp_late = 'TaskLate'
@@ -492,6 +493,7 @@ function M.populate_buf_timeline(buf, tasks)
     local grp_date = 'DateHl'
     local grp_today = 'TodayHl'
     local grp_today_txt = 'TodayWordHl'
+
     vim.api.nvim_set_hl(0, grp_late, {fg = colors.faded_red})
     vim.api.nvim_set_hl(0, grp_ontime, {fg = colors.faded_blue})
     vim.api.nvim_set_hl(0, grp_date, {fg = colors.neutral_yellow})
@@ -522,9 +524,11 @@ function M.populate_buf_timeline(buf, tasks)
     i = i + 3
 
 
+    print('tasks: ', #tasks)
     local grp = grp_ontime
     for _, task  in pairs(tasks) do
         if task.line_number == nil then
+            utils.pprint(task, 'Task: ')
             error('task.line_number is nil')
         end
         if task.due ~= nil and last_due ~= task.due then
@@ -591,6 +595,10 @@ function M.populate_buf_timeline(buf, tasks)
         { noremap = true, silent = true }
     )
 
+    lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    print('buf: ', buf)
+    print('n lines: ', #lines)
+    print('end of populate_buf_timeline')
     return buf
 end
 
@@ -621,8 +629,6 @@ function M.split_lines(str, prefix)
 end
 
 function M.open_link()
-
-
     local linenr = vim.fn.line('.')
     linenr = tonumber(linenr)-1
     local win = float.Window.get_win()
@@ -697,6 +703,17 @@ function M.close_right()
 end
 
 function M.open_window(buf, title)
+
+    -- M.set_hl()
+    -- M.config_win()
+
+    -- M.highlight_tags(buf)
+
+    M.vid = vim.fn.win_getid()
+    vim.api.nvim_buf_set_keymap(buf, 'n', '<ESC>', ':bd<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(buf, 'n', 'q', ':bd<CR>', {noremap = true, silent = true})
+
+    -- get current window id
     local win = dev.nvim.ui.views.scratch({}, {
         title = title,
         title_pos = 'center',
@@ -718,6 +735,7 @@ function M.open_window(buf, title)
         },
     })
 
+    print('buf: ' .. buf)
     win.buf = buf
     win:open()
     vim.api.nvim_set_option_value('winhighlight', 'Normal:Normal', {win = 0, scope = "local"})
@@ -726,19 +744,11 @@ function M.open_window(buf, title)
 
     M.set_hl()
     M.config_win()
-    vim.cmd('set nowrap')
 
-    win:set_buf_links(file_lines)
-    M.highlight_tags(win.buf)
+    -- win:set_buf_links(file_lines)
+    -- M.highlight_tags(win.buf)
     vim.cmd([[2match Define /#\w\+/]])
-    vim.cmd('set nonumber')
-    vim.cmd('set norelativenumber')
 
-    -- local opts = vim.api.nvim_win_get_config(win.vid)
-
-    -- Reapply the configuration to the floating window
-    -- vim.cmd.hi('clear FloatTitle')
-    -- win.buffer
 end
 
 -- Function to highlight the pattern
@@ -778,6 +788,7 @@ M.init = function()
 end
 
 function M.open_current_tag(tag)
+    print('open current tag')
     tag = tag or vim.fn.expand('<cWORD>')
     tag = tag:match('(#%w+)')
     if tag == nil then
@@ -797,7 +808,14 @@ function M.open_current_tag(tag)
         return
     end
 
-    M.open_window(tasks, tag .. ' tasks')
+    -- create a buffer
+    local buf = M.create_buf()
+    M.populate_buf_timeline(buf,tasks)
+    print('buf: ', buf)
+
+    print('open window')
+    M.open_window(buf, tag .. ' tasks')
+    print('end of open current tag')
 end
 
 M.load_tasks = function()
@@ -894,6 +912,9 @@ M.command = function(args)
         if arg[1]:match(tag_pattern) then
             table.insert(opts.tags,arg[1])
             table.remove(arg, 1)
+        elseif arg[1] == 'current' then
+            M.open_current_tag()
+            return
         elseif arg[1] == 'status' then
             arg.status = arg[2]
             table.remove(arg, 1)
@@ -931,6 +952,7 @@ vim.api.nvim_create_user_command('Tasks',
     { nargs = '*', complete = M.complete}
 )
 vim.api.nvim_set_keymap('n', '<F9>', ':Tasks toggle default<CR>', {noremap = true, silent = true})
+vim.api.nvim_set_keymap('n', '<LocalLeader>t', ':Tasks current<CR>', {noremap = true, silent = true})
 
 function M.open_window_by_tag(tag)
     local tasks_qf = M.query_by_tag(tag)
