@@ -8,52 +8,65 @@ local M = {
         template_dir = '/home/gagarin/.config/nvim/templates',
     },
 }
+
 M.templates = {
     author  = 'Iuro Nascimento',
     email = 'iuro@ufmg.br',
+
     Today = function()
         return os.date('%A %d %B %Y')
     end,
+
     today = function()
-        os.date('%Y-%m-%d')
+        return os.date('%Y-%m-%d')
     end,
+
     year  = function()
-        os.date('%Y')
+        return os.date('%Y')
     end,
+
     month = function()
-        os.date('%m')
+        return os.date('%m')
     end,
+
     day   = function()
-        os.date('%d')
+        return os.date('%d')
     end,
+
     time  = function()
-        os.date('%H:%M:%S')
+        return os.date('%H:%M:%S')
     end,
+
     date  = function()
-        os.date('%Y-%m-%d %H:%M:%S')
+        return os.date('%Y-%m-%d %H:%M:%S')
     end,
+
     root = M.config.template_dir,
 }
 
 M.templates.reminders = function()
     local today = os.date('%a')
     local templ
+
     if today == "Sun" or today == "Sat" then
         templ = 'weekndday.tpl'
     else
         templ = 'workday.tpl'
     end
+
     local filename
     if M.templates.root == '' then
         filename = templ
     else
         filename = M.templates.root .. '/' .. templ
     end
+
     local file = io.open(filename)
     if not file then
         print(string.format('File %s does not exist', filename))
         return ''
     end
+
     local file_content = file:read('*a')
     file:close()
     return M.templater:render(file_content, M.templates)
@@ -78,8 +91,10 @@ end
 function M.insert_template(filepath)
     -- Get the current date
     local date = os.date("%Y-%m-%d")
+
     -- Open the new file
     local new_file = io.open(filepath, "w")
+
     if new_file then
         -- Write the template with the current date
         new_file:write(string.format(daily_tasks_template, date))
@@ -115,6 +130,7 @@ function M.watch_folder_for_new_files()
 
             local today os.date("%Y-%m-%d.md")
             local filename = fs.get_filename(filepath)
+
             if filename == today then
                 -- check if the file is loaded in a buffer
                 if vim.fn.bufexists(filepath) == 1 then
@@ -127,11 +143,12 @@ function M.watch_folder_for_new_files()
                     -- switch to the window
                     vim.cmd(winnr .. 'wincmd w')
                 end
-                
+
                 vim.cmd('normal! G')
                 vim.api.nvim_put({''}, 'l', true, false) -- add a line below the current line
                 M.expand_file(M.config.template_dir .. '/daily.tpl')
             end
+
             vim.notify("Today daily file created: ", filepath)
         end
     end)
@@ -144,42 +161,70 @@ end
 -- create a command to insert the template
 -- :lua require('templater').insert_template()
 function M.expand(text)
-    return M.templater:render(text, M.templates)
+    text = M.pre_escape(text)
+    print('text: ', text)
+    text = M.templater:render(text, M.templates)
+    text = M.de_escape(text)
+    return text
+end
+
+function M.de_escape(text)
+    local lines = require'utils'.split2(text, '\n')
+    for i, line in ipairs(lines) do
+        local line, count = line:gsub('%[%[(jq.*:.*)%]%]', '{{%1}}')
+        if count > 0 then
+            lines[i] = line
+        end
+    end
+    text = table.concat(lines, '\n')
+    return text
+end
+
+function M.pre_escape(text)
+    local lines = require'utils'.split2(text, '\n')
+    for i, line in ipairs(lines) do
+        local line, count = line:gsub('{{(jq.*:.*)}}', '[[%1]]')
+        if count > 0 then
+            lines[i] = line
+        end
+    end
+    text = table.concat(lines, '\n')
+    return text
 end
 
 
 function M.get_expanded_file(template_file)
-    print('templater.expand_file(' .. template_file .. ')')
     if template_file == nil or template_file == '' then
-        print('template_file is nil')
         require'fzf-lua'.fzf_exec('fd . -tf ' .. M.templates.root, {
             prompt = 'Select> ',
             actions = {
                 ['default'] = function(selected)
-                    print('selected: ', selected[1])
                     M.get_expand_file(selected[1])
                 end,
             },
         })
-        
+
         return
     end
+
     local file = io.open(template_file, 'r')
     if file == '' or file == nil or not file then
         print(string.format('Template file %s does not exist', template_file))
         return ''
     end
+
     local file_content = file:read("*all")
     file:close()
+
     local content = require'utils'.split2(M.expand(file_content), '\n')
     if type(content) == 'string' then
         content = {content}
     end
+
     return content
 end
 
 function M.expand_file(template_file)
-    print('templater.expand_file(' .. template_file .. ')')
     if template_file == nil or template_file == '' then
         print('template_file is nil')
         require'fzf-lua'.fzf_exec('fd . -tf ' .. M.templates.root, {
@@ -191,29 +236,33 @@ function M.expand_file(template_file)
                 end,
             },
         })
-        
+
         return
     end
-    print("template file: ")
-    require'utils'.pprint(template_file)
+
     local file = io.open(template_file, 'r')
     if file == '' or file == nil or not file then
         print(string.format('Template file %s does not exist', template_file))
         return ''
     end
+
     local file_content = file:read("*all")
     file:close()
+
     local content = require'utils'.split2(M.expand(file_content), '\n')
     if type(content) == 'string' then
         content = {content}
     end
+
     if vim then
         return vim.api.nvim_put(content, 'l', true, false)
     else
         return content
     end
 end
+
 vim.api.nvim_create_user_command('TemplIns', function(opt)
     M.expand_file(opt.args)
 end, {nargs='?'})
+
 return M
