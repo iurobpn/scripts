@@ -1,4 +1,3 @@
-local fs = require('dev.lua.fs')
 local json = require('cjson')
 local utils = require('utils')
 
@@ -91,10 +90,19 @@ function M.recurrent_done()
     return true
 end
 
+--- Search for tasks in the json file
+--- @param tag string or nil
+--- @param ... table
 M.search = function(tag, ...)
-    return M.views.search(tag, ...)
+    local opts = {...}
+    opts = opts[1] or {}
+    opts.tag = tag
+    M.views.search(opts)
 end
 
+--- Check a line for a jq command to run
+--- @param linenr integer
+--- @return string
 function M.get_cmd_from_line(linenr)
     if linenr == nil then
         linenr = vim.fn.line('.')
@@ -147,6 +155,9 @@ function M.ShowJqResult()
     end
 end
 
+---convert task to a short string
+---@param task table 
+---@return string
 function M.toshortstring(task)
     local mtags = ''
     if task.metatags then
@@ -162,6 +173,9 @@ function M.toshortstring(task)
     return line
 end
 
+---convert a task to a string
+---@param task table
+---@return string
 function M.tostring(task)
     local status
     if task.status == 'not started' then
@@ -188,8 +202,12 @@ function M.tostring(task)
     return line
 end
 
+--- convert a metatag to a string
+---@param mtag string
+---@param val any
+---@return string
 function M.mtag_to_string(mtag,val)
-    return string.format('[%s:: %s]', mtag, value)
+    return string.format('[%s:: %s]', mtag, val)
 end
 
 function M.UpdateJqFloat()
@@ -264,8 +282,8 @@ function M.UpdateJqFloat()
                 end
 
                 -- Get the window width and height
-                local width = vim.api.nvim_get_option("columns")
-                local height = vim.api.nvim_get_option("lines")
+                local width = vim.o.columns
+                local height = vim.o.lines
 
                 -- Calculate the width and height of the floating window
                 local float_width = max_line_length + 2  -- Add padding
@@ -288,14 +306,15 @@ function M.UpdateJqFloat()
                 -- Configure floating window options
                 local opts = {
                     style = 'minimal',
-                    relative = 'win',
+                    relative = 'cursor',
                     width = float_width,
                     height = float_height,
-                    row = current_line,
+                    row = 1,
                     col = cmd_start_col - 1,  -- Adjust for 0-indexing
                     border = nil,
                     noautocmd = true,
                 }
+                utils.pprint(opts, 'opts: ')
 
                 -- create a name space for highlightinh current line
                 if M.jq.ns_line_id == nil then
@@ -319,8 +338,6 @@ function M.UpdateJqFloat()
                 vim.api.nvim_set_option_value('wrap', false, { scope = "local", win = jq.vid })
                 -- call matchadd to set the highlight group for the line number for the jq window
                 vim.fn.matchadd('LineNr', "| .*$", 1, -1, { window = jq.vid})
-
-
             else
                 -- Handle error (optional)
                 print("Error executing command: " .. line_content)
@@ -373,7 +390,7 @@ vim.api.nvim_exec([[
     autocmd BufLeave *md lua require'dev.lua.tasks'.CloseJqFloat()
   augroup END
 ]], false)
---
+
 -- -- Set up autocommands
 -- vim.api.nvim_exec([[
 --   augroup JqResultAutocmd
@@ -397,6 +414,7 @@ vim.api.nvim_create_user_command('TasksIndex', 'lua require"dev.lua.tasks.indexe
         desc = 'Index note tasks  and save into json file'
     }
 )
+
 -- Define the autocommand to trigger on saving a markdown file
 vim.api.nvim_create_autocmd("BufWritePost", {
     pattern = "*.md",     -- Only apply to markdown files

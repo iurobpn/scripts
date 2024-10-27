@@ -37,9 +37,16 @@ end
 
 -- local log_file = '/tmp/error_lua.log'
 function qfloat.qrun(cmd)
-    vim.cmd.cexpr(cmd)
-    -- vim.cmd.cexpr(fmt('system("%s")', cmd))
-    qfloat.qopen()
+    if cmd == nil or cmd == '' then
+        print('No command to run.')
+        return
+    end
+    if type(cmd) == 'table' and cmd.args ~= nil then
+        cmd = cmd.args
+    end
+    local fname = '/tmp/error_lua.log'
+    utils.get_command_output(cmd .. ' > ' .. fname)
+    qfloat.qfile(fname)
 end
 
 function qfloat.qfile(filename)
@@ -47,7 +54,6 @@ function qfloat.qfile(filename)
         print('File does not exist: ' .. filename)
         return
     end
-    print('error file: ' .. filename)
     vim.cmd.cfile(filename)
     qfloat.qopen()
 end
@@ -346,6 +352,7 @@ function qfloat.qclose_qfix()
         end
     end
 end
+
 -- Check if a quickfix window is open
 function qfloat.is_quickfix_open()
   for _, win in ipairs(vim.fn.getwininfo()) do
@@ -413,6 +420,12 @@ vim.api.nvim_create_user_command("QrunCurrent", qfloat.qrun_current, {})
 vim.api.nvim_create_user_command("QrunLast",    qfloat.qrun_last,    {})
 vim.api.nvim_create_user_command("Qclose",      Window.close,        {})
 vim.api.nvim_create_user_command("Qmessage",    qfloat.qmessage,     {})
+vim.api.nvim_create_user_command("Qrun",
+    function (args)
+        qfloat.qrun(args)
+    end,
+    {nargs = '+'}
+)
 
 
 

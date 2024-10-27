@@ -133,6 +133,7 @@ function M.get_command_output(cmd)
     -- Return the output, trimming any trailing newlines
     return result --:gsub("%s+$", "")
 end
+M.run = M.get_command_output
 
 M.trim = function(s)
     return (s:gsub("^%s*(.-)%s*$", "%1"))
