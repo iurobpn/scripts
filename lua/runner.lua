@@ -25,6 +25,7 @@ function M.zellij_run(opts)
     -- if no '--' is present, the command is assumed to be a pane command
     local res = opts.args:match(' %-%- ')
     if res ~= nil then
+        print('res')
         for i, opt in ipairs(opts.fargs) do
             if opt == '--' then
                 z_opts.cmd =  table.concat(opts.fargs, ' ', i+1)
@@ -49,6 +50,7 @@ function M.zellij_run(opts)
         z_opts.cmd = opts.args
     end
     local cmd = 'zellij run ' .. z_opts.args .. ' -- ' .. z_opts.cmd
+    print('Running command: ' .. cmd)
 
     local status, msg = M.run(cmd)
     -- local st = vim.inspect(status)
@@ -62,7 +64,7 @@ function M.zellij_run(opts)
     return status, msg
 end
 
-function M.input_complete(arg_lead, cmd_line, cursor_pos)
+function M.input_complete(arg_lead, _, _)
     -- These are the valid completions for the command
     -- Return all options that start with the current argument lead
 
@@ -72,7 +74,7 @@ function M.input_complete(arg_lead, cmd_line, cursor_pos)
     return table.concat(opt, ' ')
 end
 
-function M.complete(arg_lead, cmd_line, cursor_pos)
+function M.complete(arg_lead, _, _)
     -- These are the valid completions for the command
     -- Return all options that start with the current argument lead
     return vim.tbl_filter(function(option)
@@ -104,7 +106,14 @@ vim.api.nvim_create_user_command("ZellijRun",
         desc = 'run a command with zellij in the current pane or a new pane (float or aside)'
     })
 
-vim.api.nvim_set_keymap('n', '<F5>', ':ZellijRun ', {noremap = true, silent = true})
+vim.api.nvim_set_keymap('n',
+    '<F5>',
+    ':ZellijRun ',
+    {
+        noremap = true,
+        silent = true,
+        desc = 'run a command using zellij run and options'
+    })
 -- vim.ui.select()
 
 function M.run(cmd)

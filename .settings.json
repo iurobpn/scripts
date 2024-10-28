@@ -2,11 +2,12 @@
     "excepts": [
     ],
     "initialized": true,
-    "main_root": "",
+    "last_file": "./lua/launch_tserver.lua",
+    "main_root": ".root",
+    "package": "qfloat",
     "query_user_root": false,
     "root_dir": "/home/gagarin/git/scripts",
     "root_files": [
-        ".root",
         "root.tex"
     ],
     "root_priority": [
@@ -16,66 +17,14 @@
     ],
     "settings_file": ".settings.json",
     "tables": {
+        "qfloat": {
+            "last_file": ""
+        },
         "query_history": [
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select(.status != \"done\" and .due == null and .tags[] == \"#today\")] | sort_by(.due)'",
-            "jq '[ .[] | select(.status != \"done\" and .due == null and .tags[] == \"#today\")] | sort_by(.due)'",
-            "jq '[ .[] | select(.status != \"done\" and .tags[] == \"#today\")] | sort_by(.due)'",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") or (.tags[] == \"#important\") )) ] | sort_by(.due) '",
-            "jq '[ .[] | select(.status != \"done\" and .tags[] == \"#today\")] | sort_by(.due)'",
-            "jq '[ .[] | select(.status != \"done\" and .tags[] == \"#important\")] | sort_by(.due)'",
-            "jq '[ .[] | select(.status != \"done\" and .tags[] == \"#important\")] | sort_by(.due)'",
-            "jq '[ .[] | select(.status != \"done\" and .tags[] == \"#important\")] | sort_by(.due)'",
-            "jq '[ .[] | select(.status != \"done\" and .tags[] == \"#important\")] | sort_by(.due)'",
-            "jq '[ .[] | select(.status != \"done\" and .tags[] == \"#important\")] | sort_by(.due)'",
-            "jq '[ .[] | select(.status != \"done\" and .tags[] == \"#important\")] | sort_by(.due)'",
-            "jq '[ .[] | select(.status != \"done\" and .tags[] == \"#important\")] | sort_by(.due)'",
-            "jq '[ .[] | select(.status != \"done\" and .tags[] == \"#important\")] | sort_by(.due)'",
-            "jq '[ .[] | select(.status != \"done\" and .tags[] == \"#important\")] | sort_by(.due)'",
-            "jq '[ .[] | select(.status != \"done\" and .tags[] == \"#important\")] | sort_by(.due)'",
-            "jq '[ .[] | select(.status != \"done\" and .tags[] == \"#important\")] | sort_by(.due)'",
-            "jq '[ .[] | select(.status!=\"done\" and .due!=null ) ] | sort_by(.due)' ",
-            "jq '[ .[] | select(.status!=\"done\" and .due!=null ) ] | sort_by(.due)' ",
-            "jq '[ .[] | select(.status!=\"done\" and (.tags | index(\"#goal\") or index(\"#today\") ) ) ] | sort_by(.due)' ",
-            "jq '[ .[] | select(.status!=\"done\" and (.tags | index(\"#goal\") or index(\"#today\") ) ) ] | sort_by(.due)' ",
-            "jq '[ .[] | select(.status!=\"done\" and (.tags | index(\"#goal\") or index(\"#today\") ) ) ] | sort_by(.due)' ",
-            "jq '[ .[] | select(.status!=\"done\" and .due!=null ) ] | sort_by(.due)' ",
-            "jq '[ .[] | select(.status!=\"done\" and .due!=null ) ] | sort_by(.due)' ",
-            "jq '[ .[] | select(.status!=\"done\" and .due!=null ) ] | sort_by(.due)' ",
-            "jq '[ .[] | select(.status!=\"done\" and .due!=null ) ] | sort_by(.due)' ",
-            "jq '[ .[] | select(.status!=\"done\" and .due!=null ) ] | sort_by(.due)' ",
-            "jq '[ .[] | select(.status!=\"done\" and .due!=null ) ] | sort_by(.due)' ",
-            "jq '[ .[] | select(.status!=\"done\" and .due!=null ) ] | sort_by(.due)' ",
-            "jq '[ .[] | select(.status!=\"done\" and (.tags | index(\"#goal\") or index(\"#today\") ) ) ] | sort_by(.due)' ",
-            "jq '[ .[] | select(.status!=\"done\" and .tags | index(\"#important\") ) ] | sort_by(.due)' ",
-            "jq --arg today \"$(date +%Y-%m-%d)\" '[ .[] | select(.status!=\"done\" and .due!=null and .due <= $today ) ] | sort_by(.due)' ",
-            "jq '[ .[] | select(.status!=\"done\" and .tags | index(\"#important\") ) ] | sort_by(.due)' ",
-            "jq '[ .[] | select(.status!=\"done\" and (.tags | index(\"#goal\") or index(\"#today\") ) ) ] | sort_by(.due)' ",
-            "jq '[ .[] | select(.status!=\"done\" and .tags | index(\"#important\") ) ] | sort_by(.due)' ",
-            "jq --arg today \"$(date +%Y-%m-%d)\" '[ .[] | select(.status!=\"done\" and .due!=null and .due <= $today ) ] | sort_by(.due)' ",
-            "jq --arg today \"$(date +%Y-%m-%d)\" '[ .[] | select(.status==\"done\" and .due==$today) ] | sort_by(.due)' ",
-            "jq --arg today \"$(date +%Y-%m-%d)\" '[ .[] | select(.status==\"done\" and .due==$today) ] | sort_by(.due)' "
         ],
         "query_list": [
             {
-                "description": "select by id",
+                "description": "jq 'select by id'",
                 "inputs": [
                     "id"
                 ],
@@ -86,14 +35,20 @@
                 "inputs": [
                     "tag"
                 ],
-                "query": "[ .[] | select(.status != \"done\" and .due != null and .tags[] == \"%s\") ]"
+                "query": "jq '[ .[] | select(.status != \"done\" and .due != null and .tags[] == \"%s\") ]'"
             },
             {
                 "description": "select by tag (undone)",
                 "inputs": [
                     "tag"
                 ],
-                "query": "[ .[] | select(.status != \"done\" and .tags[] == \"%s\") ]"
+                "query": "jq '[ .[] | select(.status != \"done\" and .tags[] == \"%s\") ]'"
+            },
+            {
+                "description": "select by tags #today or #important and sort by due date",
+                "inputs": [
+                ],
+                "query": "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") and (.tags[] == \"#important\") )) ] | sort_by(.due) '"
             }
         ]
     }

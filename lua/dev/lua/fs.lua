@@ -5,6 +5,10 @@ local utils = require('utils')
 local M = {}
 
 function M.file_exists(filename)
+    if type(filename) ~= 'string' then
+        vim.notify('Filename must be a string', vim.log.levels.ERROR)
+        return false
+    end
     local file = io.open(filename, "r")
     if file then
         file:close()

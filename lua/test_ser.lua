@@ -1,9 +1,6 @@
-
 local luasocket = require'socket'
 
-
 -- a client creates its socket
-
 local ip = "127.0.0.1"
 local port = 12345
 local client = luasocket.connect(ip, port)

@@ -193,7 +193,7 @@ M.show = function()
     end
     M.win:fit()
 
-    vim.api.nvim_buf_set_keymap(0, 'n', 's',    ':lua require("dev.nvim.cmake").show()<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(0, 'n', 's',    ':lua require("dev.nvim.cmake").show()<CR>', {noremap = true, silent = true, desc = 'Show CMake Presets'})
     vim.api.nvim_buf_set_keymap(0, 'n', 'r',    ':lua require("dev.nvim.cppbuild").run()<CR>', {noremap = true, silent = true})
     vim.api.nvim_buf_set_keymap(0, 'n', 'f', ':lua require("dev.nvim.cppbuild").select_config()<CR>', {noremap = true, silent = true})
     vim.api.nvim_buf_set_keymap(0, 'n', 't', ':lua require("dev.nvim.cppbuild").select_target()<CR>', {noremap = true, silent = true})
@@ -259,7 +259,7 @@ M.cmake_get_all = function()
     M.current.config = M.configs[2]
     M.current.targets = {}
 end
-function M.complete_command(arg_lead, cmd_line, cursor_pos)
+function M.complete_command(arg_lead, _, _)
     -- These are the valid completions for the command
     local options = { "run", "build", "configure", "cmake", "get", "target", "config", "select", "debug" }
     -- Return all options that start with the current argument lead
@@ -270,9 +270,9 @@ end
 
 vim.api.nvim_create_user_command('Cpp', function(args)
     M.command(args)
-end, { nargs = '*' , complete = M.complete_command })
+end, { nargs = '*' , complete = M.complete_command, desc = 'C++ config, build and run commands' })
 
-vim.api.nvim_set_keymap('n', '<F10>', ':Cpp<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<F10>', ':Cpp<CR>', { noremap = true, silent = true, desc = 'C++ config, build and run commands' })
 
 M.print = function()
     print('Config: ', vim.inspect(M.current.config))

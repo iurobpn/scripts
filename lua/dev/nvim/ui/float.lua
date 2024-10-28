@@ -193,7 +193,7 @@ function Window.set_link_ns()
             name = 'dev_float',
             normal = {
                 group = 'link_hl',
-                opts = { 
+                opts = {
                     fg = Window.colors.neutral_blue,
                     underline = false,
                 },
@@ -213,11 +213,19 @@ function Window.set_link_ns()
 end
 
 function Window:ui_width()
-    return vim.api.nvim_get_option("columns")
+    if self == nil then
+        return vim.o.columns
+    elseif self.vid ~= nil then
+        return vim.api.nvim_win_get_width(self.vid)
+    end
 end
 
 function Window:ui_height()
-    return vim.api.nvim_get_option("lines")
+    if self == nil then
+        return vim.o.lines
+    elseif self.vid ~= nil then
+        return vim.api.nvim_win_get_height(self.vid)
+    end
 end
 
 function Window:config(...)
@@ -239,10 +247,10 @@ function Window:get_size()
         local lines = vim.api.nvim_buf_get_lines(self.buf, 0, -1, false)
 
         -- Calculate the height (number of lines)
-        local height = #lines
+        height = #lines
 
         -- Calculate the width (the length of the longest line)
-        local width = 0
+        width = 0
         for _, line in ipairs(lines) do
             if #line > width then
                 width = #line
@@ -364,7 +372,7 @@ function Window:set_options()
     local buffer = self.option.buffer or {}
     for k, v in pairs(buffer) do
         vim.api.nvim_set_option_value(k, v, { buf = self.buf })
-    end 
+    end
     local window = self.option.window or {}
     for k, v in pairs(window) do
         vim.api.nvim_set_option_value(k, v, { win = self.vid })
@@ -404,7 +412,9 @@ function Window.close_all()
     end
 end
 
-function Window:open()
+function Window:open(filename,linenr)
+    self.filename = filename
+    self.linenr = linenr
 
     -- if not self.cursor then
     -- --     vim.opt.guicursor = vim.o.background
@@ -413,7 +423,7 @@ function Window:open()
 
     if self.current then -- use current buffer
         self.vid, self.buf, self.filename = Window.get_current()
-    elseif self.buf then -- use the buffer already set
+    -- elseif self.buf then -- use the buffer already set
 
     elseif self.vid ~= nil then -- use the window id already set. It must be a float
         self.buf, self.filename = Window.get_window(self.vid)
@@ -448,7 +458,7 @@ function Window:open()
         vim.api.nvim_win_set_buf(self.vid, self.buf)
     end
 
-    if vid ~= nil and self.close_current or opts.close_current then
+    if self.vid ~= nil and self.close_current or opts.close_current then
         vim.api.nvim_win_close(self.vid, false)
     end
     if self.idx < 0 then
@@ -457,7 +467,11 @@ function Window:open()
     end
 
     if not self.modifiable then
-        vim.api.nvim_buf_set_keymap(self.buf, self.close_map.mode, self.close_map.key, self.close_map.cmd, { noremap = true, silent = true })
+        vim.api.nvim_buf_set_keymap(self.buf, self.close_map.mode,
+            self.close_map.key, self.close_map.cmd, {
+                noremap = true,
+                silent = true
+            })
     else
         vim.api.nvim_buf_set_keymap(self.buf, 'n', '<ESC>', self.close_map.cmd, self.close_map.opts)
     end
@@ -584,17 +598,16 @@ function Window.fullscreen()
     Window.floats[win_id].fullscreen = true
 end
 
-function Window:set_links(files, lines)
-
-end
-
 function Window.open_link()
     local win = Window.get_win()
     local linenr = vim.fn.line('.')
     if win ~= nil then
         win:close()
+    else
+        vim.notify("Current window is not a float")
+        return
     end
-    
+
     vim.cmd.e(win.map_file_line[linenr].file)
     vim.api.nvim_win_set_cursor(0, {win.map_file_line[linenr].line,0})
 end
@@ -627,13 +640,13 @@ function Window:set_buf_links(map_file_line)
     vim.api.nvim_create_autocmd("CursorMoved", {
         buffer = self.buf,
         callback = function()
-            local link = Window.ns.link
+            link = Window.ns.link
             -- Clear all highlights first
             vim.api.nvim_buf_clear_namespace(self.buf, link.id, 0, -1)
 
             local line_count = vim.api.nvim_buf_line_count(self.buf)
 
-            local cursor_line = vim.api.nvim_win_get_cursor(0)[1] - 1
+            cursor_line = vim.api.nvim_win_get_cursor(0)[1] - 1
             -- Reapply without cursor highlights
             for i = 0, line_count - 1 do
                 if i ~= cursor_line then
@@ -736,8 +749,12 @@ function Window.handle_link()
             noremap = true,
             silent = true,
             callback = function()
-                win.close()
-                open_in_floating_window(filename, tonumber(line_number))
+                local win = Window.get_win()
+                if win ~= nil then
+                    win:close()
+                end
+                win = Window()
+                win:open(filename, tonumber(line_number))
             end
         })
     end
@@ -773,9 +790,9 @@ function Window:get_position()
             error("Invalid corner specified: " .. (self.position or 'nil'))
         end
     else
-        if self.position.relative then
+        if self.position.relative ~= nil then
             row, col = self.relative.row*ui_height, self.relative.col*ui_width
-        elseif self.position.absolute then
+        elseif self.position.absolute ~= nil then
             row = self.position.absolute.row
             col = self.position.absolute.col
         else
@@ -802,7 +819,7 @@ function Window:set_content(content)
 end
 
 function Window:redraw()
-    local vid = nil
+    local vid
     if not self then
         vid = vim.fn.win_getid()
         self = Window.floats[vid]
@@ -823,21 +840,12 @@ function Window:fit()
     -- Get the lines of the buffer
     local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
 
-    -- Calculate the height (number of lines)
-    local height = #lines
-
     -- Calculate the width (the length of the longest line)
     local width = 0
     for _, line in ipairs(lines) do
         if #line > width then
             width = #line
         end
-    end
-    if width == 0 then
-        width = 1
-    end
-    if height == 0 then
-        height = 1
     end
 
     self:config({
@@ -899,7 +907,7 @@ function Window.toggle()
         local win = nil
         local idx = -1
         if n > 0 then
-            for i, w in ipairs(Window.hidden) do
+            for i, w in pairs(Window.hidden) do
                 idx = i
                 win = w
                 break
@@ -912,14 +920,14 @@ function Window.toggle()
             Window.floats[win.vid] = win
             Window.hidden[idx] = nil
         else
-            local win = Window()
+            win = Window()
             win:open()
             Window.floats[win.vid] = win
         end
     end
 end
 
-function Buffer.set_buf_links(buf,map_file_line)
+function Buffer.set_buf_links(buf,_)
 
     if Window.ns == nil or Window.ns.link == nil then
         Window.set_link_ns()

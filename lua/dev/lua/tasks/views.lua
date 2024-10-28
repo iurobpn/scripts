@@ -38,7 +38,7 @@ function M.params_to_string(parameters)
     if parameters == nil then
         return str
     end
-    for k,v in pairs(parameters) do
+    for k, v in pairs(parameters) do
         str = str .. '[' .. k .. ':: ' .. v .. '] '
     end
     return str
@@ -49,8 +49,8 @@ function M.tags_to_string(tags)
     if tags == nil then
         return str
     end
-    for _,tag in ipairs(tags) do
-        str = str ..  tag .. ' '
+    for _, tag in ipairs(tags) do
+        str = str .. tag .. ' '
     end
     return str
 end
@@ -96,8 +96,8 @@ function M.open_context_window(filename, line_nr)
 
     win:open()
 
-    line_nr = math.floor(#content/2)
-    vim.api.nvim_win_set_cursor(win.vid, {line_nr, 0})
+    line_nr = math.floor(#content / 2)
+    vim.api.nvim_win_set_cursor(win.vid, { line_nr, 0 })
 end
 
 --- Convert a list of tasks to a quickfix list
@@ -122,8 +122,7 @@ function M.to_qfix(tasks)
 end
 
 function M.set_custom_hl(buf, line)
-
-    local entry = vim.api.nvim_buf_get_lines(buf, line-1, line, false)[1]
+    local entry = vim.api.nvim_buf_get_lines(buf, line - 1, line, false)[1]
 
     if entry == nil then
         print(string.format('could not get line %d from buffer', line))
@@ -135,14 +134,14 @@ function M.set_custom_hl(buf, line)
         return
     end
     local hl_group = 'MetaTags'
-    vim.api.nvim_set_hl(0, hl_group, { fg = dev.color.gray , italic = true })  -- Adjust the color as needed
+    vim.api.nvim_set_hl(0, hl_group, { fg = dev.color.gray, italic = true })  -- Adjust the color as needed
     -- Define the namespace for extmarks (you can use the same namespace for multiple extmarks)
     local ns_id = vim.api.nvim_create_namespace('previewer_due')
     -- Create your custom highlight group with color similar to comments
 
     -- Set virtual text at a given line (line 2 in this case, 0-based index)
-    vim.api.nvim_buf_set_extmark(buf, ns_id, line-1, 0, {
-        virt_text = { { string.format("(due: %s) ", due_date), hl_group } },  -- Text and optional highlight group
+    vim.api.nvim_buf_set_extmark(buf, ns_id, line - 1, 0, {
+        virt_text = { { string.format("(due: %s) ", due_date), hl_group } }, -- Text and optional highlight group
         virt_text_pos = "inline",
         priority = 100,
         -- virt_text_pos = "eol",  -- Places the virtual text at the end of the line
@@ -176,11 +175,11 @@ function M.format_file_line(tasks)
         error('tasks is nil')
     end
     local out = {}
-    for _, task  in pairs(tasks) do
+    for _, task in pairs(tasks) do
         if task.line_number == nil then
             error('task.line_number is nil')
         end
-        table.insert(out,string.format('%s:%d:', task.filename, task.line_number))
+        table.insert(out, string.format('%s:%d:', task.filename, task.line_number))
     end
 
     return out
@@ -188,14 +187,17 @@ end
 
 function M.format_tasks_short(tasks)
     local tasks_qf = {}
-    for _, task  in pairs(tasks) do
+    for _, task in pairs(tasks) do
         if task.line_number == nil then
             error('task.line_number is nil')
         end
-        table.insert(tasks_qf, {filename = task.filename,
-            lnum = task.line_number, text = (task.description or '') ..
+        table.insert(tasks_qf, {
+            filename = task.filename,
+            lnum = task.line_number,
+            text = (task.description or '') ..
                 ' ' .. M.params_to_string(task.parameters) ..
-                ' ' .. M.tags_to_string(task.tags)})
+                ' ' .. M.tags_to_string(task.tags)
+        })
     end
 
     return tasks_qf
@@ -212,8 +214,7 @@ function M.format_timeline(tasks_in)
     local first = true
     local last_due = ''
     local i = 0
-    for _, task  in pairs(tasks_in) do
-
+    for _, task in pairs(tasks_in) do
         if task.line_number == nil then
             error('task.line_number is nil')
         end
@@ -225,13 +226,15 @@ function M.format_timeline(tasks_in)
                 i = i + 2
             end
             local date_tbl = os.time({
-                year = task.due:sub(1,4),
-                month = task.due:sub(6,7),
-                day = task.due:sub(9,10),
-                hour = 0, min = 0, sec = 0
+                year = task.due:sub(1, 4),
+                month = task.due:sub(6, 7),
+                day = task.due:sub(9, 10),
+                hour = 0,
+                min = 0,
+                sec = 0
             })
             local date = os.date('%A, %d de %B de %Y', date_tbl)
-            table.insert(tasks,  ' '.. date)
+            table.insert(tasks, ' ' .. date)
             i = i + 1
             first = false
             table.insert(tasks, '')
@@ -243,7 +246,7 @@ function M.format_timeline(tasks_in)
         last_due = task.due
         table.insert(tasks, glyphs.circle .. ' ' .. dev.lua.tasks.toshortstring(task))
         i = i + 1
-        table.insert(file_line, {file = task.filename, line = task.line_number, buf_line = i, due = task.due})
+        table.insert(file_line, { file = task.filename, line = task.line_number, buf_line = i, due = task.due })
         i = i + 1
     end
 
@@ -257,17 +260,16 @@ function M.format_tasks(tasks_in)
         vim.notify('tasks_in is nil', vim.log.levels.ERROR)
         return
     end
-    for _, task  in pairs(tasks_in) do
+    for _, task in pairs(tasks_in) do
         if task.line_number == nil then
             error('task.line_number is nil')
         end
         table.insert(tasks, dev.lua.tasks.tostring(task))
-        table.insert(file_line, {file = task.filename, line = task.line_number})
+        table.insert(file_line, { file = task.filename, line = task.line_number })
     end
 
     return tasks, file_line
 end
-
 
 function M.query_by_due()
     local q = query.Query()
@@ -309,27 +311,27 @@ function M.parse_entry(entry_str)
 end
 
 function M.fzf_query_due(tag, ...)
-    local opts = {...}
+    local opts = { ... }
     opts = opts[1] or {}
 
     if opts.due == nil then
-        opts.due = {order = 'ASC'}
+        opts.due = { order = 'ASC' }
     end
     M.fzf_query(tag, opts)
 end
 
 M.query_tag = function(tag, ...)
-    local opts = {...}
+    local opts = { ... }
     opts = opts[1] or {}
     local tasks
     if opts == nil or opts.due == nil then
         tasks = M.query_by_tag(tag)
-    -- else
-    --     local order = nil
-    --     if opts.due ~= nil and opts.due.order ~= nil then
-    --         order = opts.due.order
-    --     end
-    --     tasks = M.query_by_tag_and_due(tag)--, order)
+        -- else
+        --     local order = nil
+        --     if opts.due ~= nil and opts.due.order ~= nil then
+        --         order = opts.due.order
+        --     end
+        --     tasks = M.query_by_tag_and_due(tag)--, order)
     end
     M.tasks = tasks
     return tasks
@@ -339,7 +341,7 @@ function M.fzf_query(tasks, ...)
     -- local tasks = M.query_tag(tag, ...)
     tasks = M.to_lines(tasks)
     M.tasks = tasks
-    local opts = {...}
+    local opts = { ... }
     opts = opts[1] or {}
 
     -- debug
@@ -359,13 +361,13 @@ function M.fzf_query(tasks, ...)
         previewer = pv.Previewer,
         prompt    = 'Tasks❯ ',
         cwd       = query.Query.path,
-        fzf_opts = {
+        fzf_opts  = {
             ["--no-sort"] = true,
         },
 
         -- actions inherit from 'actions.files' and merge
-        actions = {
-            ["default"] =  sink
+        actions   = {
+            ["default"] = sink
         },
     })
     -- require'fzf-lua'.files(str_tasks, task_query_opts)
@@ -406,7 +408,7 @@ function M.open_due_window(tag)
 
     win:open()
     vim.cmd("set ft=markdown")
-    vim.api.nvim_set_option_value('winhighlight', 'Normal:Normal', {win = 0, scope = "local"})
+    vim.api.nvim_set_option_value('winhighlight', 'Normal:Normal', { win = 0, scope = "local" })
     for _, file in ipairs(files) do
         -- M.set_custom_hl(win.buf, i)
         win:set_buf_links(file)
@@ -429,10 +431,10 @@ function M.add_virtual_line(i, buf, ns_id, line, glyph, grp)
         assert(#line == #grp, 'line and grp must have the same length')
         assert(ns_id ~= nil, 'ns_id is nil')
         -- get the number of lines in the buffer
-        for j=i,i+#line-1 do
+        for j = i, i + #line - 1 do
             vim.api.nvim_buf_set_extmark(buf, ns_id, j, 0, {
-                virt_text = {{glyph[j-i+1], grp[j-i+1]}},
-                virt_text_pos = 'inline',  -- Place over the existing text
+                virt_text = { { glyph[j - i + 1], grp[j - i + 1] } },
+                virt_text_pos = 'inline', -- Place over the existing text
             })
         end
     end
@@ -441,11 +443,11 @@ end
 function M.create_buf()
     -- Create a new empty buffer
 
-    local buf = vim.api.nvim_create_buf(false, true)  -- (listed = false, scratch = true)
+    local buf = vim.api.nvim_create_buf(false, true) -- (listed = false, scratch = true)
 
     -- Set buffer options if needed
-    vim.api.nvim_set_option_value( 'bufhidden', 'wipe', { buf = buf })
-    vim.api.nvim_set_option_value('filetype', 'markdown', { buf = buf })  -- Replace 'your_filetype' as needed
+    vim.api.nvim_set_option_value('bufhidden', 'wipe', { buf = buf })
+    vim.api.nvim_set_option_value('filetype', 'markdown', { buf = buf }) -- Replace 'your_filetype' as needed
 
     return buf
 end
@@ -456,9 +458,9 @@ function M.populate_buffer(buf, tasks)
     local grp_late = 'TaskLate'
     local grp_ontime = 'TaskOnTime'
     local grp_date = 'DateHl'
-    vim.api.nvim_set_hl(0, grp_late, {fg = colors.faded_red})
-    vim.api.nvim_set_hl(0, grp_ontime, {fg = colors.faded_blue})
-    vim.api.nvim_set_hl(0, grp_date, {fg = colors.neutral_yellow})
+    vim.api.nvim_set_hl(0, grp_late, { fg = colors.faded_red })
+    vim.api.nvim_set_hl(0, grp_ontime, { fg = colors.faded_blue })
+    vim.api.nvim_set_hl(0, grp_date, { fg = colors.neutral_yellow })
 
     -- create timeline as virtual text
     local file_line = {}
@@ -470,7 +472,7 @@ function M.populate_buffer(buf, tasks)
     local first = true
     local last_due = ''
     local i = 0
-    for _, task  in pairs(tasks) do
+    for _, task in pairs(tasks) do
         if task.line_number == nil then
             error('task.line_number is nil')
         end
@@ -481,19 +483,19 @@ function M.populate_buffer(buf, tasks)
                 -- i = i + 1
             end
             local date_tbl = os.time({
-                year = task.due:sub(1,4),
-                month = task.due:sub(6,7),
-                day = task.due:sub(9,10),
+                year = task.due:sub(1, 4),
+                month = task.due:sub(6, 7),
+                day = task.due:sub(9, 10),
                 hour = 0,
                 min = 0,
                 sec = 0
             })
             local date = os.date('%A, %d de %B de %Y', date_tbl)
             date = tostring(date)
-            date = string.sub(date, 1,1):upper() ..  string.sub(date, 2)
+            date = string.sub(date, 1, 1):upper() .. string.sub(date, 2)
 
             -- get window size
-            vim.api.nvim_buf_set_lines(buf, i, -1, false, {date})
+            vim.api.nvim_buf_set_lines(buf, i, -1, false, { date })
             vim.api.nvim_buf_add_highlight(buf, ns_id, grp_date, i, 0, -1)
             i = i + 1
             first = false
@@ -506,18 +508,18 @@ function M.populate_buffer(buf, tasks)
         end
         local task_lines = task.description .. tags .. ' ' .. fs.basename(task.filename) .. ':' .. task.line_number
 
-        local task_file_line = {file = task.filename,  line =task.line_number, due = task.due}
-        for j=i,i+#task_lines-1 do
-            M.map_file_line[j] =  task_file_line
+        local task_file_line = { file = task.filename, line = task.line_number, due = task.due }
+        for j = i, i + #task_lines - 1 do
+            M.map_file_line[j] = task_file_line
         end
-        table.insert(file_line, {file = task.filename, line = task.line_number, buf_line = i, due = task.due})
+        table.insert(file_line, { file = task.filename, line = task.line_number, buf_line = i, due = task.due })
         i = i + #task_lines
     end
 
     -- Buffer.set_buf_links(buf,file_lines)
 
     for _, fline in ipairs(file_line) do
-        M.map_file_line[fline.buf_line] = {file = fline.file,  line =fline.line, due = fline.due}
+        M.map_file_line[fline.buf_line] = { file = fline.file, line = fline.line, due = fline.due }
     end
 
     vim.api.nvim_buf_set_keymap(buf, 'n', '<CR>',
@@ -537,11 +539,11 @@ function M.populate_buf_timeline(buf, tasks)
     local grp_today = 'TodayHl'
     local grp_today_txt = 'TodayWordHl'
 
-    vim.api.nvim_set_hl(0, grp_late, {fg = colors.faded_red})
-    vim.api.nvim_set_hl(0, grp_ontime, {fg = colors.faded_blue})
-    vim.api.nvim_set_hl(0, grp_date, {fg = colors.neutral_yellow})
-    vim.api.nvim_set_hl(0, grp_today, {fg = colors.bright_orange})
-    vim.api.nvim_set_hl(0, grp_today_txt, {fg = colors.bright_yellow})
+    vim.api.nvim_set_hl(0, grp_late, { fg = colors.faded_red })
+    vim.api.nvim_set_hl(0, grp_ontime, { fg = colors.faded_blue })
+    vim.api.nvim_set_hl(0, grp_date, { fg = colors.neutral_yellow })
+    vim.api.nvim_set_hl(0, grp_today, { fg = colors.bright_orange })
+    vim.api.nvim_set_hl(0, grp_today_txt, { fg = colors.bright_yellow })
 
     -- create timeline as virtual text
     local file_line = {}
@@ -559,39 +561,39 @@ function M.populate_buf_timeline(buf, tasks)
     local today_tbl = os.time()
     today = os.date('%A, %d de %B de %Y', today_tbl)
     today = tostring(today)
-    today = today:sub(1,1):upper() ..  today:sub(2)
-    vim.api.nvim_buf_set_lines(buf, i, -1, false, {'Today', ''})
+    today = today:sub(1, 1):upper() .. today:sub(2)
+    vim.api.nvim_buf_set_lines(buf, i, -1, false, { 'Today', '' })
     vim.api.nvim_buf_add_highlight(buf, ns_id, grp_today_txt, i, 0, -1)
     i = i + 2
-    vim.api.nvim_buf_set_lines(buf, i, -1, false, {today, '', ''})
+    vim.api.nvim_buf_set_lines(buf, i, -1, false, { today, '', '' })
     vim.api.nvim_buf_add_highlight(buf, ns_id, grp_today, i, 0, -1)
     i = i + 3
 
 
     local grp = grp_ontime
-    for _, task  in pairs(tasks) do
+    for _, task in pairs(tasks) do
         if task.line_number == nil then
             utils.pprint(task, 'Task: ')
             error('task.line_number is nil')
         end
         if task.due ~= nil and last_due ~= task.due then
             if not first then
-                M.add_virtual_line(i, buf, ns_id, {''}, {glyphs.horizontal_bar}, {grp})
+                M.add_virtual_line(i, buf, ns_id, { '' }, { glyphs.horizontal_bar }, { grp })
                 i = i + 1
                 -- M.add_virtual_line(i, buf, ns_id, {''})
                 -- i = i + 1
             end
             local date_tbl = os.time({
-                year = task.due:sub(1,4),
-                month = task.due:sub(6,7),
-                day = task.due:sub(9,10),
+                year = task.due:sub(1, 4),
+                month = task.due:sub(6, 7),
+                day = task.due:sub(9, 10),
                 hour = 0,
                 min = 0,
                 sec = 0
             })
             local date = os.date('%A, %d de %B de %Y', date_tbl)
             date = tostring(date)
-            date = date:sub(1,1):upper() ..  date:sub(2)
+            date = date:sub(1, 1):upper() .. date:sub(2)
             local is_late = utils.is_before(task.due)
 
             if is_late then
@@ -599,7 +601,7 @@ function M.populate_buf_timeline(buf, tasks)
             end
 
             -- get window size
-            vim.api.nvim_buf_set_lines(buf, i, -1, false, {date})
+            vim.api.nvim_buf_set_lines(buf, i, -1, false, { date })
             vim.api.nvim_buf_add_highlight(buf, ns_id, grp_date, i, 0, -1)
             i = i + 1
             first = false
@@ -619,29 +621,29 @@ function M.populate_buf_timeline(buf, tasks)
         end
         table.insert(task_lines, ' ' .. fs.basename(task.filename) .. ':' .. task.line_number)
 
-        local glyphss = {glyphs.circle}
-        for _=2,#task_lines do
+        local glyphss = { glyphs.circle }
+        for _ = 2, #task_lines do
             table.insert(glyphss, glyphs.horizontal_bar)
         end
 
-        local groups = {grp}
-        for _=2,#task_lines do
+        local groups = { grp }
+        for _ = 2, #task_lines do
             table.insert(groups, grp)
         end
 
-        local task_file_line = {file = task.filename,  line =task.line_number, due = task.due}
-        for j=i,i+#task_lines-1 do
-            M.map_file_line[j] =  task_file_line
+        local task_file_line = { file = task.filename, line = task.line_number, due = task.due }
+        for j = i, i + #task_lines - 1 do
+            M.map_file_line[j] = task_file_line
         end
         M.add_virtual_line(i, buf, ns_id, task_lines, glyphss, groups)
-        table.insert(file_line, {file = task.filename, line = task.line_number, buf_line = i, due = task.due})
+        table.insert(file_line, { file = task.filename, line = task.line_number, buf_line = i, due = task.due })
         i = i + #task_lines
     end
 
     -- Buffer.set_buf_links(buf,file_lines)
 
     for _, fline in ipairs(file_line) do
-        M.map_file_line[fline.buf_line] = {file = fline.file,  line =fline.line, due = fline.due}
+        M.map_file_line[fline.buf_line] = { file = fline.file, line = fline.line, due = fline.due }
     end
 
     vim.api.nvim_buf_set_keymap(buf, 'n', '<CR>',
@@ -663,15 +665,15 @@ function M.split_lines(str, prefix)
     end
     -- divide task_str in lines
     local width = vim.api.nvim_win_get_width(0) - 4
-    local n_lines = math.floor(#str/ width)
+    local n_lines = math.floor(#str / width)
     local lines = {}
     if n_lines > 1 then
-        for j=1,n_lines do
-            local line = str:sub((j-1)*width+1, j*width)
+        for j = 1, n_lines do
+            local line = str:sub((j - 1) * width + 1, j * width)
             table.insert(lines, prefix .. utils.trim(line))
         end
     else
-        lines = {prefix .. utils.trim(str)}
+        lines = { prefix .. utils.trim(str) }
     end
     if lines[#lines] == ' ' then
         table.remove(lines, #lines)
@@ -681,7 +683,7 @@ end
 
 function M.open_link()
     local linenr = vim.fn.line('.')
-    linenr = tonumber(linenr)-1
+    linenr = tonumber(linenr) - 1
     local win = float.Window.get_win()
     if win ~= nil then
         win:close()
@@ -695,7 +697,7 @@ function M.open_link()
     vim.cmd.e(M.map_file_line[linenr].file)
     -- get current window id
     vim.cmd('normal! zR')
-    vim.api.nvim_win_set_cursor(0, {M.map_file_line[linenr].line, 0})
+    vim.api.nvim_win_set_cursor(0, { M.map_file_line[linenr].line, 0 })
     if win ~= nil then
         M.vid = nil
     else
@@ -723,8 +725,8 @@ function M.open_right(buf, _)
 
     -- M.highlight_tags(buf)
 
-    vim.api.nvim_buf_set_keymap(buf, 'n', '<ESC>', ':wincmd c<CR>', {noremap = true, silent = true})
-    vim.api.nvim_buf_set_keymap(buf, 'n', 'q', ':wincmd c<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(buf, 'n', '<ESC>', ':wincmd c<CR>', { noremap = true, silent = true })
+    vim.api.nvim_buf_set_keymap(buf, 'n', 'q', ':wincmd c<CR>', { noremap = true, silent = true })
     -- get current window id
     M.vid_r = vim.fn.win_getid()
 end
@@ -735,7 +737,7 @@ function M.toggle_right(...)
         M.vid_r = nil
     else
         -- open the window
-        local opts = {...}
+        local opts = { ... }
         opts = opts[1] or {}
         opts.toggle = true
         M.search(opts)
@@ -743,8 +745,6 @@ function M.toggle_right(...)
         assert(M.vid_r ~= nil, 'M.vid_r is nil')
     end
 end
-
-
 
 function M.close_right()
     -- check if vid is defined and is a window
@@ -756,15 +756,14 @@ function M.close_right()
 end
 
 function M.open_window(buf, title)
-
     -- M.set_hl()
     -- M.config_win()
 
     -- M.highlight_tags(buf)
 
     M.vid = vim.fn.win_getid()
-    vim.api.nvim_buf_set_keymap(buf, 'n', '<ESC>', ':wincmd c<CR>', {noremap = true, silent = true})
-    vim.api.nvim_buf_set_keymap(buf, 'n', 'q', ':wincmd c<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(buf, 'n', '<ESC>', ':wincmd c<CR>', { noremap = true, silent = true })
+    vim.api.nvim_buf_set_keymap(buf, 'n', 'q', ':wincmd c<CR>', { noremap = true, silent = true })
 
     -- get current window id
     local win = dev.nvim.ui.views.scratch(nil, {
@@ -790,7 +789,7 @@ function M.open_window(buf, title)
 
     win.buf = buf
     win:open()
-    vim.api.nvim_set_option_value('winhighlight', 'Normal:Normal', {win = 0, scope = "local"})
+    vim.api.nvim_set_option_value('winhighlight', 'Normal:Normal', { win = 0, scope = "local" })
     -- vim.cmd("set ft=markdown")
     vim.cmd([[call matchadd("LineNr", "| .*$")]])
 
@@ -800,7 +799,6 @@ function M.open_window(buf, title)
     -- win:set_buf_links(file_lines)
     -- M.highlight_tags(win.buf)
     vim.cmd([[2match Define /#\w\+/]])
-
 end
 
 -- Function to highlight the pattern
@@ -808,10 +806,10 @@ function M.highlight_tags(bufnr)
     local ns_id = vim.api.nvim_create_namespace("highlight_tags")
 
     -- Define the orange highlight group
-    vim.api.nvim_set_hl(0, 'PatternHighlight', {fg = '#FFA500'})  -- Orange color (Hex: #FFA500)
+    vim.api.nvim_set_hl(0, 'PatternHighlight', { fg = '#FFA500' }) -- Orange color (Hex: #FFA500)
 
     -- Define the pattern
-    local pattern = '\\[\\w\\+:: [\\w\\d:\\-/]\\+\\]'  -- Escaped Lua pattern for your desired regex
+    local pattern = '\\[\\w\\+:: [\\w\\d:\\-/]\\+\\]' -- Escaped Lua pattern for your desired regex
     -- Get total lines in the buffer
     local line_count = vim.api.nvim_buf_line_count(bufnr)
 
@@ -825,8 +823,8 @@ function M.highlight_tags(bufnr)
         local end_pos = 0
         repeat
             local res = vim.fn.matchstrpos(line, pattern, end_pos)
-            start_pos = tonumber(res[2]) + 1  -- Convert to 1-based index
-            end_pos = tonumber(res[3]) + 1  -- Convert to 1-based index
+            start_pos = tonumber(res[2]) + 1 -- Convert to 1-based index
+            end_pos = tonumber(res[3]) + 1   -- Convert to 1-based index
             if start_pos > 0 and end_pos > 0 then
                 -- Highlight the match with higher priority to overlay
                 -- link highlights
@@ -834,7 +832,7 @@ function M.highlight_tags(bufnr)
                     'PatternHighlight', line_num,
                     start_pos, end_pos)
             end
-        until start_pos == 0 and end_pos == 0  -- Stop if no more matches are found
+        until start_pos == 0 and end_pos == 0 -- Stop if no more matches are found
     end
 end
 
@@ -852,7 +850,7 @@ function M.open_current_tag(tag)
     end
     local q = query.Query()
     local opts = {
-        tags = {tag},
+        tags = { tag },
         status = 'not done'
     }
     -- get windows options
@@ -866,7 +864,7 @@ function M.open_current_tag(tag)
 
     -- create a buffer
     local buf = M.create_buf()
-    M.populate_buf_timeline(buf,tasks)
+    M.populate_buf_timeline(buf, tasks)
     M.title = tag .. ' tasks'
     M.open_window(buf, M.title)
 end
@@ -884,7 +882,7 @@ M.load_tasks = function()
 end
 
 M.search = function(...)
-    local opts = {...}
+    local opts = { ... }
     opts = opts[1] or {}
 
     local tasks
@@ -892,7 +890,7 @@ M.search = function(...)
     if opts.default then
         local q = query.Query()
         tasks = q:select(M.default_query)
-    elseif opts.search == 'last'  then
+    elseif opts.search == 'last' then
         if M.tasks == nil then
             local q = query.Query()
             tasks = q:select(M.default_query)
@@ -969,12 +967,12 @@ M.command = function(args)
     }
 
     if #arg == 0 then
-        M.search({default = true})
+        M.search({ default = true })
         return
     end
     while arg ~= nil and #arg > 0 do
         if arg[1]:match(tag_pattern) then
-            table.insert(opts.tags,arg[1])
+            table.insert(opts.tags, arg[1])
             table.remove(arg, 1)
         elseif arg[1] == 'current' then
             M.open_current_tag()
@@ -1016,11 +1014,11 @@ vim.api.nvim_create_user_command('Tasks',
     function(args)
         M.command(args)
     end,
-    { nargs = '*', complete = M.complete}
+    { nargs = '*', complete = M.complete }
 )
-vim.api.nvim_set_keymap('n', '<F9>', ':Tasks toggle default<CR>', {noremap = true, silent = true})
-vim.api.nvim_set_keymap('n', '<LocalLeader>t', ':Tasks current<CR>', {noremap = true, silent = true})
-vim.api.nvim_set_keymap('n', '<LocalLeader>l', ':Tasks last<CR>', {noremap = true, silent = true})
+vim.api.nvim_set_keymap('n', '<F9>', ':Tasks toggle default<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<LocalLeader>t', ':Tasks current<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<LocalLeader>l', ':Tasks last<CR>', { noremap = true, silent = true })
 function M.open_window_by_tag(tag)
     local tasks_qf = M.query_by_tag(tag)
     float.qset(tasks_qf)
