@@ -14,7 +14,7 @@ local fmt = string.format
 local Window = {}
 
 -- local log = Log('float')
-  ----- static ----------------------
+----- static ----------------------
 Window.id_count = 0
 Window.floats = {} -- list of open floats, indexed by the wim win id
 Window.hidden = {} -- list of hidden floats, indexed by the wim win id
@@ -89,7 +89,7 @@ Window.option = {
 }
 
 Window.colors = require('config.gruvbox-colors').get_colors()
-    --------------------------------
+--------------------------------
 
 function Window:new(...)
     self.vid = nil -- vim id
@@ -109,15 +109,15 @@ function Window:new(...)
     }
 
     self.position = 'center'
-        -- {
-         --    relative = {
-         --    row = 0.5,
-         --    col = 0.5,
-        -- },
-        -- absolute = {
-        --     row = 0,
-        --     col = 0,
-        -- },
+    -- {
+    --    relative = {
+    --    row = 0.5,
+    --    col = 0.5,
+    -- },
+    -- absolute = {
+    --     row = 0,
+    --     col = 0,
+    -- },
     -- },
     -- style = 'minimal',
     self.border = 'rounded'
@@ -130,9 +130,9 @@ function Window:new(...)
     self.title = ''
     self.maps = {
         n = {
-                -- keys = 'q',
-                -- cmd = ':lua Window.close()<CR>',
-                -- opts = { noremap = true, silent = true }
+            -- keys = 'q',
+            -- cmd = ':lua Window.close()<CR>',
+            -- opts = { noremap = true, silent = true }
         },
         i = {},
         v = {},
@@ -175,7 +175,7 @@ function Window:new(...)
         }
     }
 
-    local opts = {...}
+    local opts = { ... }
     opts = opts[1]
     if opts then
         for k, v in pairs(opts) do
@@ -229,10 +229,10 @@ end
 
 function Window:win_width()
     local width
-    if self ~= nil and self.vid ~= nil  then
+    if self ~= nil and self.vid ~= nil then
         width = vim.api.nvim_win_get_width(self.vid)
     else
-        width =  vim.o.columns
+        width = vim.o.columns
     end
 
     return width
@@ -250,7 +250,7 @@ function Window:win_height()
 end
 
 function Window:config(...)
-    local opts = {...}
+    local opts = { ... }
     opts = opts[1]
     if opts then
         tbl.merge(self, opts)
@@ -287,18 +287,18 @@ function Window:get_size()
         width = self.size.absolute.width
         height = self.size.absolute.height
     elseif self.size.flex then
-        height = ui_height*(self.size.relative.height or Window.size.relative.height)
+        height = ui_height * (self.size.relative.height or Window.size.relative.height)
         if #self.content == 0 then
             self.content = vim.api.nvim_buf_get_lines(self.buf, 0, -1, false)
         end
-        local tmp_width = self:get_max_content_width(self.content)+2
+        local tmp_width = self:get_max_content_width(self.content) + 2
         if tmp_width > ui_width or tmp_width <= 1 then
             tmp_width = ui_width
         end
         width = tmp_width
     elseif self.size.relative then
-        width = ui_width*self.size.relative.width
-        height = ui_height*self.size.relative.height
+        width = ui_width * self.size.relative.width
+        height = ui_height * self.size.relative.height
     else
         error('Size not set size')
     end
@@ -313,7 +313,7 @@ function Window:set_size()
 end
 
 function Window:add_map(mode, keys, cmd, opts)
-    table.insert(self.maps[mode], {keys = keys, cmd = cmd, opts = opts})
+    table.insert(self.maps[mode], { keys = keys, cmd = cmd, opts = opts })
 end
 
 function Window:params()
@@ -354,8 +354,8 @@ function Window.move(dx, dy)
     end
 
     local win_config = vim.api.nvim_win_get_config(win_id)
-    win_config.row[false] = win_config.row[false] - dy  -- Adjust the row positiondx, dy
-    win_config.col[false] = win_config.col[false] - dx  -- Adjust the row positiondx, dy
+    win_config.row[false] = win_config.row[false] - dy -- Adjust the row positiondx, dy
+    win_config.col[false] = win_config.col[false] - dx -- Adjust the row positiondx, dy
     vim.api.nvim_win_set_config(win_id, win_config)
 end
 
@@ -433,7 +433,7 @@ function Window.close_all()
     end
 end
 
-function Window:open(filename,linenr)
+function Window:open(filename, linenr)
     self.filename = filename
     self.linenr = linenr
 
@@ -444,8 +444,7 @@ function Window:open(filename,linenr)
 
     if self.current then -- use current buffer
         self.vid, self.buf, self.filename = Window.get_current()
-    -- elseif self.buf then -- use the buffer already set
-
+        -- elseif self.buf then -- use the buffer already set
     elseif self.vid ~= nil then -- use the window id already set. It must be a float
         self.buf, self.filename = Window.get_window(self.vid)
     else
@@ -454,11 +453,11 @@ function Window:open(filename,linenr)
             self.buf = vim.api.nvim_create_buf(false, true)
         end
         if self.filename ~= nil and #self.filename > 0 then -- create a buffer to load the file
-            vim.api.nvim_set_option_value('modifiable', true, {buf = self.buf})
-            Buffer.load(self.buf,self.filename)
-        elseif self.content ~= nil and #self.content > 0 then -- create a buffer and load the content into it
-            vim.api.nvim_set_option_value('modifiable', true, {buf = self.buf})
-            vim.api.nvim_buf_set_lines(self.buf, 0,  -1, false, self.content) -- write to buffer
+            vim.api.nvim_set_option_value('modifiable', true, { buf = self.buf })
+            Buffer.load(self.buf, self.filename)
+        elseif self.content ~= nil and #self.content > 0 then                 -- create a buffer and load the content into it
+            vim.api.nvim_set_option_value('modifiable', true, { buf = self.buf })
+            vim.api.nvim_buf_set_lines(self.buf, 0, -1, false, self.content)  -- write to buffer
         end
     end
 
@@ -507,7 +506,6 @@ function Window:open(filename,linenr)
     Window.floats[self.vid] = self
 end
 
-
 function Window.get_window(vid)
     -- Get the current window and buffer
     local buf, filename = nil, nil
@@ -520,6 +518,7 @@ function Window.get_window(vid)
 
     return buf, filename
 end
+
 function Window.get_win()
     local vid = vim.api.nvim_get_current_win()
     if not Window.is_floating(vid) then
@@ -554,7 +553,6 @@ function Window.is_floating(vid)
     return vid ~= nil and vim.api.nvim_win_is_valid(vid) and vim.api.nvim_win_get_config(vid).relative ~= ''
 end
 
-
 function Window.snap_down()
     local win_id = vim.fn.win_getid()
     if not win_id or not vim.api.nvim_win_is_valid(win_id) or not Window.is_floating(win_id) then
@@ -563,7 +561,7 @@ function Window.snap_down()
     end
 
     local win_config = vim.api.nvim_win_get_config(win_id)
-    win_config.row = vim.api.nvim_get_option("columns") - win_config.height
+    win_config.row = vim.o.columns - win_config.height
     vim.api.nvim_win_set_config(win_id, win_config)
 end
 
@@ -587,7 +585,7 @@ function Window.snap_right()
     end
 
     local win_config = vim.api.nvim_win_get_config(win_id)
-    win_config.col = vim.api.nvim_get_option("columns") - win_config.width
+    win_config.col = vim.o.columns - win_config.width
     vim.api.nvim_win_set_config(win_id, win_config)
 end
 
@@ -613,8 +611,8 @@ function Window.fullscreen()
     local win_config = vim.api.nvim_win_get_config(win_id)
     win_config.row = 0
     win_config.col = 0
-    win_config.width = vim.api.nvim_get_option("columns")
-    win_config.height = vim.api.nvim_get_option("lines")-5
+    win_config.width = vim.o.columns
+    win_config.height = vim.o.lines
     vim.api.nvim_win_set_config(win_id, win_config)
     Window.floats[win_id].fullscreen = true
 end
@@ -630,7 +628,7 @@ function Window.open_link()
     end
 
     vim.cmd.e(win.map_file_line[linenr].file)
-    vim.api.nvim_win_set_cursor(0, {win.map_file_line[linenr].line,0})
+    vim.api.nvim_win_set_cursor(0, { win.map_file_line[linenr].line, 0 })
 end
 
 -- should be a buffer function, not window
@@ -650,7 +648,7 @@ function Window:set_buf_links(map_file_line)
 
     -- local N = utils.numel(map_file_line)
     -- for i=0,N-1 do
-        -- vim.api.nvim_buf_clear_namespace(self.buf, link.id, i, i+1)
+    -- vim.api.nvim_buf_clear_namespace(self.buf, link.id, i, i+1)
     -- end
 
     vim.api.nvim_buf_clear_namespace(self.buf, link.id, 0, -1)
@@ -671,7 +669,7 @@ function Window:set_buf_links(map_file_line)
             -- Reapply without cursor highlights
             for i = 0, line_count - 1 do
                 if i ~= cursor_line then
-                    vim.api.nvim_buf_clear_namespace(self.buf, link.id, i, i+1)
+                    vim.api.nvim_buf_clear_namespace(self.buf, link.id, i, i + 1)
                 end
             end
 
@@ -690,11 +688,9 @@ function Window:get_max_content_width(lines)
         error("Lines must be a list of strings")
     end
     if lines == nil or #lines == 0 then
-        local buf
-        if self.buf == nil then
+        local buf = self.buf
+        if buf == nil then
             buf = 0
-        else
-            buf = self.buf
         end
         if lines == nil or lines == 0 then
             lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
@@ -781,7 +777,6 @@ function Window.handle_link()
     end
 end
 
-
 function Window.new_id()
     Window.id_count = Window.id_count + 1
     return Window.id_count
@@ -812,7 +807,7 @@ function Window:get_position()
         end
     else
         if self.position.relative ~= nil then
-            row, col = self.relative.row*ui_height, self.relative.col*ui_width
+            row, col = self.relative.row * ui_height, self.relative.col * ui_width
         elseif self.position.absolute ~= nil then
             row = self.position.absolute.row
             col = self.position.absolute.col
@@ -876,7 +871,7 @@ function Window:fit()
     self:config({
         style = 'minimal',
         size = {
-            flex =  true,
+            flex = true,
         },
         current = false,
         buffer = {
@@ -908,9 +903,9 @@ function Window.toggle_fullscreen()
         vim.notify("Current window is not a float to be toggled.")
         return
     end
-    if  Window.floats[win_id].fullscreen then
+    if Window.floats[win_id].fullscreen then
         Window.floats[win_id].fullscreen = false
-        Window.redraw()
+        Window:redraw()
     else
         Window.fullscreen()
     end
@@ -951,28 +946,13 @@ function Window.toggle()
         end
     end
 end
+
 Window = _G.class(Window)
 
-local win = Window()
-
-function Buffer.set_buf_links(buf,_)
-
+function Buffer.set_buf_links(buf, _)
     if Window.ns == nil or Window.ns.link == nil then
         Window.set_link_ns()
     end
-
-    -- local link = Window.ns.link
-
-    -- local cursor_line = vim.api.nvim_win_get_cursor(0)[1] - 1
-
-    -- local N = utils.numel(map_file_line)
-    -- for i=0,N-1 do
-        -- vim.api.nvim_buf_clear_namespace(self.buf, link.id, i, i+1)
-    -- end
-
-    -- vim.api.nvim_buf_clear_namespace(self.buf, link.id, 0, -1)
-
-    -- vim.api.nvim_buf_add_highlight(self.buf, link.id, link.hover.group, cursor_line, 0, -1)
 
     -- Create an autocommand for updating when cursor moves
     vim.api.nvim_create_autocmd("CursorMoved", {
@@ -988,11 +968,9 @@ function Buffer.set_buf_links(buf,_)
             -- Reapply without cursor highlights
             for i = 0, line_count - 1 do
                 if i ~= cursor_line then
-                    vim.api.nvim_buf_clear_namespace(buf, link.id, i, i+1)
+                    vim.api.nvim_buf_clear_namespace(buf, link.id, i, i + 1)
                 end
             end
-
-            -- Get current cursor line
 
             -- Apply the highlight with cursor on the current line
             vim.api.nvim_buf_add_highlight(buf, link.id, link.hover.group, cursor_line, 0, -1)
@@ -1000,33 +978,30 @@ function Buffer.set_buf_links(buf,_)
     })
 end
 
-vim.api.nvim_create_user_command("WinUp",               ':lua dev.nvim.ui.float.Window.up()',                {})
-vim.api.nvim_create_user_command("WinDown",             ':lua dev.nvim.ui.float.Window.down()',              {})
-vim.api.nvim_create_user_command("WinLeft",             ':lua dev.nvim.ui.float.Window.left()',              {})
-vim.api.nvim_create_user_command("WinRight",            ':lua dev.nvim.ui.float.Window.right()',             {})
-vim.api.nvim_create_user_command("WinSnapUp",           ':lua dev.nvim.ui.float.Window.up()',                {})
-vim.api.nvim_create_user_command("WinSnapDown",         ':lua dev.nvim.ui.float.Window.down()',              {})
-vim.api.nvim_create_user_command("WinSnapLeft",         ':lua dev.nvim.ui.float.Window.left()',              {})
-vim.api.nvim_create_user_command("WinSnapRight",        ':lua dev.nvim.ui.float.Window.right()',             {})
+vim.api.nvim_create_user_command("WinUp", ':lua dev.nvim.ui.float.Window.up()', {})
+vim.api.nvim_create_user_command("WinDown", ':lua dev.nvim.ui.float.Window.down()', {})
+vim.api.nvim_create_user_command("WinLeft", ':lua dev.nvim.ui.float.Window.left()', {})
+vim.api.nvim_create_user_command("WinRight", ':lua dev.nvim.ui.float.Window.right()', {})
+vim.api.nvim_create_user_command("WinSnapUp", ':lua dev.nvim.ui.float.Window.up()', {})
+vim.api.nvim_create_user_command("WinSnapDown", ':lua dev.nvim.ui.float.Window.down()', {})
+vim.api.nvim_create_user_command("WinSnapLeft", ':lua dev.nvim.ui.float.Window.left()', {})
+vim.api.nvim_create_user_command("WinSnapRight", ':lua dev.nvim.ui.float.Window.right()', {})
 vim.api.nvim_create_user_command("WinToggleFullScreen", ':lua dev.nvim.ui.float.Window.toggle_fullscreen()', {})
-vim.api.nvim_create_user_command("WinFullScreen",       ':lua dev.nvim.ui.float.Window.fullscreen()',        {})
-vim.api.nvim_create_user_command("WinRedraw",           ':lua dev.nvim.ui.float.Window.redraw()',            {})
-vim.api.nvim_create_user_command("WinToggle",           ':lua dev.nvim.ui.float.Window.toggle()',            {})
+vim.api.nvim_create_user_command("WinFullScreen", ':lua dev.nvim.ui.float.Window.fullscreen()', {})
+vim.api.nvim_create_user_command("WinRedraw", ':lua dev.nvim.ui.float.Window.redraw()', {})
+vim.api.nvim_create_user_command("WinToggle", ':lua dev.nvim.ui.float.Window.toggle()', {})
 
 -- create mappings for the move functions
-vim.api.nvim_set_keymap('n', '<C-k>',       ':WinSnapUp<CR>',           { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-j>',       ':WinSnapDown<CR>',         { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-l>',       ':WinSnapRight<CR>',        { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-h>',       ':WinSnapLeft<CR>',         { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'º',           ':WinToggleFullScreen<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'Ç',           ':WinToggle<CR>',           { noremap = true, silent = true })
--- handle_link()
--- ag  '\- \[.\]' | cut -d : -f1,2 | sed 's/:/ /g' | sort | uniq
+vim.api.nvim_set_keymap('n', '<C-k>', ':WinSnapUp<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-j>', ':WinSnapDown<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-l>', ':WinSnapRight<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-h>', ':WinSnapLeft<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', 'º', ':WinToggleFullScreen<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', 'Ç', ':WinToggle<CR>', { noremap = true, silent = true })
 
---setup the buffer with links and test
--- setup_buffer_with_links()
 
 local M = {
     Window = Window
 }
+
 return M
