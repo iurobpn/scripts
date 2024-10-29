@@ -81,7 +81,7 @@ function Duration.to_string(self)
     return s
 end
 
-Duration = class(Duration, 
+Duration = class(Duration,
     {
         constructor = function(obj, type, tf, ti, unit)
             obj = obj or {}
