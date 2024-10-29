@@ -1,42 +1,46 @@
 -- TODO create a private members table to be automatically detected by the __index metamethod
 
+--- class generator
+---@param t table
+---@param ... any
+---@return table
+function _G.class(t, ...)
+    local proto = {}
+    for k, v in pairs(t) do
+        if k == 'new' or k == 'constructor' then
+            proto.__call = v
+        end
+        proto[k] = v
+    end
+    local args = {...}
+    args = args[1] or {}
 
-function class(type, ...) -- args have to be put inside a table
-    local mt = {}
-    local argv = {...}
-    -- if not vim then 
-    argv = argv[1]
-    mt.__call = function(Type, ...)
-        local obj = {}
-
-        setmetatable(obj, {__index = Type})
-        if argv ~= nil and argv['constructor'] then
-            local f = argv['constructor']
-            obj = f(obj, ...)
+    for k, v in pairs(args) do
+        if k == 'new' or k == 'constructor' then
+            proto.__call = v
         else
-            obj = handle_args(obj, ...)
-        end
-        if obj == nil then
-            error("Error: function to handle constructor arguments must return self object (returned nil)")
-        end
-        return  obj
-    end
-    type = setmetatable(type, mt)
-    return type
-end
-
-
-function handle_args(obj, ...)
-    local argv = {...}
-    argv = argv[1]
-    if argv then
-        for k, v in pairs(argv) do
-            if k ~= "__index" then
-                obj[k] = v
-            end
+            proto[k] = v
         end
     end
-    return obj
+
+    local mt = {}
+    mt.__newindex = function(_, k, v)
+        print('new class index: ', k, v)
+    end
+
+    setmetatable(proto, mt)
+
+    if proto.__call == nil then
+        proto.__call = function()
+            local obj = {}
+            setmetatable(obj,t)
+            return obj
+        end
+    end
+
+    setmetatable(t,proto)
+
+    return t
 end
 
 return true

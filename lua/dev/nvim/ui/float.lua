@@ -1,8 +1,9 @@
 if vim == nil then
     return
 end
+
 local tbl = require('tbl')
-local Object = require('classic')
+require('class')
 local utils = require('utils')
 -- local Log = require('dev.lua.log').Log
 
@@ -10,8 +11,9 @@ local Buffer = require('dev.nvim.utils').Buffer
 
 local fmt = string.format
 
+local Window = {}
+
 -- local log = Log('float')
-local Window = Object:extend()
   ----- static ----------------------
 Window.id_count = 0
 Window.floats = {} -- list of open floats, indexed by the wim win id
@@ -28,6 +30,7 @@ Window.size = {
     -- },
     flex = false
 }
+
 Window.position = "center"
 
 Window.border = 'rounded'
@@ -84,8 +87,8 @@ Window.option = {
         buflisted = true,
     }
 }
-Window.colors = require('config.gruvbox-colors').get_colors()
 
+Window.colors = require('config.gruvbox-colors').get_colors()
     --------------------------------
 
 function Window:new(...)
@@ -104,6 +107,7 @@ function Window:new(...)
         -- },
         flex = false
     }
+
     self.position = 'center'
         -- {
          --    relative = {
@@ -187,6 +191,7 @@ end
 
 function Window.set_link_ns()
     local ns_id = vim.api.nvim_create_namespace('dev_float')
+
     if Window.ns.link == nil then
         Window.ns.link = { -- highlight namespaces
             id = ns_id,
@@ -207,25 +212,41 @@ function Window.set_link_ns()
             }
         }
     end
+
     local link = Window.ns.link
+
     vim.api.nvim_set_hl(0, link.normal.group, link.normal.opts)
     vim.api.nvim_set_hl(0, link.hover.group, link.hover.opts)
 end
 
-function Window:ui_width()
-    if self == nil then
-        return vim.o.columns
-    elseif self.vid ~= nil then
-        return vim.api.nvim_win_get_width(self.vid)
-    end
+function Window.ui_width()
+    return vim.o.columns
 end
 
-function Window:ui_height()
-    if self == nil then
-        return vim.o.lines
-    elseif self.vid ~= nil then
-        return vim.api.nvim_win_get_height(self.vid)
+function Window.ui_height()
+    return vim.o.lines
+end
+
+function Window:win_width()
+    local width
+    if self ~= nil and self.vid ~= nil  then
+        width = vim.api.nvim_win_get_width(self.vid)
+    else
+        width =  vim.o.columns
     end
+
+    return width
+end
+
+function Window:win_height()
+    local height
+    if self ~= nil and self.vid ~= nil then
+        height = vim.api.nvim_win_get_height(self.vid)
+    else
+        height = vim.o.lines
+    end
+
+    return height
 end
 
 function Window:config(...)
@@ -243,7 +264,7 @@ function Window:get_size()
     local width = 0
     local height = 0
 
-    if self.size == 'fit' then
+    if self.size.flex then
         local lines = vim.api.nvim_buf_get_lines(self.buf, 0, -1, false)
 
         -- Calculate the height (number of lines)
@@ -428,7 +449,7 @@ function Window:open(filename,linenr)
     elseif self.vid ~= nil then -- use the window id already set. It must be a float
         self.buf, self.filename = Window.get_window(self.vid)
     else
-        if not self.buf then
+        if self.buf == nil then
             -- self.buf = Buffer.new(self.buffer.listed, self.buffer.scratch)
             self.buf = vim.api.nvim_create_buf(false, true)
         end
@@ -838,7 +859,11 @@ end
 
 function Window:fit()
     -- Get the lines of the buffer
-    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+    if self.buf == nil then
+        vim.notify('No buffer to fit')
+        return
+    end
+    local lines = vim.api.nvim_buf_get_lines(self.buf, 0, -1, false)
 
     -- Calculate the width (the length of the longest line)
     local width = 0
@@ -926,6 +951,9 @@ function Window.toggle()
         end
     end
 end
+Window = _G.class(Window)
+
+local win = Window()
 
 function Buffer.set_buf_links(buf,_)
 
@@ -1001,5 +1029,4 @@ vim.api.nvim_set_keymap('n', 'Ç',           ':WinToggle<CR>',           { norem
 local M = {
     Window = Window
 }
-
 return M

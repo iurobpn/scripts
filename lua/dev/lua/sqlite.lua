@@ -3,11 +3,6 @@ require('class')
 
 local Sql = {filename = ''}
 
-Sql = class(Sql, {constructor = function(self, filename)
-    self.filename = filename
-    return self
-end})
-
 
 function Sql:connect(filename)
     self.filename = filename or self.filename
@@ -98,4 +93,11 @@ end
 local M = {
     Sql = Sql
 }
+
+Sql = class(Sql, {constructor = function(self, filename)
+    self.filename = filename
+    return self
+end})
+
+
 return M

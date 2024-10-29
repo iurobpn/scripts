@@ -4,10 +4,6 @@ require('class')
 
 local Sql = {filename = ''}
 
-Sql = class(Sql, {constructor = function(self, filename)
-    self.filename = filename
-    return self
-end})
 
 
 function Sql:connect(filename)
@@ -17,7 +13,8 @@ function Sql:connect(filename)
     if self.db == nil then
         error('Could not connect to the database ' .. self.filename)
     end
-    self.connected =true
+    self.connected = true
+
     return true
 end
 
@@ -84,7 +81,14 @@ function Sql:query(query)
     local result = self.db:nrows(query)
     return result
 end
+
 local M = {
     Sql = Sql
 }
+
+Sql = class(Sql, {constructor = function(self, filename)
+    self.filename = filename
+    return self
+end})
+
 return M

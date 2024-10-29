@@ -48,7 +48,6 @@ M.select_target = function()
             prompt = "Select a target>",
             actions = {
                 ["default"] = function(selected)
-                    utils.pprint(selected, 'selected: ')
                     M.current.targets = selected
                     M.show()
                 end
@@ -168,13 +167,16 @@ M.show = function()
         'Con(f)ig :  ' .. config_name,
         'Targe(t)s: [' .. targets .. ']',
         '',
-        '| (b)uild  |  (r)un   | (c)onfigure | c(l)ean | (q)uit |',
+        '| (b)uild  |  (r)un   | (c)onfigure | c(l)ean | re(s)et | (q)uit |',
     }
 
     local redraw = M.win ~= nil
     if not redraw then
         M.win = views.new()
-        M.win:config({
+        if M.win == nil then
+            error('Failed to create a new window')
+        end
+        M.win:config{
             content = content,
             title = 'C++ Build',
             title_pos = 'center',
@@ -184,16 +186,16 @@ M.show = function()
                     bufhidden = 'wipe',
                 }
             }
-        })
+        }
         M.win:open()
     else
-        print('draw')
         M.win:set_content({''})
         M.win:set_content(content)
     end
     M.win:fit()
+    vim.cmd('set signcolumn=no')
 
-    vim.api.nvim_buf_set_keymap(0, 'n', 's',    ':lua require("dev.nvim.cmake").show()<CR>', {noremap = true, silent = true, desc = 'Show CMake Presets'})
+    -- vim.api.nvim_buf_set_keymap(0, 'n', 's',    ':lua require("dev.nvim.cmake").show()<CR>', {noremap = true, silent = true, desc = 'Show CMake Presets'})
     vim.api.nvim_buf_set_keymap(0, 'n', 'r',    ':lua require("dev.nvim.cppbuild").run()<CR>', {noremap = true, silent = true})
     vim.api.nvim_buf_set_keymap(0, 'n', 'f', ':lua require("dev.nvim.cppbuild").select_config()<CR>', {noremap = true, silent = true})
     vim.api.nvim_buf_set_keymap(0, 'n', 't', ':lua require("dev.nvim.cppbuild").select_target()<CR>', {noremap = true, silent = true})
@@ -201,7 +203,7 @@ M.show = function()
     vim.api.nvim_buf_set_keymap(0, 'n', 'c',    ':lua require("dev.nvim.cppbuild").configure()<CR>', {noremap = true, silent = true})
     vim.api.nvim_buf_set_keymap(0, 'n', 'b',    ':lua require("dev.nvim.cppbuild").build()<CR>', {noremap = true, silent = true})
     vim.api.nvim_buf_set_keymap(0, 'n', 'l',    ':lua require("dev.nvim.cppbuild").clean()<CR>', {noremap = true, silent = true})
-    vim.api.nvim_buf_set_keymap(0, 'n', 'a',    ':lua require("dev.nvim.cppbuild").reset()<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(0, 'n', 's',    ':lua require("dev.nvim.cppbuild").reset()<CR>', {noremap = true, silent = true})
     vim.api.nvim_buf_set_keymap(0, 'n', '<Esc>',':lua require("dev.nvim.cppbuild").close()<CR>', {noremap = true, silent = true})
 end
 
@@ -219,7 +221,7 @@ vim.api.nvim_create_autocmd("VimResized", {
 M.configure = function()
     local cmd = 'cmake --preset ' .. M.current.config.configure.name
     vim.notify('cmd: ' .. cmd)
-    
+
     runner.zellij_run(cmd)
 end
 
@@ -259,6 +261,7 @@ M.cmake_get_all = function()
     M.current.config = M.configs[2]
     M.current.targets = {}
 end
+
 function M.complete_command(arg_lead, _, _)
     -- These are the valid completions for the command
     local options = { "run", "build", "configure", "cmake", "get", "target", "config", "select", "debug" }

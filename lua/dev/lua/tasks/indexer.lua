@@ -45,13 +45,6 @@ CREATE TABLE IF NOT EXISTS parameters (
     self.sql:run(create_table_parameters)
 end
 
-M = class(M, {constructor = function(self, filename)
-    if filename ~= nil then
-        self.filename = filename
-    end
-    self.sql = Sql(self.filename)
-    return self
-end})
 
 -- Function to insert data into the SQLite database
 function M:insert(task)
@@ -170,6 +163,14 @@ function mod.index()
     )
     thread:start()
 end
+
+M = class(M, {constructor = function(self, filename)
+    if filename ~= nil then
+        self.filename = filename
+    end
+    self.sql = Sql(self.filename)
+    return self
+end})
 
 return mod
 

@@ -1,5 +1,4 @@
 local utils = require('utils')
-local Object = require('classic')
 local M = {
     list = require('dev.lua.tasks.query_list'),
     hist = {}
@@ -7,7 +6,7 @@ local M = {
 
 
 
-local Query = Object:extend()
+local Query = {}
 
 -- static variables
 Query.path = '/home/gagarin/sync/obsidian'
@@ -27,7 +26,7 @@ Query.jsonfiles = {
 }
 Query.current = Query.tasks
 --constructor
-Query.new = function(self, options)
+Query.new = function(self, filename)
     if filename ~= nil then
         self.filename = filename
     end
@@ -46,7 +45,6 @@ Query.file = function(self,jsonfile)
         end
     end
 
-        
     return self.path .. '/' .. jsonfile.mod_dir .. '/' .. jsonfile.filename
 end
 
@@ -189,8 +187,12 @@ function Query.init()
     end
     vim.g.proj.register('query_history', Query.hist)
 end
+
+Query = class(Query)
+
 -- create a keymap to open the query history
 vim.api.nvim_set_keymap('n', '<localleader>q', ':lua require("dev.lua.tasks.query_jq").Query.history()<CR>', { noremap = true, silent = true })
+
 Query.init()
 
 return M

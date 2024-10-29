@@ -14,15 +14,6 @@ local M = {
     sql = nil,
 }
 
-M = class(M, {constructor = function(self, filename, path)
-    if filename ~= nil then
-        self.filename = filename
-    end
-    self.sql = Sql(self.filename)
-    self.sql:set_path(path)
-
-    return self
-end})
 
 -- Connect to (or create) the SQLite databas
 
@@ -55,6 +46,16 @@ end
 local Module = {
     Zotero = M
 }
+
+M = class(M, {constructor = function(self, filename, path)
+    if filename ~= nil then
+        self.filename = filename
+    end
+    self.sql = Sql(self.filename)
+    self.sql:set_path(path)
+
+    return self
+end})
 
 -- Inspect the database
 -- inspect_database()

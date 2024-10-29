@@ -37,7 +37,7 @@ end
 
 function qfloat.qcheck(fname)
     if not fs.file_exists(fname) then
-        print('File does not exist')
+        vim.notify('File does not exist')
         return
     end
     local cmd = 'luacheck --no-color ' .. fname
@@ -48,7 +48,7 @@ end
 function qfloat.qrun(cmd)
     if cmd == nil or cmd == '' then
         qfloat.qrun_current()
-        print('No command to run.')
+        vim.notify('No command to run.')
         return
     end
     if type(cmd) == 'table' and cmd.args ~= nil then
@@ -56,7 +56,7 @@ function qfloat.qrun(cmd)
         if cmd == nil or cmd == '' then
             local file = vim.fn.expand('%')
             if file == nil or file == '' then
-                print('No file to check.')
+                vim.notify('No file to check.')
                 return
             end
             local ft = vim.o.filetype
@@ -67,10 +67,8 @@ function qfloat.qrun(cmd)
     end
     local fname = '/tmp/error_lua.log'
     cmd = cmd .. ' > ' .. fname
-    print('cmd: ' .. cmd)
     utils.get_command_output(cmd)
     vim.cmd.cfile(fname)
-    print('fname: ' .. fname)
     --check if there is errors in the qfix
     local qf = vim.fn.getqflist()
     if #qf == 0 then
@@ -80,8 +78,8 @@ function qfloat.qrun(cmd)
 end
 
 function qfloat.qfile(filename)
-    if not utils.file_exists(filename) then
-        print('File does not exist: ' .. filename)
+    if not fs.file_exists(filename) then
+        vim.notify('File does not exist: ' .. filename)
         return
     end
     vim.cmd.cfile(filename)
@@ -119,7 +117,6 @@ function qfloat.qopen()
 
     --
     -- Open the quickfix window
-    -- print('filename in qopen(): ' .. filename)
     local win = Window({
         width = 0.5,
         height = 0.3,
@@ -132,7 +129,6 @@ function qfloat.qopen()
             },
         }
     })
-    -- print('Window: ' .. inspect(win))
     win:add_map('n', '<CR>', ':QlinkClose<CR>', { noremap = true, silent = true })
     win:add_map('n', '<Space>', ':Qlink<CR>', { noremap = true, silent = true })
     -- qclose_qfix()
@@ -181,7 +177,6 @@ qfloat.qrun_file = function(filename, is_nvim)
     is_nvim = is_nvim or true
     local cmd = qfloat.qchoose(filename, is_nvim)
     if is_nvim then
-        -- print('cmd: ' .. cmd)
         require(filename:sub(30, -5)) -- remove ~/git/scripts/lua/ and .lua
         qfloat.qmessage()
     else
@@ -283,9 +278,15 @@ function qfloat.update_time(buf)
 end
 
 function qfloat.qmessage()
-    local messages = vim.api.nvim_exec2('messages', { output = true })
+    local out = vim.api.nvim_exec2('messages', { output = true })
+    local messages = out.output
     local filename = qfloat.qstring(messages)
     qfloat.qfile(filename)
+    -- check quickfix list size
+    local qf = vim.fn.getqflist()
+    if #qf == 0 then
+        vim.notify('No errors found.')
+    end
 end
 
 -- function to set the quickfix list from a string represening all error lines.
@@ -299,7 +300,6 @@ function qfloat.qstring(lines_str, sep)
     sep = sep or '\n'
     local filename = qfloat.qparse_all(utils.split(lines_str, sep))
     if filename ~= nil then
-        print('Errors found, opening qfix: ')
         return filename
     else
         vim.notify("No errors found to populate the quickfix.")
@@ -313,7 +313,7 @@ function qfloat.qparse_all(lines_list)
     local filename = '/tmp/error_lua2.log'
     local fd = io.open(filename, 'w')
     if fd == nil then
-        print("Failed to open file: " .. filename)
+        vim.notify("Failed to open file: " .. filename)
         return nil
     end
     for _, line in ipairs(lines_list) do
@@ -324,7 +324,7 @@ function qfloat.qparse_all(lines_list)
     local cmd = 'parse_lua_error.fish ' .. filename
     local handle = io.popen(cmd)
     if not handle then
-        print("Failed to execute command: " .. cmd)
+        vim.notify("Failed to execute command: " .. cmd)
         return nil
     end
     handle:close()
@@ -338,7 +338,7 @@ function qfloat.qparse(line)
     -- local filepath, lnum, message = line:match("([^:]+):(%d+):?(.*)")
 
     if file == nil then
-        print("Error parsing line: " .. line)
+        vim.notify("Error parsing line: " .. line)
         return nil
     end
     file = utils.split(file, ' ')[1]
@@ -397,7 +397,7 @@ if vim.g.proj_enabled == nil or vim.g.proj_enabled == false then
                 -- get current file
                 fname = vim.fn.expand('%')
                 if fname == nil or fname == '' then
-                    print('No file to check.')
+                    vim.notify('No file to check.')
                     return
                 end
             end
