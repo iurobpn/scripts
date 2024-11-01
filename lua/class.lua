@@ -23,10 +23,7 @@ function _G.class(t, ...)
         end
     end
 
-    local mt = {}
-    mt.__newindex = function(_, k, v)
-        print('new class index: ', k, v)
-    end
+    local mt = getmetatable(t) or {}
 
     setmetatable(proto, mt)
 

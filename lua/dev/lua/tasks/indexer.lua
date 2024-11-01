@@ -162,6 +162,7 @@ function mod.index()
         end
     )
     thread:start()
+    thread.running = false
 end
 
 M = class(M, {constructor = function(self, filename)

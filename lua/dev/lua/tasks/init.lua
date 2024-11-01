@@ -371,6 +371,21 @@ function M.run_jq_cmd_from_current_line()
     M.views.open_window(taskss, title)
 end
 
+function M.check_completion()
+    local line = vim.api.nvim_get_current_line()
+    if string.match(line, '%- %[x%]') then
+        M.insert_completed_tag()
+    end
+end
+
+function M.insert_completed_tag()
+    local line = vim.api.nvim_get_current_line()
+    if not string.match(line, '%[completion:: .*%]') then
+        vim.api.nvim_set_current_line(line .. ' [completion:: ' .. os.date('%Y-%m-%d %H:%M:%S') .. ']')
+        vim.notify('Task marked as done')
+    end
+end
+
 function M.CloseJqFloat()
     if jq.vid and vim.api.nvim_win_is_valid(jq.vid) then
         vim.api.nvim_win_close(jq.vid, true)
