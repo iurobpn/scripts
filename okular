@@ -1,0 +1,3 @@
+#!/usr/bin/fish
+
+flatpak run org.kde.okular $argv

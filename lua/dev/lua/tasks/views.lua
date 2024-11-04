@@ -749,9 +749,14 @@ end
 function M.close_right()
     -- check if vid is defined and is a window
     if M.vid_r ~= nil and vim.api.nvim_win_is_valid(M.vid_r) then
-        -- close the window
-        vim.api.nvim_win_close(M.vid_r, true)
-        M.vid_r = nil
+        -- get the list of windows
+        local wins = vim.api.nvim_list_wins()
+        -- check if the window is the only one
+        if #wins > 1 then
+            -- close the window
+            vim.api.nvim_win_close(M.vid_r, true)
+            M.vid_r = nil
+        end
     end
 end
 

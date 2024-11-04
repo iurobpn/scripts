@@ -53,7 +53,7 @@ Window.maps = {
 Window.close_map = {
     mode = 'n',
     key = 'q',
-    cmd = ':WinToggle<CR>',
+    cmd = ':Win toggle<CR>',
     opts = { noremap = true, silent = true }
 }
 Window.current = false --get current windows buffer
@@ -140,7 +140,7 @@ function Window:new(...)
     self.close_map = {
         mode = 'n',
         key = 'q',
-        cmd = ':WinToggle<CR>',
+        cmd = ':Win toggle<CR>',
         opts = { noremap = true, silent = true }
     }
     self.current = false --get current windows buffer
@@ -978,26 +978,105 @@ function Buffer.set_buf_links(buf, _)
     })
 end
 
-vim.api.nvim_create_user_command("WinUp", ':lua dev.nvim.ui.float.Window.up()', {})
-vim.api.nvim_create_user_command("WinDown", ':lua dev.nvim.ui.float.Window.down()', {})
-vim.api.nvim_create_user_command("WinLeft", ':lua dev.nvim.ui.float.Window.left()', {})
-vim.api.nvim_create_user_command("WinRight", ':lua dev.nvim.ui.float.Window.right()', {})
-vim.api.nvim_create_user_command("WinSnapUp", ':lua dev.nvim.ui.float.Window.up()', {})
-vim.api.nvim_create_user_command("WinSnapDown", ':lua dev.nvim.ui.float.Window.down()', {})
-vim.api.nvim_create_user_command("WinSnapLeft", ':lua dev.nvim.ui.float.Window.left()', {})
-vim.api.nvim_create_user_command("WinSnapRight", ':lua dev.nvim.ui.float.Window.right()', {})
-vim.api.nvim_create_user_command("WinToggleFullScreen", ':lua dev.nvim.ui.float.Window.toggle_fullscreen()', {})
-vim.api.nvim_create_user_command("WinFullScreen", ':lua dev.nvim.ui.float.Window.fullscreen()', {})
-vim.api.nvim_create_user_command("WinRedraw", ':lua dev.nvim.ui.float.Window.redraw()', {})
-vim.api.nvim_create_user_command("WinToggle", ':lua dev.nvim.ui.float.Window.toggle()', {})
+Window.complete = function(arg, _, _)
+    local options = {
+        'open',
+        'close',
+        'toggle',
+        'close_all',
+        'flex',
+        'up',
+        'down',
+        'right',
+        'left',
+        'snap_up',
+        'snap_down',
+        'snap_left',
+        'snap_right',
+        'fullscreen',
+        'toggle_fullscreen',
+        'redraw',
+        'fit',
+    }
+    -- These are the valid completions for the command
+    -- Return all options that start with the current argument lead
+    return vim.tbl_filter(function(option)
+        return vim.startswith(option, arg)
+    end, options)
+end
+
+Window.command = function(args)
+    local cmd = args.fargs[1]
+    if cmd == nil then
+        cmd = 'open'
+    end
+    if cmd == 'open' then
+        local win = Window()
+        win:open()
+    elseif cmd == 'close' then
+        local win = Window.get_win()
+        if win ~= nil then
+            win:close()
+        end
+    elseif cmd == 'toggle' then
+        Window.toggle()
+    elseif cmd == 'close_all' then
+        Window.close_all()
+    elseif cmd == 'flex' then
+        Window.flex()
+    elseif cmd == 'up' then
+        Window.up()
+    elseif cmd == 'down' then
+        Window.down()
+    elseif cmd == 'right' then
+        Window.right()
+    elseif cmd == 'left' then
+        Window.left()
+    elseif cmd == 'snap_up' then
+        Window.snap_up()
+    elseif cmd == 'snap_down' then
+        Window.snap_down()
+    elseif cmd == 'snap_left' then
+        Window.snap_left()
+    elseif cmd == 'snap_right' then
+        Window.snap_right()
+    elseif cmd == 'fullscreen' then
+        Window.fullscreen()
+    elseif cmd == 'toggle_fullscreen' then
+        Window.toggle_fullscreen()
+    elseif cmd == 'redraw' then
+        local win = Window.get_win()
+        if win ~= nil then
+            win:redraw()
+        end
+    elseif cmd == 'fit' then
+        local win = Window.get_win()
+        if win ~= nil then
+            win:fit()
+        end
+    end
+end
+
+-- create the command
+vim.api.nvim_create_user_command("Win",
+    function(args)
+        Window.command(args)
+    end,
+    {
+        nargs = "*",
+        complete = Window.complete,
+        bang = true,
+        desc = 'Window commands'
+    })
+
 
 -- create mappings for the move functions
-vim.api.nvim_set_keymap('n', '<C-k>', ':WinSnapUp<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-j>', ':WinSnapDown<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-l>', ':WinSnapRight<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-h>', ':WinSnapLeft<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'º', ':WinToggleFullScreen<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'Ç', ':WinToggle<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-k>', ':Win snap_up<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-j>', ':Win snap_down<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-l>', ':Win snap_right<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<C-h>', ':Win snap_left<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', 'º', ':Win toggle_fullscreen<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', 'Ç', ':Win toggle<CR>', { noremap = true, silent = true })
 
 
 local M = {
