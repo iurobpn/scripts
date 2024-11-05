@@ -11,92 +11,18 @@ local Buffer = require('dev.nvim.utils').Buffer
 
 local fmt = string.format
 
-local Window = {}
+local Window = {
+    vid = nil, -- vim id
+    idx = -1,  -- index of the window inside the module
+    relative = 'editor',
 
--- local log = Log('float')
------ static ----------------------
-Window.id_count = 0
-Window.floats = {} -- list of open floats, indexed by the wim win id
-Window.hidden = {} -- list of hidden floats, indexed by the wim win id
-Window.ns = {}
-Window.size = {
-    relative = {
-        width = 0.5,
-        height = 0.5,
-    },
-    -- absolute = {
-    --     height = 0,
-    --     height = 0,
-    -- },
-    flex = false
-}
-
-Window.position = "center"
-
-Window.border = 'rounded'
-
-Window.content = ''
-Window.filename = ''
-
--- Window.-- zindex = 50,
--- Window.-- external = false,
-Window.title = ''
-Window.maps = {
-    n = {
-        -- keys = 'q',
-        -- cmd = ':lua Window.close()<CR>',
-        -- opts = { noremap = true, silent = true }
-    },
-    i = {},
-    v = {},
-}
-Window.close_map = {
-    mode = 'n',
-    key = 'q',
-    cmd = ':Win toggle<CR>',
-    opts = { noremap = true, silent = true }
-}
-Window.current = false --get current windows buffer
-Window.buffer = {
-    listed = true,
-    scratch = false,
-}
-Window.fullscreem = false
-
-Window.focusable = true
-Window.close_current = false -- close current window when it is being floated
-Window.option = {
-    window = {
-        wrap = nil,
-        number = nil,
-        relativenumber = nil,
-        cursorline = nil,
-        signcolumn = nil,
-        foldcolumn = nil,
-        winhighlight = nil,
-        winblend = nil,
-        winfixwidth = nil,
-        winfixheight = nil,
-
-    },
-    buffer = {
-        modifiable = true,
-        swapfile = true,
-        buftype = '', -- set the buffer type prompt and terminal are interesting types
-        bufhidden = '',
-        buflisted = true,
-    }
-}
-
-Window.colors = require('config.gruvbox-colors').get_colors()
---------------------------------
-
-function Window:new(...)
-    self.vid = nil -- vim id
-    self.idx = -1  -- index of the window inside the module
-
-    self.relative = 'editor'
-    self.size = {
+    -- local log = Log('float')
+    ----- static ----------------------
+    id_count = 0,
+    floats = {}, -- list of open floats, indexed by the wim win id
+    hidden = {}, -- list of hidden floats, indexed by the wim win id
+    ns = {},
+    size = {
         relative = {
             width = 0.5,
             height = 0.5,
@@ -106,29 +32,20 @@ function Window:new(...)
         --     height = 0,
         -- },
         flex = false
-    }
+    },
 
-    self.position = 'center'
-    -- {
-    --    relative = {
-    --    row = 0.5,
-    --    col = 0.5,
-    -- },
-    -- absolute = {
-    --     row = 0,
-    --     col = 0,
-    -- },
-    -- },
-    -- style = 'minimal',
-    self.border = 'rounded'
+    position = "center",
 
-    self.content = ''
-    self.filename = ''
+    border = 'rounded',
+    is_toggleable = true,
 
-    -- self.-- zindex = 50,
-    -- self.-- external = false,
-    self.title = ''
-    self.maps = {
+    content = '',
+    filename = '',
+
+    -- Window.-- zindex = 50,
+    -- Window.-- external = false,
+    title = '',
+    maps = {
         n = {
             -- keys = 'q',
             -- cmd = ':lua Window.close()<CR>',
@@ -136,23 +53,23 @@ function Window:new(...)
         },
         i = {},
         v = {},
-    }
-    self.close_map = {
+    },
+    close_map = {
         mode = 'n',
         key = 'q',
         cmd = ':Win toggle<CR>',
         opts = { noremap = true, silent = true }
-    }
-    self.current = false --get current windows buffer
-    self.buffer = {
+    },
+    current = false, --get current windows buffer
+    buffer = {
         listed = true,
         scratch = false,
-    }
-    self.fullscreem = false
+    },
+    fullscreem = false,
 
-    self.focusable = true
-    self.close_current = false -- close current window when it is being floated
-    self.option = {
+    focusable = true,
+    close_current = false, -- close current window when it is being floated
+    option = {
         window = {
             wrap = nil,
             number = nil,
@@ -173,8 +90,14 @@ function Window:new(...)
             bufhidden = '',
             buflisted = true,
         }
-    }
+    },
 
+    colors = require('config.gruvbox-colors').get_colors(),
+
+}
+--------------------------------
+
+function Window.new(self,...)
     local opts = { ... }
     opts = opts[1]
     if opts then
@@ -265,6 +188,7 @@ function Window:get_size()
     local height = 0
 
     if self.size.flex then
+        print('flex')
         local lines = vim.api.nvim_buf_get_lines(self.buf, 0, -1, false)
 
         -- Calculate the height (number of lines)
@@ -434,8 +358,16 @@ function Window.close_all()
 end
 
 function Window:open(filename, linenr)
+    print('self bufnr in ', self.buf or 'nil')
+    print('Window bufnr in ', Window.buf or 'nil')
     self.filename = filename
     self.linenr = linenr
+
+    if self.is_toggleable then
+        print("toggleable")
+    else
+        print("not toggleable")
+    end
 
     -- if not self.cursor then
     -- --     vim.opt.guicursor = vim.o.background
@@ -446,16 +378,22 @@ function Window:open(filename, linenr)
         self.vid, self.buf, self.filename = Window.get_current()
         -- elseif self.buf then -- use the buffer already set
     elseif self.vid ~= nil then -- use the window id already set. It must be a float
+        print('vid', self.vid)
         self.buf, self.filename = Window.get_window(self.vid)
     else
+        print('no vid')
         if self.buf == nil then
+           print('no buffer')
             -- self.buf = Buffer.new(self.buffer.listed, self.buffer.scratch)
             self.buf = vim.api.nvim_create_buf(false, true)
+            print('buf', self.buf)
         end
         if self.filename ~= nil and #self.filename > 0 then -- create a buffer to load the file
+            print('filename', self.filename)
             vim.api.nvim_set_option_value('modifiable', true, { buf = self.buf })
             Buffer.load(self.buf, self.filename)
         elseif self.content ~= nil and #self.content > 0 then                 -- create a buffer and load the content into it
+            print('content', self.content)
             vim.api.nvim_set_option_value('modifiable', true, { buf = self.buf })
             vim.api.nvim_buf_set_lines(self.buf, 0, -1, false, self.content)  -- write to buffer
         end
@@ -503,7 +441,13 @@ function Window:open(filename, linenr)
             end
         end
     end
-    Window.floats[self.vid] = self
+    print('bufnr ', self.buf)
+    if self.is_toggleable then
+        print('add float ', self.vid)
+        Window.floats[self.vid] = self
+    else
+        print('not adding float ', self.vid)
+    end
 end
 
 function Window.get_window(vid)

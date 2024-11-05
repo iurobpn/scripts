@@ -84,7 +84,8 @@ function Clock.open(t)
                     buflisted = false,
                     swapfile = false,
                 }
-            }
+            },
+            is_toggleable = false
         }
     )
     win:add_map('n', ':bnext', ':wincmd p<CR>', { noremap = true, silent = true })
