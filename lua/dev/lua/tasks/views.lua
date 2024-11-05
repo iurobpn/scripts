@@ -598,6 +598,8 @@ function M.populate_buf_timeline(buf, tasks)
 
             if is_late then
                 grp = grp_late
+            else
+                grp = grp_ontime
             end
 
             -- get window size
