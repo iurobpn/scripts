@@ -114,7 +114,7 @@ function M.is_before(date_str)
     local today = os.time({year = os.date("*t").year, month = os.date("*t").month, day = os.date("*t").day, hour = 0, min = 0, sec = 0})
 
     -- Compare the two dates
-    return input_date <= today
+    return input_date < today
 end
 
 function M.get_command_output(cmd)

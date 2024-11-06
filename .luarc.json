@@ -2,13 +2,24 @@
     "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
     "runtime": {
         "version": "LuaJIT",
-        "special": { "love.filesystem.load": "loadfile" }
+        "special": {
+            "love.filesystem.load": "loadfile"
+        }
     },
-
     "diagnostics": {
         "enable": true,
-        "globals": ["hs", "vim",  "dev", "it", "describe", "before_each", "after_each"],
-        "disable": ["lowercase-global"],
+        "globals": [
+            "hs",
+            "vim",
+            "dev",
+            "it",
+            "describe",
+            "before_each",
+            "after_each"
+        ],
+        "disable": [
+            "lowercase-global"
+        ],
         "workspaceEvent": "None",
         "workspaceRate": 0
     },
@@ -16,7 +27,6 @@
         "keywordSnippet": "Disable"
     },
     "workspace": {
-
         "library": [
             "/opt/nvim-linux64/share/nvim/runtime",
             "${3rd}/love2d/library"
