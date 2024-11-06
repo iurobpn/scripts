@@ -36,7 +36,7 @@ M.tasks = tasks
 M.jq = jq
 M.jq_fix = jq_fix
 
--- make recurrent taks done and add completion date
+-- make recurrent tasks done and add completion date
 function M.recurrent_done()
     local cursor_orig = vim.api.nvim_win_get_cursor(0)
     -- get current line from buffer
@@ -398,26 +398,13 @@ end
 -- Create the :JqFix command
 vim.api.nvim_create_user_command('JqCurrent', M.run_jq_cmd_from_current_line, {})
 -- Set up autocommands
-vim.api.nvim_exec([[
+vim.cmd([[
   augroup JqFloatAutocmd
     autocmd!
     autocmd CursorMoved *.md lua require'dev.lua.tasks'.UpdateJqFloat()
     autocmd BufLeave *md lua require'dev.lua.tasks'.CloseJqFloat()
   augroup END
-]], false)
-
--- -- Set up autocommands
--- vim.api.nvim_exec([[
---   augroup JqResultAutocmd
---     autocmd!
---     autocmd CursorMoved,CursorMovedI * lua UpdateJqResult()
---     autocmd BufLeave,BufUnload,BufWinLeave * lua ClearJqResult()
---   augroup END
--- ]], false)
-
--- Map to a command
--- vim.api.nvim_create_user_command('Jq', M.UpdateJqResult, {})
--- vim.api.nvim_create_user_command('Jqc', M.ClearJqResult, {})
+]])
 
 -- Or map to a keybinding (e.g., pressing <leader>jr runs the function)
 vim.api.nvim_set_keymap('n', '<LocalLeader>j', ':JqCurrent<CR>', { noremap = true, silent = true })

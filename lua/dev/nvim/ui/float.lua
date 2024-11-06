@@ -686,12 +686,12 @@ function Window.setup_buffer_with_links()
     vim.api.nvim_set_current_buf(buf)
 
     -- Set an autocmd to handle opening files when the link is selected
-    vim.api.nvim_exec([[
+    vim.cmd([[
     augroup FileLinkHandler
       autocmd!
       autocmd CursorMoved <buffer> lua handle_link()
     augroup END
-  ]], false)
+  ]])
 
     return buf
 end
