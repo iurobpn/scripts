@@ -22,8 +22,8 @@ Query.jsonfiles = {
         mod_dir = '.markdowndb',
         prefix = 'jqf',
     },
-    
 }
+
 Query.current = Query.tasks
 --constructor
 Query.new = function(self, filename)
@@ -46,6 +46,10 @@ Query.file = function(self,jsonfile)
     end
 
     return self.path .. '/' .. jsonfile.mod_dir .. '/' .. jsonfile.filename
+end
+
+Query.get_path = function(jsonfile)
+    return Query.path .. '/' .. Query.jsonfiles[jsonfile].mod_dir
 end
 
 function Query.params_to_string(parameters)
@@ -77,17 +81,20 @@ function Query:select_by_id(id)
     return query
 end
 
-function Query.select_by_tags(tags)
+function Query.select_by_tags(tags,op)
+    op = op or 'and'
     local query
     -- if tag == nil then
     --     query = string.format([['[ .[] | select(.status != "done" and .due != null) ]']])
     -- else
     --     query = string.format([['[ .[] | select(.status != "done" and .due != null and .tags[] == "%s") ]']], tag)
     -- end
-    query = '.tags[] == "' .. tags[1] .. '"'
+    query = '( ( .tags[] == "' .. tags[1] .. '" )'
     for i = 2, #tags do
-        query = query .. ' or .tags[] == "' .. tags[i] .. '"'
+        query = query .. ' ' .. op .. '( .tags[] == "' .. tags[i] .. '" )'
     end
+    query = query .. ' )'
+
     return query
 end
 
@@ -138,13 +145,14 @@ function Query:select(option)
         if option.tags ~= nil and #option.tags > 0 and option.tags[1] ~= nil then
             query = query .. andstr .. self.select_by_tags(option.tags)
         end
-        query = query .. ')] | sort_by(.due)'
+        query = query .. ')] | sort_by(.due) | unique'
         -- {{jq: '[ .[] | select(.status!="done" and .due!=null ) ] | sort_by(.due)' }}
 
         -- '.status != "done" and .due != null) ]']])
 
         cmd = string.format("jq '%s'", query)
     end
+    -- print('cmd: ' .. cmd)
     local str_tasks = self:run(cmd)
     local tasks
     if str_tasks == '' then

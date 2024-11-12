@@ -19,11 +19,12 @@ require('class')
 
 local M = {
     map_file_line = {},
-    default_query = [[jq '[ .[] | select((.status!="done" and .due!=null)]] ..
-        [[and ((.tags[] == "#today") or (.tags[] == "#important") )) ] |]] ..
-        [[sort_by(.due) ']],
+    default_query = [[jq '[ .[] | select((.status!="done") ]] ..
+        [[and ((.tags[] == "#today") or (.tags[] == "#important") ) )  ] |]] ..
+        [[sort_by(.due) | unique']],
     last_query = nil,
 }
+-- [[and ((.tags[] == "#today") or (.tags[] == "#important") or (.tags[] == "#main") ) ) ] |]] ..
 
 -- M = class(M, {constructor = function(self, filename)
 --     if filename ~= nil then
@@ -887,6 +888,16 @@ M.load_tasks = function()
 
     M.tasks = json.decode(M.json_tasks)
 end
+M.write_tasks = function(tasks, filename)
+    local json_file = query.Query.get_path('tasks') .. '/' .. filename
+    local fd = io.open(json_file, 'w')
+    if fd == nil then
+        print('Failed to open ' .. json_file)
+        return
+    end
+    fd:write(json.encode(tasks))
+    fd:close()
+end
 
 M.search = function(...)
     local opts = { ... }
@@ -897,6 +908,7 @@ M.search = function(...)
     if opts.default then
         local q = query.Query()
         tasks = q:select(M.default_query)
+        -- M.write_tasks(tasks, 'tasks_from_query.json')
     elseif opts.search == 'last' then
         if M.tasks == nil then
             local q = query.Query()
@@ -956,7 +968,7 @@ end
 M.command = function(args)
     local subcommand = args.fargs[1]
     if subcommand == "help" then
-        vim.notify("Usage: :Tasks [float|tag|due|tagdue|list|help] tag1 tag2 ...")
+        vim.notify("Usage: :Tasks [float|tag|due|toggle||default|list|help] tag1 tag2 ...")
         return
     end
 
@@ -1024,7 +1036,11 @@ vim.api.nvim_create_user_command('Tasks',
     { nargs = '*', complete = M.complete }
 )
 vim.api.nvim_set_keymap('n', '<F9>', ':Tasks toggle default<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<LocalLeader>t', ':Tasks current<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<LocalLeader>tc', ':Tasks current<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<LocalLeader>tt', ':Tasks #today<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<LocalLeader>tm', ':Tasks #main<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<LocalLeader>ti', ':Tasks #important<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<LocalLeader>tr', ':Tasks #res<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<LocalLeader>l', ':Tasks last<CR>', { noremap = true, silent = true })
 function M.open_window_by_tag(tag)
     local tasks_qf = M.query_by_tag(tag)
