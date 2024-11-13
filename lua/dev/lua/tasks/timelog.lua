@@ -212,23 +212,33 @@ end
 
 -- Register commands
 -- function M.setup()
-vim.api.nvim_create_user_command('Tasklog', function(args)
-    local cmd = args.fargs[1]
-    if cmd == 'log' then
+vim.api.nvim_create_user_command('Tasklog',
+    function(args)
+        local cmd = args.fargs[1]
+        if cmd == 'help' then
+            print("Tasklog commands:")
+            print(":Tasklog log <task description> - Log a task")
+            print(":Tasklog summary [day|month] - Show summary of tasks")
+            print(":Tasklog edit - Open the log file")
+        end
+        argvs = args.fargs
+        if cmd == 'log' then
+            argvs:remove(1)
+        end
         local subcmd = args.fargs[2]
         if subcmd == 'edit' then
             M.edit()
         elseif subcmd == 'summary' then
-            args.fargs[1] = args.fargs[3] or 'day'  -- Shift the period argument
+            argvs:remove(1)
+            if #argvs == 0 then
+                argvs[1] = 'day'
+            end
+            args.fargs = argvs
             M.show_summary(args)
         else
-            args.args = args.args:sub(5)  -- Remove 'log ' from args
-            M.log_task(args)
+            M.log_task(argvs:concat(' '))
         end
-    else
-        vim.api.nvim_err_writeln("Invalid subcommand for :Task.")
-    end
-end, {
+    end, {
         nargs = '+',
         complete = task_complete,
     })

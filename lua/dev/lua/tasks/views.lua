@@ -574,7 +574,7 @@ function M.populate_buf_timeline(buf, tasks)
     local grp = grp_ontime
     for _, task in pairs(tasks) do
         if task.line_number == nil then
-            utils.pprint(task, 'Task: ')
+            -- utils.pprint(task, 'Task (linenr is nil): ')
             error('task.line_number is nil')
         end
         if task.due ~= nil and last_due ~= task.due then
@@ -908,8 +908,10 @@ M.search = function(...)
     if opts.default then
         local q = query.Query()
         tasks = q:select(M.default_query)
+        print('default search')
+        -- utils.pprint(tasks, 'tasks in search: ')
         -- M.write_tasks(tasks, 'tasks_from_query.json')
-    elseif opts.search == 'last' then
+    elseif opts.search == 'last search' then
         if M.tasks == nil then
             local q = query.Query()
             tasks = q:select(M.default_query)
@@ -968,7 +970,7 @@ end
 M.command = function(args)
     local subcommand = args.fargs[1]
     if subcommand == "help" then
-        vim.notify("Usage: :Tasks [float|tag|due|toggle||default|list|help] tag1 tag2 ...")
+        vim.notify("Usage: :Tasks [current|status|due|toggle|default|last|help|log] tag1 tag2 ...")
         return
     end
 
@@ -1014,6 +1016,9 @@ M.command = function(args)
             return
         elseif arg[1] == 'list' then
             query.list.select()
+            return
+        elseif subcommand == 'log' then
+            vim.cmd('Tasklog ' .. args.args)
             return
         else
             table.insert(opts.args, arg[1])
