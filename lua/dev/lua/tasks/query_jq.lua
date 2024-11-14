@@ -152,9 +152,9 @@ function Query:select(option)
 
         cmd = string.format("jq '%s'", query)
     end
-    print('cmd: ' .. cmd)
+    -- print('cmd: ' .. cmd)
     local str_tasks = self:run(cmd)
-    print('str_tasks: ' .. str_tasks)
+    -- print('str_tasks: ' .. str_tasks)
     local tasks
     if str_tasks == '' then
         tasks = {}

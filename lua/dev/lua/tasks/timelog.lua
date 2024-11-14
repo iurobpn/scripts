@@ -204,7 +204,7 @@ function M.log_task(args)
         return
     end
     local current_time = os.date("%Y-%m-%d %H:%M")
-    local new_entry = current_time .. " - " .. task_description
+    local new_entry = current_time .. ':  ' .. task_description
 
     -- Check if last entry was on a different day
     local last_entry = M.get_last_log_entry()
