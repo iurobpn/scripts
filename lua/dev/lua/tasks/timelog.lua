@@ -36,8 +36,7 @@ local function parse_log(period)
 
     for _, line in ipairs(lines) do
         if line ~= "" then
-            print(line)
-            local date_str, time_str, desc = line:match("^(%d%d%d%d%-%d%d%-%d%d) (%d%d:%d%d) %- (.+)$")
+            local date_str, time_str, desc = line:match("^(%d%d%d%d%-%d%d%-%d%d) (%d%d:%d%d): (.+)$")
             if date_str and time_str and desc then
                 local entry_time = os.time{
                     year = tonumber(date_str:sub(1,4)),
@@ -46,7 +45,7 @@ local function parse_log(period)
                     hour = tonumber(time_str:sub(1,2)),
                     min = tonumber(time_str:sub(4,5)),
                 }
-                local is_break = desc:match("^%*%*")
+                local is_break = desc:match("%*%* *$")
                 local entry_type = is_break and 'break' or 'task'
 
                 local period_match = false
@@ -68,7 +67,14 @@ local function parse_log(period)
 
                         if entry.type == 'task' then
                             -- Assign duration to last task
-                            tasks[#tasks + 1] = {desc = entry.desc, duration = duration}
+                            tasks[#tasks + 1] = {
+                                desc = entry.desc,
+                                duration = duration,
+                                time = {
+                                    start = entry_time,
+                                    final = last_time,
+                                },
+                            }
                             total_task_time = total_task_time + duration
                         elseif entry.type == 'break' then
                             -- Add duration to total break time
@@ -77,15 +83,21 @@ local function parse_log(period)
                     end
 
                     last_time = entry_time
-                    last_entry = entry
+                    -- last_entry = entry
                 else
                     -- Entry not in the specified period, reset for new day/month
                     first_entry_of_period = true
                     last_time = nil
-                    last_entry = nil
+                    -- last_entry = nil
                 end
             end
         end
+    end
+    local current_time
+    if last_time == nil then
+        current_time = 0
+    else
+        current_time = os.time() - last_time
     end
 
     -- -- Handle the last entry if it's within the period
@@ -105,6 +117,7 @@ local function parse_log(period)
         tasks = tasks,
         total_task_time = total_task_time,
         total_break_time = total_break_time,
+        current_time = current_time
     }
 end
 
@@ -119,9 +132,20 @@ function M.show_summary(args)
     local summary = parse_log(period)
     if not summary then return end
 
-    local function format_time(seconds)
+    local function totime(tsec)
+        local t = os.date("*t", tsec)
+        return t.hour, t.min, t.sec
+    end
+    local function get_time(seconds)
         local minutes = math.floor(seconds / 60)
-        return string.format("%d min", minutes)
+        local hours = math.floor(minutes / 60)
+        minutes = minutes % 60
+        hours = hours % 24
+        return hours, minutes
+    end
+    local function format_time(seconds)
+        local hours, minutes = get_time(seconds)
+        return string.format("%02d h %02d min", hours, minutes)
     end
 
     local content = {}
@@ -129,7 +153,11 @@ function M.show_summary(args)
     -- List tasks and their durations
     for _, task in ipairs(summary.tasks) do
         local duration_str = format_time(task.duration)
-        local task_line = string.format("- %s: %s", task.desc, duration_str)
+        local hstart, mstart = totime(task.time.start)
+        local hfinal, mfinal = totime(task.time.final)
+
+
+        local task_line = string.format("%s    (%02d:%02d - %02d:%02d)  %s", duration_str, hstart, mstart, hfinal, mfinal, task.desc)
         table.insert(content, task_line)
     end
 
@@ -139,7 +167,9 @@ function M.show_summary(args)
     -- Total times
     local total_task_str = format_time(summary.total_task_time)
     local total_break_str = format_time(summary.total_break_time)
+    local cur_time = format_time(summary.current_time)
 
+    table.insert(content, "Current task time: " .. cur_time)
     table.insert(content, "Time working: " .. total_task_str)
     table.insert(content, "Time in breaks: " .. total_break_str)
 
@@ -158,13 +188,21 @@ function M.show_summary(args)
         col = (vim.o.columns - width) / 2,
         border = "single",
     }
+
     vim.api.nvim_open_win(buf, true, opts)
+    vim.cmd('setlocal signcolumn=no')
+    vim.api.nvim_buf_set_keymap(buf, 'n', 'q', ':bd<CR>', {noremap = true, silent = true})
+    vim.api.nvim_buf_set_keymap(buf, 'n', '<ESC>', ':bd<CR>', {noremap = true, silent = true})
 end
 
 -- Other functions remain the same...
 -- Function to log a task
 function M.log_task(args)
     local task_description = args.args
+    if task_description == nil or task_description == "" then
+        vim.notify("No task description provided.")
+        return
+    end
     local current_time = os.date("%Y-%m-%d %H:%M")
     local new_entry = current_time .. " - " .. task_description
 
@@ -220,23 +258,25 @@ vim.api.nvim_create_user_command('Tasklog',
             print(":Tasklog log <task description> - Log a task")
             print(":Tasklog summary [day|month] - Show summary of tasks")
             print(":Tasklog edit - Open the log file")
+            return
         end
         argvs = args.fargs
         if cmd == 'log' then
-            argvs:remove(1)
+            table.remove(argvs,1)
         end
-        local subcmd = args.fargs[2]
+        local subcmd = args.fargs[1]
         if subcmd == 'edit' then
             M.edit()
         elseif subcmd == 'summary' then
-            argvs:remove(1)
+            table.remove(argvs,1)
             if #argvs == 0 then
                 argvs[1] = 'day'
             end
             args.fargs = argvs
             M.show_summary(args)
         else
-            M.log_task(argvs:concat(' '))
+            args.fargs = argvs
+            M.log_task(args)
         end
     end, {
         nargs = '+',
