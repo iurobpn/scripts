@@ -110,11 +110,12 @@ function M.get_cmd_from_line(linenr)
     local line = vim.fn.getline(linenr)
     local cmd = line:match('%{%{%s*jq: (.*)%}%}')
     if not cmd then
-        return
+        return nil
     end
     cmd = 'jq ' .. cmd
     return cmd
 end
+
 
 -- Function to run the jq command from the current line
 function M.get_jq_lines()

@@ -188,7 +188,6 @@ function Window:get_size()
     local height = 0
 
     if self.size.flex then
-        print('flex')
         local lines = vim.api.nvim_buf_get_lines(self.buf, 0, -1, false)
 
         -- Calculate the height (number of lines)
@@ -358,16 +357,9 @@ function Window.close_all()
 end
 
 function Window:open(filename, linenr)
-    print('self bufnr in ', self.buf or 'nil')
-    print('Window bufnr in ', Window.buf or 'nil')
     self.filename = filename
     self.linenr = linenr
 
-    if self.is_toggleable then
-        print("toggleable")
-    else
-        print("not toggleable")
-    end
 
     -- if not self.cursor then
     -- --     vim.opt.guicursor = vim.o.background
@@ -378,22 +370,16 @@ function Window:open(filename, linenr)
         self.vid, self.buf, self.filename = Window.get_current()
         -- elseif self.buf then -- use the buffer already set
     elseif self.vid ~= nil then -- use the window id already set. It must be a float
-        print('vid', self.vid)
         self.buf, self.filename = Window.get_window(self.vid)
     else
-        print('no vid')
         if self.buf == nil then
-           print('no buffer')
             -- self.buf = Buffer.new(self.buffer.listed, self.buffer.scratch)
             self.buf = vim.api.nvim_create_buf(false, true)
-            print('buf', self.buf)
         end
         if self.filename ~= nil and #self.filename > 0 then -- create a buffer to load the file
-            print('filename', self.filename)
             vim.api.nvim_set_option_value('modifiable', true, { buf = self.buf })
             Buffer.load(self.buf, self.filename)
-        elseif self.content ~= nil and #self.content > 0 then                 -- create a buffer and load the content into it
-            print('content', self.content)
+        elseif self.content ~= nil and #self.content > 0 then -- create a buffer and load the content into it
             vim.api.nvim_set_option_value('modifiable', true, { buf = self.buf })
             vim.api.nvim_buf_set_lines(self.buf, 0, -1, false, self.content)  -- write to buffer
         end
@@ -441,12 +427,8 @@ function Window:open(filename, linenr)
             end
         end
     end
-    print('bufnr ', self.buf)
     if self.is_toggleable then
-        print('add float ', self.vid)
         Window.floats[self.vid] = self
-    else
-        print('not adding float ', self.vid)
     end
 end
 
