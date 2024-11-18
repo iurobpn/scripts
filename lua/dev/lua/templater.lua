@@ -171,7 +171,7 @@ end
 function M.de_escape(text)
     local lines = require'utils'.split2(text, '\n')
     for i, line in ipairs(lines) do
-        local line, count = line:gsub('%[%[(jq.*:.*)%]%]', '{{%1}}')
+        local line, count = line:gsub('%[%[(jq.?:.*)%]%]', '{{%1}}')
         if count > 0 then
             lines[i] = line
         end
@@ -183,7 +183,7 @@ end
 function M.pre_escape(text)
     local lines = require'utils'.split2(text, '\n')
     for i, line in ipairs(lines) do
-        local line, count = line:gsub('{{(jq.*:.*)}}', '[[%1]]')
+        local line, count = line:gsub('{{(jq.?:.*)}}', '[[%1]]')
         if count > 0 then
             lines[i] = line
         end

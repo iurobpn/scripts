@@ -108,7 +108,7 @@ function M.get_cmd_from_line(linenr)
         linenr = vim.fn.line('.')
     end
     local line = vim.fn.getline(linenr)
-    local cmd = line:match('%{%{%s*jq: (.*)%}%}')
+    local cmd = line:match('%{%{%s*jq.?: (.*)%}%}')
     if not cmd then
         return nil
     end

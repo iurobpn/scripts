@@ -21,7 +21,7 @@ local M = {
     map_file_line = {},
     default_query = [[jq '[ .[] | select((.status!="done") ]] ..
         [[and ((.tags[] == "#today") or (.tags[] == "#important") ) )  ] |]] ..
-        [[sort_by(.due) | unique']],
+        [[ sort_by(.due) | unique | sort_by(.due)']],
     last_query = nil,
 }
 -- [[and ((.tags[] == "#today") or (.tags[] == "#important") or (.tags[] == "#main") ) ) ] |]] ..

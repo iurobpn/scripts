@@ -145,7 +145,7 @@ function Query:select(option)
         if option.tags ~= nil and #option.tags > 0 and option.tags[1] ~= nil then
             query = query .. andstr .. self.select_by_tags(option.tags)
         end
-        query = query .. ')] | sort_by(.due) | unique'
+        query = query .. ')] | sort_by(.due) | unique | sort_by(.due)'
         -- {{jq: '[ .[] | select(.status!="done" and .due!=null ) ] | sort_by(.due)' }}
 
         -- '.status != "done" and .due != null) ]']])
@@ -168,6 +168,7 @@ end
 function Query:run(cmd)
     table.insert(Query.hist, cmd)
     local file = self:file()
+    -- print('cmd: ' .. cmd)
     local str_tasks = utils.get_command_output(cmd .. ' ' .. file)
     return str_tasks
 end

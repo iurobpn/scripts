@@ -283,5 +283,6 @@ vim.api.nvim_create_user_command('Tasklog',
         complete = task_complete,
     })
 -- end
+vim.api.nvim_set_keymap('n', '<localleader>ts', '<cmd>Tasklog summary<CR>', {noremap = true, silent = true})
 
 return M
