@@ -315,7 +315,6 @@ function M.UpdateJqFloat()
                     border = nil,
                     noautocmd = true,
                 }
-                utils.pprint(opts, 'opts: ')
 
                 -- create a name space for highlightinh current line
                 if M.jq.ns_line_id == nil then
@@ -366,7 +365,7 @@ function M.run_jq_cmd_from_current_line()
     end
     local taskss, title = M.views.search(cmd)
     if not taskss then
-        vim.notify('No tasks found')
+        print('No tasks found')
         return
     end
     M.views.open_window(taskss, title)
