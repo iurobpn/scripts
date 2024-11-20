@@ -6,13 +6,13 @@ local timer_plugin = {
 require'dev.lua.tasks.timelog'
 -- Global variables to manage the timer and window
 local countdown = {
-  win = nil,
-  buf = nil,
-  timer = nil,
-  time_left = nil,
-  start_time = nil,
-  duration = nil,
-  description = nil,
+    win = nil,
+    buf = nil,
+    timer = nil,
+    time_left = nil,
+    start_time = nil,
+    duration = nil,
+    description = nil,
 }
 
 
@@ -136,11 +136,10 @@ function timer_plugin.TimerCommand(args)
 
     if subcommand == 'start' then
         local task_id_str = args.fargs[2]
-        if not task_id_str then
-            print("Usage: :Timer start <task_id>")
-            return
+        local task_id
+        if task_id_str ~= nil then
+            task_id = tonumber(task_id_str)
         end
-        local task_id = tonumber(task_id_str)
         timer_plugin.TimerStart(task_id)
     elseif subcommand == 'countdown' then
         local time
@@ -158,7 +157,9 @@ function timer_plugin.TimerCommand(args)
             print("Usage: :Timer countdown <time>")
             return
         end
-        countdown.start(tonumber(time), args.fargs[3], args.fargs[4])
+        table.remove(args.fargs, 1)
+        vim.cmd('Countdown ' .. table.concat(args.fargs, ' '))
+        -- countdown.start(tonumber(time), args.fargs[3], args.fargs[4])
     elseif subcommand == 'pause' then
         timer_plugin.TimerPause()
     elseif subcommand == 'stop' then
@@ -182,7 +183,7 @@ function countdown.start(duration, description, callback)
 
     vim.api.nvim_set_hl(0, "MyFloatBorder", { fg = dev.color.bright_blue, bg = "None" }) -- bright_red for the border
     vim.api.nvim_set_hl(0, "FloatContent", { fg = dev.color.bright_blue, bg = "None" }) -- bright_red for the border
-    
+
     -- Create a floating window
     countdown.win = vim.api.nvim_open_win(buf, true, {
         relative = 'editor',
@@ -193,9 +194,9 @@ function countdown.start(duration, description, callback)
         style = 'minimal',
         border = 'rounded',
         focusable = false,
-    }) 
+    })
     vim.api.nvim_set_option_value('winblend', 90, { scope = "local", win = countdown.win }) -- Set transparency (0-100, 0 is opaque, 100 is fully transparent)
-    vim.api.nvim_set_option_value('winhl', 'NormalFloat:FloatContent,FloatBorder:MyFloatBorder', { scope = "local", win = countdown.win }) 
+    vim.api.nvim_set_option_value('winhl', 'NormalFloat:FloatContent,FloatBorder:MyFloatBorder', { scope = "local", win = countdown.win })
     -- Follow main colorscheme
     -- Define a custom highlight group for the border
     vim.cmd("wincmd p")
@@ -206,19 +207,14 @@ function countdown.start(duration, description, callback)
         countdown.update_popup(callback)
     end))
 end
+
 -- Timer functions
 function timer_plugin.TimerStart(task_id)
-    if not task_id or not tasks[task_id] then
-        print("Invalid task ID.")
-        return
-    end
-
     if timer_active then
         print("A timer is already running.")
         return
     end
 
-    current_task = tasks[task_id]
     timer_start_time = os.time()
     timer_active = true
 
@@ -228,9 +224,17 @@ function timer_plugin.TimerStart(task_id)
         timer_plugin.update_popup()
     end))
 
-    -- Create popup window
-    timer_plugin.create_popup()
 
+    print("Timer started for task ID: ", task_id)
+    if task_id == nil then
+        vim.notify("No task ID provided. Starting timer without a task.")
+        current_task = timer_plugin.TaskNew("Unnamed task")
+        task_id = current_task.id
+    else
+        vim.notify("task ID provided: " .. task_id)
+        current_task = tasks[task_id]
+    end
+    require'utils'.pprint(current_task, 'current_task: ')
     -- Log start time
     table.insert(logs, {
         task_id = task_id,
@@ -238,9 +242,15 @@ function timer_plugin.TimerStart(task_id)
         time_start = timer_start_time,
         time_end = nil,
     })
+    -- Create popup window
+    timer_plugin.create_popup()
 
     save_data()
-    print("Timer started for task ID:", task_id)
+    if task_id == 0 then
+        print("Timer started")
+    else
+        print("Timer started for task ID:", task_id)
+    end
 end
 
 function timer_plugin.TimerPause()
@@ -335,6 +345,7 @@ end
 
 -- Task management functions
 function timer_plugin.TaskNew(name)
+    vim.notify("Task created with name: " .. name)
     if name == "" then
         print("Task name cannot be empty.")
         return
@@ -352,7 +363,8 @@ function timer_plugin.TaskNew(name)
     }
     table.insert(active_tasks, id)
     save_data()
-    print("Task created with ID:", id)
+    vim.notify("Task created with ID:", id)
+    return tasks[id]
 end
 
 function timer_plugin.TaskList()
@@ -523,6 +535,7 @@ function timer_plugin.create_popup()
         col = col,
         style = 'minimal',
         border = 'single',
+        focusable = false,
     })
 
     timer_plugin.update_popup()
@@ -530,6 +543,7 @@ end
 local blink_state = false
 
 function countdown.update_popup(callback)
+    require'utils'.pprint(countdown, 'countdown: ')
     if not countdown.win or not vim.api.nvim_win_is_valid(countdown.win) then
         return
     end
@@ -558,6 +572,7 @@ function countdown.update_popup(callback)
 
     -- Stop the timer when time reaches 0
     if countdown.time_left <= 0 then
+        countdown.time_left = 0
         countdown.timer:stop()
         countdown.timer:close()
         countdown.timer = nil
@@ -699,18 +714,23 @@ end, { nargs = '*' , complete = timer_plugin.complete_timer_command })
 
 -- Command to start or control the countdown timer
 vim.api.nvim_create_user_command("Countdown", function(opts)
+    vim.notify('countdown timer command: ' .. opts.args)
     local args = vim.split(opts.args, " ", { plain = true, trimempty = true })
     if #args >= 1 then
         local first_arg = args[1]
+        vim.notify('countdown timer command: ' .. first_arg)
         if first_arg == "close" then
+            local vid = countdown.win
+            countdown.win = nil
+            vim.notify('Closing countdown timer')
             -- Close the timer window and clean up
             if countdown.timer then
                 countdown.timer:stop()
                 countdown.timer:close()
                 countdown.timer = nil
             end
-            if countdown.win and vim.api.nvim_win_is_valid(countdown.win) then
-                vim.api.nvim_win_close(countdown.win, true)
+            if vid and vim.api.nvim_win_is_valid(vid) then
+                vim.api.nvim_win_close(vid, true)
                 countdown.win = nil
             end
             if countdown.buf and vim.api.nvim_buf_is_valid(countdown.buf) then
