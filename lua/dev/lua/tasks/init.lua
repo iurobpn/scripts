@@ -234,7 +234,7 @@ function M.UpdateJqFloat()
             break
         end
     end
-    if jsonfile ==nil then
+    if jsonfile == nil then
         M.CloseJqFloat()
         return
     end
@@ -247,8 +247,10 @@ function M.UpdateJqFloat()
             -- Close previous floating window if any
             M.CloseJqFloat()
 
+            local old_line = jq.line
             -- Update jq.line
             jq.line = current_line
+
 
             -- Extract the command from the line (adjust as needed)
             local lines = M.get_jq_lines()
@@ -320,11 +322,15 @@ function M.UpdateJqFloat()
                 if M.jq.ns_line_id == nil then
                     M.jq.ns_line_id = vim.api.nvim_create_namespace('JqFloatCur')
                     vim.api.nvim_set_hl(0, 'ClearCmd', { fg = dev.color.dark0_hard })
+                    vim.api.nvim_set_hl(0, 'FadeJqLine', { fg = dev.color.bright_red })
                 end
                 local ns_l_id = M.jq.ns_line_id
                 -- clear namespace highlights
                 vim.api.nvim_buf_clear_namespace(bufnr, ns_l_id, 0, -1)
                 vim.api.nvim_buf_add_highlight(bufnr, ns_l_id, 'ClearCmd', current_line-1, 0, -1)
+                if old_line ~= nil then
+                    vim.api.nvim_buf_add_highlight(bufnr, ns_l_id, 'FadeJqLine', old_line-1, 0, -1)
+                end
                 -- Open the floating window
                 jq.vid = vim.api.nvim_open_win(jq.bufnr, false, opts)
 

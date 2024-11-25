@@ -6,6 +6,7 @@ local nvim = {
     cmake = require('dev.nvim.cmake'),
     cppbuild = require('dev.nvim.cppbuild'),
 }
+
 nvim.init = function()
     -- nvim.fzf.
 end
