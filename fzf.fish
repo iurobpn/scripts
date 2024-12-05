@@ -8,7 +8,7 @@ function vf
     if test -z "$dir"
         set -e dir
     end
-    fd . -tf $dir |  sed -e 's#^\./(.*)##g' | fzf --multi $FZF_DEFAULT_OPTIONS --bind 'enter:become(vim {+})'
+    fd . -u -tf $dir |  sed -e 's#^\./(.*)##g' | fzf --multi $FZF_DEFAULT_OPTIONS --bind 'enter:become(vim {+})'
 end
 
 function fg
@@ -30,13 +30,13 @@ function fprg
     else
         set prog "echo"
     end
-    fd . -tf "$dir" |  sed -e 's#^\./(.*)##g' | fzf --multi $FZF_DEFAULT_OPTIONS --bind 'enter:become($prog {+})'
+    fd . -u -tf "$dir" |  sed -e 's#^\./(.*)##g' | fzf --multi $FZF_DEFAULT_OPTIONS --bind 'enter:become($prog {+})'
 end
 
 function zfloat 
     test -n "$argv"; and test "argv" = "-h"; and echo "Usage: zfloat [query_dir]\n searchs a subdirectory of query_dir to enter"; and return
     set dir fcd $argv
-    fd . -td $dir | fzf $FZF_DEFAULT_OPTIONS
+    fd . -u -td $dir | fzf $FZF_DEFAULT_OPTIONS
     zellij action new-pane -f  --cwd "$dir" -- fish
 end
 
@@ -81,7 +81,7 @@ end
 function fscd
     test -n "$argv"; and test "argv" = "-h"; and echo "Usage: fscd [query_dir]\n returns the selected directory"; and return
         
-    set dir $(fd . -td $argv | fzf $FZF_DEFAULT_OPTIONS)
+    set dir $(fd . -u -td $argv | fzf $FZF_DEFAULT_OPTIONS)
     if test -n "$dir"
         echo $dir
     end

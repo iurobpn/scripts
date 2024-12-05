@@ -65,6 +65,10 @@ local function format_time(seconds)
     return string.format("%02d:%02d:%02d", hours, mins, secs)
 end
 
+
+--- format task to a string
+---@param task table
+---@return string
 local format_task = function(task)
     return string.format(
         "%d | %-10s | t_start: %s | t_elapsed: %s | t_est: %s",
@@ -126,7 +130,8 @@ end
 -- Load data on startup
 load_data()
 
--- Timer command handler
+--- Timer command function to handle :Timer ...
+--- @param args any 
 function timer_plugin.TimerCommand(args)
     local subcommand = args.fargs[1]
     if not subcommand then
