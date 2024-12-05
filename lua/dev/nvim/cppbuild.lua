@@ -93,8 +93,14 @@ M.init = function()
     if M.configs == nil or M.targets == nil then
         M.configs, M.targets = cmake.get_all()
     end
-    M.current.config = M.configs[1]
-    M.current.targets = {M.targets[1]}
+    -- utils.pprint(M.configs, 'configs')
+    if M.configs ~= nil then
+        M.current.config = M.configs[1]
+    end
+
+    if M.targets ~= nil then
+        M.current.targets = {M.targets[1]}
+    end
 end
 
 M.close = function()

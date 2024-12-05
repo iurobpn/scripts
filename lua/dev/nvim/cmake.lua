@@ -1,3 +1,4 @@
+local Path = require("plenary.path")
 local lfs = require'lfs'
 local fs = require'dev.lua.fs'
 local json = require "dkjson"  -- dkjson for JSON parsing
@@ -10,6 +11,41 @@ local M = {
     configs = {}
 }
 
+-- Checks if there is a CMakePresets.json or CMakeUserPresets.json file
+-- in the current directory, a CMakeUserPresets.json is
+-- preferred over CMakePresets.json as CMakePresets.json
+-- is implicitly included by CMakeUserPresets.json
+function M.check(cwd)
+  -- helper function to find the config file
+  -- returns file path if found, nil otherwise
+  local function findcfg()
+    local files = vim.fn.readdir(cwd)
+    local file = nil
+    local presetFiles = {}
+    for _, f in ipairs(files) do -- iterate over files in current directory
+      if
+        f == "CMakePresets.json"
+        or f == "CMakeUserPresets.json"
+        or f == "cmake-presets.json"
+        or f == "cmake-user-presets.json"
+      then -- if a preset file is found
+        presetFiles[#presetFiles + 1] = tostring(Path:new(cwd, f))
+      end
+    end
+    table.sort(presetFiles, function(a, b)
+      return a < b
+    end)
+    if #presetFiles > 0 then
+      file = presetFiles[#presetFiles]
+    end
+    return file
+  end
+
+  local file = findcfg() -- check for config file
+
+  return file
+end
+
 function M.get_build_type(preset)
     return preset.configurePresets[1].cacheVariables.CMAKE_BUILD_TYPE or 'nil'
 end
@@ -19,13 +55,17 @@ function M.get_build_dir(preset)
 end
 
 M.get_preset_file = function(source_dir)
-    return require('cmake-tools.presets').check(source_dir)
+    return M.check(source_dir)
 end
 
 function M.decode(file)
+    if file == nil then
+        vim.notify("Could not find preset file")
+        return
+    end
     local fd = io.open(file, 'r')
-    if not fd then
-        error(string.format("Could not open file %s", file))
+    if fd == nil then
+        vim.notify(string.format("Could not open file %s", file))
     end
     local str = fd:read('*a')
     return json.decode(str)
@@ -55,11 +95,13 @@ end
 -- cmake -S /path/to/source --preset=ninja-release
 -- cmake --build . --target myexe
 -- cmake --build . --target myexe --config Release
-
 M.get_configs = function(source_dir)
     local configs = {}
     local presets = M.decode(M.get_preset_file(source_dir))
-    
+    if presets == nil then
+        return
+    end
+
     for _, file in ipairs(presets.include) do
         if file:match('cmake') == nil and file:match('TracyClient') == nil then
             file = source_dir .. '/' .. file
