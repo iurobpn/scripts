@@ -162,7 +162,7 @@ end
 -- :lua require('templater').insert_template()
 function M.expand(text)
     text = M.pre_escape(text)
-    print('text: ', text)
+    -- print('text: ', text)
     text = M.templater:render(text, M.templates)
     text = M.de_escape(text)
     return text
@@ -231,7 +231,7 @@ function M.expand_file(template_file)
             prompt = 'Select> ',
             actions = {
                 ['default'] = function(selected)
-                    print('selected: ', selected[1])
+                    -- print('selected: ', selected[1])
                     M.expand_file(selected[1])
                 end,
             },
