@@ -89,7 +89,6 @@ M.init = function()
     -- if it has, then load the configs and targets
     -- and select a config and a target
     -- then show the selected config and target
-
     if M.configs == nil or M.targets == nil then
         M.configs, M.targets = cmake.get_all()
     end
@@ -242,7 +241,8 @@ M.build = function()
     end
     cmd = cmd .. ' --preset ' .. M.current.config.configure.name
     vim.notify('cmd: ' .. cmd)
-    runner.zellij_run(cmd)
+    vim.cmd('set makeprg ' .. cmd)
+    -- runner.zellij_run(cmd)
 end
 
 M.debug = function()

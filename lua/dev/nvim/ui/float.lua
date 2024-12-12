@@ -188,7 +188,7 @@ function Window:get_size()
     local height = 0
 
     if self.size.flex then
-        local lines = vim.api.nvim_buf_get_lines(self.buf, 0, -1, false)
+        local lines = Buffer.get_lines(self.buf)
 
         -- Calculate the height (number of lines)
         height = #lines
@@ -212,7 +212,7 @@ function Window:get_size()
     elseif self.size.flex then
         height = ui_height * (self.size.relative.height or Window.size.relative.height)
         if #self.content == 0 then
-            self.content = vim.api.nvim_buf_get_lines(self.buf, 0, -1, false)
+            Buffer.get_lines(self.buf)
         end
         local tmp_width = self:get_max_content_width(self.content) + 2
         if tmp_width > ui_width or tmp_width <= 1 then
@@ -373,15 +373,17 @@ function Window:open(filename, linenr)
         self.buf, self.filename = Window.get_window(self.vid)
     else
         if self.buf == nil then
-            -- self.buf = Buffer.new(self.buffer.listed, self.buffer.scratch)
-            self.buf = vim.api.nvim_create_buf(false, true)
+            self.buf = Buffer.scratch()
         end
         if self.filename ~= nil and #self.filename > 0 then -- create a buffer to load the file
-            vim.api.nvim_set_option_value('modifiable', true, { buf = self.buf })
+            Buffer.set_value(self.buf, 'modifiable', true)
             Buffer.load(self.buf, self.filename)
         elseif self.content ~= nil and #self.content > 0 then -- create a buffer and load the content into it
-            vim.api.nvim_set_option_value('modifiable', true, { buf = self.buf })
-            vim.api.nvim_buf_set_lines(self.buf, 0, -1, false, self.content)  -- write to buffer
+            if not Buffer.is_valid(self.buf) then
+                Buffer.set_value(self.buf, 'modifiable', true)
+                -- vim.api.nvim_set_option_value('modifiable', true, { buf = self.buf })
+                Buffer.set_lines(self.buf, self.content)
+            end
         end
     end
 
@@ -655,7 +657,7 @@ function Window.setup_buffer_with_links()
     }
 
     -- Set the buffer lines
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+    Buffer.set_lines(buf, lines)
 
     -- Define a pattern to match 'filename.lua:number'
     local pattern = [[\v(\S+\.lua):(\d+)]]
@@ -784,7 +786,7 @@ function Window:fit()
         vim.notify('No buffer to fit')
         return
     end
-    local lines = vim.api.nvim_buf_get_lines(self.buf, 0, -1, false)
+    local lines = Buffer.get_lines(self.buf)
 
     -- Calculate the width (the length of the longest line)
     local width = 0

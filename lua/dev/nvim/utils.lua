@@ -10,7 +10,7 @@ function M.get_context(filename, line_num, size)
     if not M.is_file_loaded(filename) then
         -- load the file to a new buffer
         bufnr = vim.api.nvim_create_buf(false, true)
-        Buffer.load_file(bufnr, filename, false)
+        Buffer.load(bufnr, filename)
     else
         bufnr = vim.fn.bufnr(filename)
     end
@@ -68,7 +68,7 @@ function Buffer.unmap(bufnr)
 end
 
 function Buffer.load(buf,filename)
-    if not buf then
+    if buf ~= nil or not Buffer.is_valid(buf) then
         print("No buffer provided")
         return
     end
@@ -76,55 +76,41 @@ function Buffer.load(buf,filename)
         error('No filename provided')
         return
     end
-    if not buf then
-        buf = vim.api.nvim_create_buf(true, false)
-    end
     vim.api.nvim_buf_set_name(buf, filename)
     vim.api.nvim_command("edit " .. filename)
 end
 
-function Buffer.append_lines(buf, content)
+function Buffer.append(buf, content)
+    if not Buffer.is_valid(buf) then
+        print("No buffer provided")
+        return
+    end
     local line_start = vim.api.nvim_buf_line_count(buf)
     content = Buffer.check_content(content)
     vim.api.nvim_buf_set_lines(buf, line_start, -1, true, content) -- append to file
-
 end
-function Buffer.set_lines(buf, line_start, line_end, content)
-    if not buf then
+
+---set lines in buffer
+---@param buf number
+---@param line_start number
+---@param line_end number
+---@param content string
+function Buffer.set_lines(buf, content, line_start, line_end, strict)
+    if buf ~= nil or not Buffer.is_valid(buf) then
         print("No buffer provided")
         return
     end
     if line_start == nil then
         line_start = 0
     end
+    if line_end == nil then
+        line_end = -1
+    end
+    if strict == nil then
+        strict = false
+    end
     content = Buffer.check_content(content)
-    vim.api.nvim_buf_set_lines(buf, line_start, -1, true, content) -- overwrite file
-end
-
-function Buffer.load_file(buf,filename,is_saved)-- Check if the file exists
-    if not is_saved then
-        is_saved = true
-    end
-    if vim.fn.filereadable(filename) == 1 then
-        -- Read file content
-        local file_content = vim.fn.readfile(filename)
-
-        -- Load the file content into the buffer
-        vim.api.nvim_buf_set_lines(buf, 0, -1, false, file_content)
-
-        -- Optionally set the buffer name (not mandatory)
-        if is_saved then
-            vim.api.nvim_buf_set_name(buf, filename)
-        end
-
-        -- Set the filetype (optional, if you need it)
-        vim.api.nvim_set_option_value('filetype', vim.fn.fnamemodify(filename, ":e"), {buf = buf})
-
-        return buf -- Return the buffer number
-    else
-        print("File not found: " .. filename)
-        return nil
-    end
+    vim.api.nvim_buf_set_lines(buf, line_start, line_end, strict, content) -- overwrite file
 end
 
 function Buffer.check_content(content)
@@ -151,6 +137,72 @@ function Buffer.new(listed, scratch)
         scratch = false
     end
     return vim.api.nvim_create_buf(listed, scratch)  -- false for listed, true for scratch
+end
+
+-- add acratch buffer
+function Buffer.scratch(content)
+    local buf = Buffer.new(false, true)
+    Buffer.set_lines(buf, content)
+    return buf
+end
+
+function Buffer.delete(buf)
+    if not Buffer.is_valid(buf) then
+        return
+    end
+    vim.api.nvim_buf_delete(buf, {force = true})
+end
+
+function Buffer.get_lines(buf, start, finish, strict)
+    if not Buffer.is_valid(buf) then
+        return
+    end
+    if not start then
+        start = 0
+    end
+    if not finish then
+        finish = -1
+    end
+    if strict == nil then
+        strict = true
+    end
+    return vim.api.nvim_buf_get_lines(buf, start, finish, strict)
+end
+
+function Buffer.get_text(buf, start_row, start_col, end_row, end_col)
+    if not Buffer.is_valid(buf) then
+        return
+    end
+    return vim.api.nvim_buf_get_text(buf, start_row, start_col, end_row, end_col)
+end
+
+function Buffer.get_name(buf)
+    if not Buffer.is_valid(buf) then
+        return
+    end
+    return vim.api.nvim_buf_get_name(buf)
+end
+
+function Buffer.get_option(buf, option)
+    if not Buffer.is_valid(buf) then
+        return
+    end
+    return vim.api.nvim_get_option_value(option , { buf = buf})
+end
+
+function Buffer.set_option(buf, option, value)
+    if not Buffer.is_valid(buf) then
+        return
+    end
+    vim.api.nvim_set_option_value(option, value, { buf = buf } )
+end
+
+-- checki if buffer is valid
+function Buffer.is_valid(buf)
+    if buf == nil or not vim.api.nvim_buf_is_valid(buf) then
+        return false
+    end
+    return true
 end
 
 M.Buffer = Buffer
