@@ -29,3 +29,5 @@ mt = mt or {}
 mt.__call = call
 setmetatable(c, mt)
 c()
+
+setmetatable(c,(mt)..a)

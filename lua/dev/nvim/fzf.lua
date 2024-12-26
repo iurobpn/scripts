@@ -83,7 +83,7 @@ M.lcd = function()
     local source = 'fd . -td --hidden --exclude .git --exclude .gtags ~'
     local options = {
         sink = function(selected)
-            vim.cmd('cd ' .. selected[1])
+            vim.cmd('lcd ' .. selected[1])
         end
     }
     M.exec(source, options)
@@ -155,5 +155,6 @@ vim.api.nvim_create_user_command(
         end,
     })
 vim.api.nvim_create_user_command('Fcd', M.cd, {})
+vim.api.nvim_create_user_command('Flcd', M.cd, {})
 
 return M
