@@ -388,7 +388,7 @@ if vim.g.proj_enabled == nil or vim.g.proj_enabled == false then
         { nargs = '*' }
     )
 
-    vim.api.nvim_set_keymap('n', '<F7>', ':Qrun_current<CR>', { noremap = true, silent = true })
+    vim.api.nvim_set_keymap('n', ',q', ':Qrun_current<CR>', { noremap = true, silent = true })
     vim.api.nvim_set_keymap('n', '<F6>', ':Qcheck<CR>', { noremap = true, silent = true })
     vim.api.nvim_create_user_command("Qcheck",
         function(args)
