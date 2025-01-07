@@ -1,139 +1,115 @@
-# MIT License (MIT)
+# @ttscoff's version of @max-sixty's revision of @aluxian's
+# fish translation of @junegunn's fzf git keybindings
+# https://gist.github.com/junegunn/8b572b8d4b5eddd8b85e5f4d40f17236
+# https://gist.github.com/aluxian/9c6f97557b7971c32fdff2f2b1da8209
 #
-# Copyright (c) 2024 Junegunn Choi
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+# 2021-12-23:
+# - Fix hash returned by *git_log being truncated
+# - Allow multiple selections for git_status
+# - Allow multiple selections for git_log, insert HASH[1].. HASH[-1] range
+# - bind ctrl-a for select all
 
-# Convert bash functions to Fish
+# Deciphered from fzf-file-widget. Somewhat unclear why it doesn't exist already!
+function fzf_add_to_commandline -d 'add stdin to the command line, for fzf functions'
+    read -l result
+    commandline -t ""
+    commandline -it -- (string escape $result)
+    commandline -f repaint
+end
 
-function __fzf_git_color
-    if set -q NO_COLOR
-        echo never
-    else if test (count $argv) -gt 0 -a -n "$FZF_GIT_PREVIEW_COLOR"
-        echo "$FZF_GIT_PREVIEW_COLOR"
+function fzf_add_multi_files_to_commandline -d 'add stdin to the command line without escaping, for fzf functions'
+    read -l result
+    set files (string split '*' $result)
+    commandline -t ""
+    for file in $files
+        commandline -it -- (string escape $file)" "
+    end
+    commandline -f repaint
+end
+
+function fzf_add_multi_hashes_to_commandline -d 'add multiple hashes as a range'
+    read -d \n -z -a result
+    set -l hashes
+    for hash in $result
+        if test -n (string trim $hash)
+            set -a hashes $hash
+        end
+    end
+    commandline -t ""
+    if test (count $hashes) -gt 1
+        commandline -it -- $hashes[1]".. "$hashes[-1]
     else
-        echo (set -q FZF_GIT_COLOR; and echo $FZF_GIT_COLOR; or echo "always")
+        commandline -it -- $hashes[1]
     end
+    commandline -f repaint
 end
 
-function __fzf_git_cat
-    if set -q FZF_GIT_CAT
-        echo "$FZF_GIT_CAT"
-        return
-    end
 
-    set _fzf_git_bat_options "--style="'${BAT_STYLE:-full}'" --color=(__fzf_git_color .) --pager=never"
-    if type -q batcat
-        echo "batcat $_fzf_git_bat_options"
-    else if type -q bat
-        echo "bat $_fzf_git_bat_options"
-    else
-        echo "cat"
-    end
+function fzf-down
+    fzf --height 50% --min-height 20 --border --bind ctrl-p:toggle-preview --bind ctrl-a:select-all $argv
 end
 
-function __fzf_git_pager
-    set pager (set -q FZF_GIT_PAGER; and echo $FZF_GIT_PAGER; or echo $GIT_PAGER)
-    set pager (set -q pager; and echo $pager; or git config --get core.pager 2>/dev/null)
-    echo (set -q pager; and echo $pager; or echo "cat")
+# https://gist.github.com/aluxian/9c6f97557b7971c32fdff2f2b1da8209
+function __git_fzf_is_in_git_repo
+    command -s -q git
+    and git rev-parse HEAD >/dev/null 2>&1
 end
 
-if test (count $argv) -eq 1
-    function branches
-        git branch $argv --sort=-committerdate --sort=-HEAD --format=$'%(HEAD) %(color:yellow)%(refname:short) %(color:green)(%(committerdate:relative))\t%(color:blue)%(subject)%(color:reset)' --color=(__fzf_git_color) | column -ts$'\t'
-    end
-
-    function refs
-        git for-each-ref $argv --sort=-creatordate --sort=-HEAD --color=(__fzf_git_color) --format=$'%(if:equals=refs/remotes)%(refname:rstrip=-2)%(then)%(color:magenta)remote-branch%(else)%(if:equals=refs/heads)%(refname:rstrip=-2)%(then)%(color:brightgreen)branch%(else)%(if:equals=refs/tags)%(refname:rstrip=-2)%(then)%(color:brightcyan)tag%(else)%(if:equals=refs/stash)%(refname:rstrip=-2)%(then)%(color:brightred)stash%(else)%(color:white)%(refname:rstrip=-2)%(end)%(end)%(end)%(end)\t%(color:yellow)%(refname:short) %(color:green)(%(creatordate:relative))\t%(color:blue)%(subject)%(color:reset)' | column -ts$'\t'
-    end
-
-    function hashes
-        git log --date=short --format="%C(green)%C(bold)%cd %C(auto)%h%d %s (%an)" --graph --color=(__fzf_git_color) $argv
-    end
-
-    switch "$argv[1]"
-        case branches
-            echo 'CTRL-O (open in browser) ╱ ALT-A (show all branches)'
-            branches
-        case all-branches
-            echo 'CTRL-O (open in browser)'
-            branches -a
-        case hashes
-            echo 'CTRL-O (open in browser) ╱ CTRL-D (diff)\nCTRL-S (toggle sort) ╱ ALT-A (show all hashes)'
-            hashes
-        case all-hashes
-            echo 'CTRL-O (open in browser) ╱ CTRL-D (diff)\nCTRL-S (toggle sort)'
-            hashes --all
-        case refs
-            echo 'CTRL-O (open in browser) ╱ ALT-E (examine in editor) ╱ ALT-A (show all refs)'
-            refs --exclude='refs/remotes'
-        case all-refs
-            echo 'CTRL-O (open in browser) ╱ ALT-E (examine in editor)'
-            refs
-        case nobeep
-            # Do nothing
-        case '*'
-            exit 1
-    end
+function __git_fzf_git_remote
+    __git_fzf_is_in_git_repo; or return
+    git remote -v | awk '{print $1 ":" $2}' | uniq | \
+    fzf-down --ansi --tac \
+    --preview 'git log --oneline --graph --date=short --pretty="format:%C(auto)%cd %h%d %s" --remotes={1} | head -200' | \
+    cut -d ':' -f1 | \
+    fzf_add_to_commandline
 end
 
-# Handle if more than one argument is provided
-if test (count $argv) -gt 1
-    set branch (git rev-parse --abbrev-ref HEAD 2>/dev/null)
-    if test "$branch" = "HEAD"
-        set branch (git describe --exact-match --tags 2>/dev/null; or git rev-parse --short HEAD)
-    end
+function __git_fzf_git_status
+    __git_fzf_is_in_git_repo; or return
+    git -c color.status=always status --short | \
+    fzf-down -m --ansi --preview 'git diff --color=always HEAD -- {-1} | head -500' | \
+    cut -c4- | \
+    sed 's/.* -> //' | \
+    tr '\n' '*' | \
+    sed 's/\*$//' | \
+    fzf_add_multi_files_to_commandline
+end
 
-    switch "$argv[1]"
-        case commit
-            set hash (echo $argv[2] | grep -o "[a-f0-9]\{7,\}")
-            set path /commit/$hash
-        case branch remote-branch
-            set branch (echo $argv[2] | sed 's/^[* ]*//' | cut -d' ' -f1)
-            set remote (git config branch."$branch".remote; or echo "origin")
-            set branch (string replace "$remote/" "" $branch)
-            set path /tree/$branch
-        case remote
-            set remote $argv[2]
-            set path /tree/$branch
-        case file
-            set path /blob/$branch/(git rev-parse --show-prefix)$argv[2]
-        case tag
-            set path /releases/tag/$argv[2]
-        case '*'
-            exit 1
-    end
+function __git_fzf_git_branch
+    __git_fzf_is_in_git_repo; or return
+    git branch -a --color=always | \
+    grep -v '/HEAD\s' | \
+    fzf-down -m --ansi --preview-window right:70% --preview 'git log --color=always --oneline --graph --date=short \
+    --pretty="format:%C(auto)%cd %h%d %s %C(magenta)[%an]%Creset" \
+    --print0 \
+    --read0 \
+    (echo {} | sed s/^..// | cut -d" " -f1) | head -'$LINES | \
+    sed 's/^..//' | cut -d' ' -f1 | \
+    sed 's#^remotes/##' | \
+    fzf_add_to_commandline
+end
 
-    set remote (set -q remote; and echo $remote; or git config branch."$branch".remote; or echo "origin")
-    set remote_url (git remote get-url "$remote" 2>/dev/null; or echo "$remote")
+function __git_fzf_git_tag
+    __git_fzf_is_in_git_repo; or return
+    git tag --sort -version:refname | \
+    fzf-down --ansi --preview-window right:70% \
+    --preview 'git show --color=always {} | head -'$LINES | \
+    fzf_add_to_commandline
+end
 
-    if string match -r "^git@" "$remote_url"
-        set url (string replace 'git@' 'https://' (string replace '.git' '' (string replace ':' '/' "$remote_url")))
-    else if string match -r "^http" "$remote_url"
-        set url (string replace '.git' '' "$remote_url")
-    end
+function __git_fzf_git_log
+    __git_fzf_is_in_git_repo; or return
+    git log --color=always --graph --date=short --format="%C(auto)%cd %h%d %s %C(magenta)[%an]%Creset" | \
+    fzf-down -m --ansi --reverse --preview 'git show --color=always (echo {} | grep -o "[a-f0-9]\{7,\}") | head -'$LINES | \
+    awk '{print $3}' \
+    | fzf_add_multi_hashes_to_commandline
+end
 
-    switch (uname -s)
-        case Darwin
-            open "$url$path"
-        case '*'
-            xdg-open "$url$path"
-    end
-    exit 0
+# https://gist.github.com/junegunn/8b572b8d4b5eddd8b85e5f4d40f17236
+function git_fzf_key_bindings -d "Set custom key bindings for git+fzf"
+    bind \cg\cf __git_fzf_git_status
+    bind \cg\cb __git_fzf_git_branch
+    bind \cg\ct __git_fzf_git_tag
+    bind \cg\ch __git_fzf_git_log
+    bind \cg\cr __git_fzf_git_remote
 end

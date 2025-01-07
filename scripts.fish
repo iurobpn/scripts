@@ -9,3 +9,4 @@ source $SCRIPTS_DIR/query.fish
 source $SCRIPTS_DIR/lua/dev/lua/tasks/find.fish
 source $SCRIPTS_DIR/copilot.fish
 source $SCRIPTS_DIR/update_ip.fish
+source $SCRIPTS_DIR/notes.fish
