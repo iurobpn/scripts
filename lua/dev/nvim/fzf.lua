@@ -70,8 +70,13 @@ function M.exec(source, ...)
     -- end
 end
 
-M.cd = function()
-    local source = 'fd . -td --hidden --exclude .git --exclude .gtags ~'
+M.cd = function(opts)
+    if #opts.args == 0 then
+        dir = '~'
+    else
+        dir = opts.args
+    end
+    local source = 'fd . -td --hidden --exclude .git --exclude .gtags ' .. dir
     local options = {
         sink = function(selected)
             vim.cmd('cd ' .. selected[1])
@@ -80,7 +85,12 @@ M.cd = function()
     M.exec(source, options)
 end
 M.lcd = function()
-    local source = 'fd . -td --hidden --exclude .git --exclude .gtags ~'
+    if #opts.args == 0 then
+        dir = '~'
+    else
+        dir = opts.args
+    end
+    local source = 'fd . -td --hidden --exclude .git --exclude .gtags ' .. dir
     local options = {
         sink = function(selected)
             vim.cmd('lcd ' .. selected[1])
@@ -154,7 +164,20 @@ vim.api.nvim_create_user_command(
             end
         end,
     })
-vim.api.nvim_create_user_command('Fcd', M.cd, {})
-vim.api.nvim_create_user_command('Flcd', M.cd, {})
+
+vim.api.nvim_create_user_command(
+    'Fcd',
+    M.cd,
+    {
+        nargs = '?',
+    }
+)
+vim.api.nvim_create_user_command(
+    'Flcd',
+    M.lcd,
+    {
+        nargs = '?',
+    }
+)
 
 return M
