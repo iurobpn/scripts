@@ -239,7 +239,7 @@ function update_ufmg
         set remote origin
     end
     set -l GIT $HOME/git
-    set -l repos CGAL-matlab ProVANT-Simulator_Developer armadillo-pmr cpp_tests data_structures dotfiles matlab-dev nmpc-obs ocpsol pres-research prov_sim_configs pylattes reports papers scripts sets-obs svgs thesis site_macro paper_nmpc_hrep
+    set -l repos CGAL-matlab ProVANT-Simulator_Developer armadillo-pmr cpp_tests data_structures dotfiles matlab-dev nmpc-obs ocpsol pres-research prov_sim_configs pylattes reports papers scripts sets-obs svgs thesis site_macro op1319
     # set repos (echo $repos |  sed -e 's#\([a-zA-Z\._0-9\-]\+\)#/home/gagarin/git/\1#g')
     # echo "updating repos: $repos"
     check_repos $repos -r $remote
