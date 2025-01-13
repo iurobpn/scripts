@@ -11,3 +11,4 @@ source $SCRIPTS_DIR/copilot.fish
 source $SCRIPTS_DIR/update_ip.fish
 source $SCRIPTS_DIR/notes.fish
 source $SCRIPTS_DIR/rsync.fish
+source $SCRIPTS_DIR/bukufzf.fish
