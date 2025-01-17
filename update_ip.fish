@@ -5,3 +5,7 @@ function update_ip
     && mv /tmp/config ~/.ssh/config && rm -f /tmp/config
 end
 
+function myip
+    curl -4 icanhazip.com
+end
+
