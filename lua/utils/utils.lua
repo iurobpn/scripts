@@ -5,8 +5,8 @@ local fmt = string.format
 
 local M = {}
 function M.file_exist(name)
-   local f=io.open(name,"r")
-   if f~=nil then io.close(f) return true else return false end
+    local f=io.open(name,"r")
+    if f~=nil then io.close(f) return true else return false end
 end
 
 
@@ -81,11 +81,11 @@ end
 
 -- Function to split text into lines without losing empty lines
 function M.split2(text)
-  local lines = {}
-  for line in string.gmatch(text, "([^\n]*)\n?") do
-    table.insert(lines, line)
-  end
-  return lines
+    local lines = {}
+    for line in string.gmatch(text, "([^\n]*)\n?") do
+        table.insert(lines, line)
+    end
+    return lines
 end
 
 function M.split(inputstr, sep)
