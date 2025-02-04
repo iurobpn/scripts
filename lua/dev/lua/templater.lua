@@ -49,7 +49,7 @@ M.templates.reminders = function()
     local templ
 
     if today == "Sun" or today == "Sat" then
-        templ = 'weekndday.tpl'
+        templ = 'weekend.tpl'
     else
         templ = 'workday.tpl'
     end
