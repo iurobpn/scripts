@@ -22,6 +22,13 @@ local M = {
     default_query = [[jq '[ .[] | select((.status!="done") ]] ..
         [[and ((.tags[] == "#today") or (.tags[] == "#important") ) )  ] |]] ..
         [[ sort_by(.due) | unique | sort_by(.due)']],
+    work_query = [[ jq '[ .[] | select(.status != "done" and (.tags[] != "#personal" and ( (.tags[] == "#today") or (.tags[] == "#important") ))) ] | sort_by(.due) | unique | sort_by(.due) ]],
+    personal_query = [[ jq '[ .[] | select(.status != "done" and ( (.tags[] == "#personal" and ( (.tags[] == "#today") or (.tags[] == "#important") ))) ] | sort_by(.due) | unique | sort_by(.due) ]],
+
+not_query = [[ jq '[ .[] | select(.status != "done" and (.tags[] != "%s" and ( (.tags[] == "today") or (.tags[] == "#important") ))) ] | sort_by(.due) | unique | sort_by(.due) ]],
+    -- work_query = [[jq '[ .[] | select((.status!="done") ]] ..
+    --     [[and ((.tags[] == "#today") or (.tags[] == "#important")  ) )  ] |]] ..
+    --     [[ sort_by(.due) | unique | sort_by(.due)']],
     last_query = nil,
 }
 -- [[and ((.tags[] == "#today") or (.tags[] == "#important") or (.tags[] == "#main") ) ) ] |]] ..
@@ -919,6 +926,14 @@ M.search = function(...)
         else
             tasks = M.tasks
         end
+    elseif opts.search == 'personal' then
+        local q = query.Query()
+        tasks = q:select(M.personal_query)
+        M.tasks = tasks
+    elseif opts.search == 'work' then
+        local q = query.Query()
+        tasks = q:select(M.work_query)
+        M.tasks = tasks
     else
         local q = query.Query()
         if opts.cmd == nil then
@@ -1041,6 +1056,8 @@ vim.api.nvim_create_user_command('Tasks',
     { nargs = '*', complete = M.complete }
 )
 vim.api.nvim_set_keymap('n', '<F9>', ':Tasks toggle default<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<LocalLeader>tw', ':Tasks toggle work<CR>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<LocalLeader>p', ':Tasks toggle personal<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<LocalLeader>tc', ':Tasks current<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<LocalLeader>tt', ':Tasks #today<CR>', { noremap = true, silent = true })
 vim.api.nvim_set_keymap('n', '<LocalLeader>tm', ':Tasks #main<CR>', { noremap = true, silent = true })
