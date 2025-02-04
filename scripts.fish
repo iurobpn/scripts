@@ -13,3 +13,4 @@ source $SCRIPTS_DIR/notes.fish
 source $SCRIPTS_DIR/rsync.fish
 source $SCRIPTS_DIR/bukufzf.fish
 source $SCRIPTS_DIR/ubuntu_codename.fish
+source $SCRIPTS_DIR/jqp.fish
