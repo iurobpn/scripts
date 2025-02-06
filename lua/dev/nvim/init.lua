@@ -5,6 +5,7 @@ local nvim = {
     timer = require('dev.nvim.timer'),
     cmake = require('dev.nvim.cmake'),
     cppbuild = require('dev.nvim.cppbuild'),
+    runfloat = require('dev.nvim.runfloat'),
 }
 
 nvim.init = function()
