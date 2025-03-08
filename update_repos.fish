@@ -246,7 +246,7 @@ function update_ufmg
 end
 
 
-
+# git functions
 function ahead
     git status -sb | grep "ahead" > /dev/null
 end
@@ -256,17 +256,26 @@ function behind
 end
 
 function clean
-        git status | grep "nothing to commit" > /dev/null
+    git status --porcelain | not grep '^ *M' > /dev/null
+end
+
+function staged
+    git status --porcelain | grep '^M' > /dev/null
+end
+
+function modified
+    git status --porcelain | grep '^ M' > /dev/null
 end
 
 function untracked
-        git status | grep "Untracked" > /dev/null
+    git status --porcelain | grep '^??' > /dev/null
 end
+
 function notstaged
-        git status | grep "not staged" > /dev/null
+        not staged
 end
 
 function is_git_repo
-    test -d .git
+    git rev-parse --is-inside-work-tree > /dev/null
 end
 
