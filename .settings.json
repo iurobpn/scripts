@@ -21,6 +21,7 @@
             "last_file": ""
         },
         "query_history": [
+            "jq '[ .[] | select((.status!=\"done\") and ((.tags[] == \"#today\") or (.tags[] == \"#important\") ) )  ] | sort_by(.due) | unique | sort_by(.due)'"
         ],
         "query_list": [
             {
