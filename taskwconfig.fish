@@ -5,7 +5,7 @@ function twsync
         echo "Usage: tasksync <tosync|tohome>"
         return
     else
-        set -l SYNC_DIR /home/gagarin/sync/taskw/
+        set -l SYNC_DIR $HOME/sync/taskw/
         if [ $argv[1] = "tohome" ]
             set FROM $SYNC_DIR
             set TO $HOME
