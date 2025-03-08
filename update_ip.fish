@@ -1,8 +1,9 @@
 #!/usr/bin/fish
 
 function update_ip
-    update_ip.awk ~/sync/obsidian/ip.md ~/.ssh/config > /tmp/config \
-    && mv /tmp/config ~/.ssh/config && rm -f /tmp/config
+    set -l TMP_FILE ~/tmpconf
+    update_ip.awk ~/sync/obsidian/ip.md ~/.ssh/config > $TMP_FILE  \
+    && mv $TMP_FILE ~/.ssh/config && rm -f $TMP_FILE
 end
 
 function myip
