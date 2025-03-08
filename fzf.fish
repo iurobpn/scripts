@@ -8,7 +8,7 @@ function vf
     if test -z "$dir"
         set -e dir
     end
-    fd . -u -tf $dir |  sed -e 's#^\./(.*)##g' | fzf --multi $FZF_DEFAULT_OPTIONS --bind 'enter:become(vim {+})'
+    fd . -u -tf $dir |  sed -e 's#^\./(.*)##g' | fzf --multi $FZF_DEFAULT_OPTIONS --bind 'enter:become(nvim {+})'
 end
 
 function fg

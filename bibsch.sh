@@ -12,7 +12,7 @@ if echo "$*" | grep ' -p'; then
 else
     print=0
 fi
-Ensure a file is provided
+# Ensure a file is provided
 
 BIBFILE="$1"
 
@@ -33,7 +33,7 @@ extract_entries() {
 }
 
 # Use fzf to search, treating each whole entry as a single item
-selected_entries=$(extract_entries | fzf --read0 --multi --preview "echo {} | bat --language=bibtex --style=plain")
+selected_entries=$(extract_entries | fzf --read0 --multi --preview "echo {} | bat --wrap=character  --language=bibtex --style=plain")
 
 # Print the selected entries, formatting with bibtool if available
 if [[ -n "$selected_entries" ]]; then
