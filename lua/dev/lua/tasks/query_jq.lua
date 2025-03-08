@@ -8,8 +8,9 @@ local M = {
 
 local Query = {}
 
+local home = os.getenv('HOME')
 -- static variables
-Query.path = '/home/gagarin/sync/obsidian'
+Query.path = home .. '/sync/obsidian'
 Query.jsonfiles = {
     tasks = {
         filename = 'tasks.json',

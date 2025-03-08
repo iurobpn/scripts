@@ -3,9 +3,11 @@ require('class')
 local sql = require('dev.lua.sqlite2')
 local M = {}
 
+
+local home = os.getenv('HOME')
 local Query = {
     filename = 'tasks.db',
-    path = '/home/gagarin/sync/obsidian/',
+    path = home .. '/sync/obsidian/',
     sql = nil,
 }
 

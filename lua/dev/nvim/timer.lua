@@ -40,10 +40,10 @@ local timer = nil
 local timer_start_time = nil
 local timer_active = false
 local popup_win = nil
-
+local home = os.getenv('HOME')
 -- File paths for data persistence
 --
-local data_dir = "/home/gagarin/sync/obsidian/.tasks"
+local data_dir = home .. "/sync/obsidian/.tasks"
 local tasks_file = data_dir .. '/' .. timer_plugin.filename
 local logs_file = data_dir .. '/logs.json'
 

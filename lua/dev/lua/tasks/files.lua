@@ -1,4 +1,5 @@
+local home = os.getenv('HOME')
 local M = {
-    filename = "/home/gagarin/sync/obsidian/.markdowndb/files.json"
+    filename = home .. "/sync/obsidian/.markdowndb/files.json"
 }
 

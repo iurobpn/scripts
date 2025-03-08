@@ -1,11 +1,12 @@
 local templater = require 'lustache'
 local fs = require'dev.lua.fs'
 
+local home = os.getenv('HOME')
 local M = {
     templater = templater,
     templates = nil,
     config = {
-        template_dir = '/home/gagarin/.config/nvim/templates',
+        template_dir = home .. '/.config/nvim/templates',
     },
 }
 

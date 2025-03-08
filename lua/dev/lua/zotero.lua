@@ -8,9 +8,10 @@
 -- PRAGMA database_list;
 --
 require('dev.lua.sqlite')
+local home = os.getenv('HOME')
 local M = {
     filename = 'zotero.sqlite',
-    path = '/home/gagarin/sync/zotero/',
+    path = home .. '/sync/zotero/',
     sql = nil,
 }
 

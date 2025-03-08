@@ -6,10 +6,11 @@ local json = require('cjson')
 
 local parser = require('dev.lua.tasks.parser')
 
+local home = os.getenv('HOME')
 local M = { 
     filename = 'tasks.db',
     filepath = '.tasks',
-    path = '/home/gagarin/sync/obsidian',
+    path = home .. '/sync/obsidian',
     sql = nil,
 }
 

@@ -5,8 +5,9 @@ local json = require "dkjson"  -- dkjson for JSON parsing
 local utils = require('utils')
 local pprint = utils.pprint
 
+local home = os.getenv('HOME')
 local M = {
-    source_dir = '/home/gagarin/git/nmpc-obs/cpp',
+    source_dir = home .. '/git/nmpc-obs/cpp',
     build_dir = 'build/Release',
     configs = {}
 }
