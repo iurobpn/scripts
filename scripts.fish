@@ -16,3 +16,4 @@ source $SCRIPTS_DIR/ubuntu_codename.fish
 source $SCRIPTS_DIR/jqp.fish
 source $SCRIPTS_DIR/select-bibtex.fish
 source $SCRIPTS_DIR/taskwconfig.fish
+source $SCRIPTS_DIR/taskstab.fish

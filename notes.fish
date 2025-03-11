@@ -1,5 +1,5 @@
 function notes
-    if [ $argv[1] == "-h" ]
+    if [ $argv[1] = "-h" ]
         if not set -q PKM_DIR
             set -gx PKM_DIR ~/git/pkm
         end
