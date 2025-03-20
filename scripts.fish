@@ -18,4 +18,5 @@ source $SCRIPTS_DIR/select-bibtex.fish
 source $SCRIPTS_DIR/taskwconfig.fish
 source $SCRIPTS_DIR/taskstab.fish
 source $SCRIPTS_DIR/dirty.sh
+source $SCRIPTS_DIR/gita.fish
 # source $SCRIPTS_DIR/find_in_zotero.sh
