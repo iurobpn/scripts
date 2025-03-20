@@ -10,7 +10,7 @@
 require('dev.lua.sqlite')
 local M = {
     filename = 'zotero.sqlite',
-    path = '/home/gagarin/sync/zotero/',
+    path = '/home/gagarin/Koofr/zotero/',
     sql = nil,
 }
 

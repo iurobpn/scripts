@@ -25,7 +25,7 @@ local timer_active = false
 local popup_win = nil
 
 -- File paths for data persistence
-local data_dir = "/home/gagarin/sync/obsidian/.tasks"
+local data_dir = "/home/gagarin/git/pkm/.tasks"
 local tasks_file = data_dir .. '/' .. timer_plugin.filename
 local logs_file = data_dir .. '/logs.json'
 

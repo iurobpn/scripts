@@ -9,7 +9,7 @@ local M = {
 local Query = {}
 
 -- static variables
-Query.path = '/home/gagarin/sync/obsidian'
+Query.path = '/home/gagarin/git/pkm'
 Query.jsonfiles = {
     tasks = {
         filename = 'tasks.json',

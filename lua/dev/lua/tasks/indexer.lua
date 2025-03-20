@@ -9,7 +9,7 @@ local parser = require('dev.lua.tasks.parser')
 local M = { 
     filename = 'tasks.db',
     filepath = '.tasks',
-    path = '/home/gagarin/sync/obsidian',
+    path = '/home/gagarin/git/pkm',
     sql = nil,
 }
 

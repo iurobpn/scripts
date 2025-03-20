@@ -5,7 +5,7 @@ local M = {}
 
 local Query = {
     filename = 'tasks.db',
-    path = '/home/gagarin/sync/obsidian/',
+    path = '/home/gagarin/git/pkm',
     sql = nil,
 }
 

@@ -1,4 +1,4 @@
 local M = {
-    filename = "/home/gagarin/sync/obsidian/.markdowndb/files.json"
+    filename = "/home/gagarin/git/pkm/.markdowndb/files.json"
 }
 
