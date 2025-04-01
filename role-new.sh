@@ -6,5 +6,5 @@ if [ -z $1 ]; then
 fi
 newrole=$1
 mkdir -p roles/$newrole/{tasks,handlers,templates,files,vars,defaults,meta}
-touch roles/$newrole/{tasks,handlers,templates,files,vars,defaults,meta}/main.yml
+touch roles/$newrole/{tasks,handlers,vars,defaults,meta}/main.yml
 tree roles/$newrole
