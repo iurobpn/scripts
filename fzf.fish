@@ -8,10 +8,10 @@ function vf
     if test -z "$dir"
         set -e dir
     end
-    fd . -u -tf $dir |  sed -e 's#^\./(.*)##g' | fzf --multi $FZF_DEFAULT_OPTIONS --bind 'enter:become(nvim {+})'
+    fd . -u -tf $dir |  sed -e 's#^\./(.*)##g' | fzf --multi $FZF_DEFAULT_OPTIONS --ansi --preview --bind 'enter:become(nvim {+})'
 end
 
-function fg
+function frg
     set rg_prefix 'rg --column --line-number --no-heading --color=always --smart-case';
     fzf --bind "start:reload:$rg_prefix {q}" \
     --bind "change:reload:$rg_prefix {q} || true" \

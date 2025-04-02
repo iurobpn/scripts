@@ -1,5 +1,5 @@
 function notes
-    if [ $argv[1] = "-h" ]
+    if test -n "$argv" && test "$argv[1]" = "-h"
         if not set -q PKM_DIR
             set -gx PKM_DIR ~/git/pkm
         end
@@ -16,10 +16,10 @@ function notes
     end
     # echo $notes_dir
     # cd $notes_dir
-    if zellij action query-tab-names | grep notes
-        zellij action go-to-tab-name notes
+    if tmux-has-window notes
+        tmux-goto-window notes
     else
-        zellij action new-tab --layout notes --name notes --cwd "$notes_dir"
+        tmux new-window -n notes -c $notes_dir
     end
 end
 
