@@ -8,16 +8,30 @@ function vf
     if test -z "$dir"
         set -e dir
     end
-    fd . -u -tf $dir |  sed -e 's#^\./(.*)##g' | fzf --multi $FZF_DEFAULT_OPTIONS --ansi --preview --bind 'enter:become(nvim {+})'
+    fd . -u -tf $dir |  sed -e "s#^\./(.*)##g" | fzf --multi $FZF_DEFAULT_OPTIONS --bind "enter:become(nvim {+})" --preview "bat --style=numbers --color=always {}" --preview-window "60%,wrap"
 end
 
 function frg
-    set rg_prefix 'rg --column --line-number --no-heading --color=always --smart-case';
+    set rg_prefix "rg --column --line-number --no-heading --color=always --smart-case";
     fzf --bind "start:reload:$rg_prefix {q}" \
     --bind "change:reload:$rg_prefix {q} || true" \
     --bind 'enter:become(vim {1} +{2})' \
     --ansi --disabled \
     --height=50% --layout=reverse
+end
+function frg2
+# 1. Search for text in files using Ripgrep
+# 2. Interactively restart Ripgrep with reload action
+# 3. Open the file in Vim
+set RG_PREFIX "rg --column --line-number --no-heading --color=always --smart-case "
+set INITIAL_QUERY '${*:-}'
+fzf --ansi --disabled --query "$INITIAL_QUERY" \
+    --bind "start:reload:$RG_PREFIX {q}" \
+    --bind "change:reload:sleep 0.1; $RG_PREFIX {q} || true" \
+    --delimiter : \
+    --preview 'bat --color=always {1} --highlight-line {2}' \
+    --preview-window 'up,60%,border-bottom,+{2}+3/3,~3' \
+    --bind 'enter:become(vim {1} +{2})'
 end
 
 function fprg
