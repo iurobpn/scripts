@@ -20,4 +20,5 @@ source $SCRIPTS_DIR/taskstab.fish
 source $SCRIPTS_DIR/dirty.sh
 source $SCRIPTS_DIR/gita.fish
 source $SCRIPTS_DIR/tmux.fish
+source $SCRIPTS_DIR/role-new.sh
 # source $SCRIPTS_DIR/find_in_zotero.sh
