@@ -18,7 +18,7 @@ function tmux-attach-or-create
     if tmux-has-window $argv
         tmux-goto-window $argv
     else
-        tmux new-window -n $argv
+        tmux new-window -n $argv \; send-keys 'vit' Enter
     end
 end
 

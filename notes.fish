@@ -19,7 +19,8 @@ function notes
     if tmux-has-window notes
         tmux-goto-window notes
     else
-        tmux new-window -n notes -c $notes_dir
+        tmux new-window -n notes -c "notes_dir" \; send-keys "vit" Enter
+        tmux splitw -v \; send-keys "nvim" Enter Enter
     end
 end
 
