@@ -7,7 +7,7 @@ local lua = {
 vim.g.proj = lua.proj
 vim.g.proj.init()
 
-lua.sqlite    = require'dev.lua.sqlite2'
+lua.sqlite    = require'dev.lua.sqlite'
 lua.tasks     = require'dev.lua.tasks'
 lua.fs        = require'dev.lua.fs'
 lua.log       = require'dev.lua.log'
