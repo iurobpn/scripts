@@ -424,12 +424,12 @@ vim.api.nvim_create_user_command('TasksIndex', 'lua require"dev.lua.tasks.indexe
 )
 
 -- Define the autocommand to trigger on saving a markdown file
-vim.api.nvim_create_autocmd("BufWritePost", {
-    pattern = "*.md",     -- Only apply to markdown files
-    callback = function()
-        vim.cmd("TasksIndex")  -- Execute the 'TasksIndex' command
-    end,
-})
+-- vim.api.nvim_create_autocmd("BufWritePost", {
+--     pattern = "*.md",     -- Only apply to markdown files
+--     callback = function()
+--         vim.cmd("TasksIndex")  -- Execute the 'TasksIndex' command
+--     end,
+-- })
 
 -- Helper function to get today's date in "YYYY-MM-DD" format
 local function get_current_date()
