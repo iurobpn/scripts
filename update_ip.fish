@@ -2,10 +2,15 @@
 
 function update_ip
     if not set -q SYNC_PATH
-        set -xg SYNC_DIR $HOME/Koofr
+        set -xg SYNC_DIRS $HOME/Koofr $HOME/Sync
     end
     set -l MYIP (myip)
-    echo "$MYIP" > $SYNC_DIR/ip.txt
+    for dir in $SYNC_DIRS
+        if test -d $dir
+            echo "$MYIP" > $dir/ip.txt
+            break
+        end
+    end
 end
 
 function myip
@@ -13,5 +18,5 @@ function myip
 end
 
 
-update_ip:w
+update_ip
 
