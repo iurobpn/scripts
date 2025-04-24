@@ -1,22 +1,17 @@
-#!/usr/bin/fish
+#!/usr/bin/env fish
 
 function update_ip
     if not set -q SYNC_PATH
-        set -xg SYNC_PATH ~/sync
+        set -xg SYNC_DIR $HOME/Koofr
     end
-    cp ~/.ssh/config ~/.ssh/config.bkp
-    update_ip.awk $SYNC_DIR/kpxc/ip.md ~/.ssh/config > /tmp/config \
-    && cp /tmp/config ~/.ssh/config
-end
-
-function updateip
-    if not set -q SYNC_PATH
-        set -xg SYNC_PATH ~/sync
-    end
-    update_ip.awk $SYNC_PATH/kpxc/ip.md ~/.ssh/config
+    set -l MYIP (myip)
+    echo "$MYIP" > $SYNC_DIR/ip.txt
 end
 
 function myip
     curl -4 icanhazip.com
 end
+
+
+update_ip:w
 
