@@ -17,6 +17,3 @@ function myip
     curl -4 icanhazip.com
 end
 
-
-update_ip
-
