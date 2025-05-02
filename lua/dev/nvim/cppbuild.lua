@@ -3,7 +3,7 @@ local utils = require('utils')
 local cmake = require('dev.nvim.cmake')
 local prj = require('dev.lua.project')
 local fs = require('utils.fs')
-local runner = require('runner')
+local runner = require('utils.runner')
 
 local M = {
     configs = nil,

@@ -1,5 +1,5 @@
 local json = require('cjson')
-local tbl = require('tbl')
+local tbl = require('utils.tbl')
 local utils = require('utils')
 
 Project = {

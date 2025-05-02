@@ -2,7 +2,7 @@ if vim == nil then
     return
 end
 
-local tbl = require('tbl')
+local tbl = require('utils.tbl')
 require('class')
 local utils = require('utils')
 -- local Log = require('dev.lua.log').Log

@@ -1,5 +1,5 @@
-require'time'
-local gruvbox = require'gruvbox-term'
+require'utils.time'
+local gruvbox = require'gruvbox-colors'
 require'debug'
 require'class'
 
