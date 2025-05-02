@@ -1,7 +1,7 @@
 local Window = require ('dev.nvim.ui.float').Window
 -- local inspect = require 'inspect'
 
-local fs = require ('dev.lua.fs')
+local fs = require ('utils.fs')
 -- local Log = require 'dev.lua.log'.Log
 
 

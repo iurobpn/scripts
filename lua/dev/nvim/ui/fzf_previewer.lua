@@ -8,7 +8,7 @@
 local builtin = require("fzf-lua.previewer.builtin")
 
 local utils = require("utils")
-local fs = require("dev.lua.fs")
+local fs = require("utils.fs")
 
 local M = {}
 

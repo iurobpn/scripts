@@ -1,9 +1,16 @@
 -- timer_plugin.lua
 local timer_plugin = {
     filename = "tasks_pl.json",
-
 }
-require'dev.lua.tasks.timelog'
+local module = 'tasks'
+local res, err = pcall(require, module)
+if not res then
+    print("Error loading module: " .. module)
+    print("Error: " .. err)
+    return
+end
+local tasks_plugin = require(module)
+require'tasks.timelog'
 -- Global variables to manage the timer and window
 local countdown = {
     win = nil,
@@ -23,7 +30,7 @@ if not json then
 end
 
 -- Assume the 'tasks' plugin is available and has been required as 'tasks_plugin'
-local tasks_plugin = require('dev.lua.tasks')
+
 
 -- Data structures
 local tasks = {}

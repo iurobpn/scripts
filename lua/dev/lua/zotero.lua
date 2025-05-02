@@ -47,12 +47,11 @@ local Module = {
     Zotero = M
 }
 
-M = class(M, {constructor = function(self, filename, path)
+M = class(M, {constructor = function(self, filename)
     if filename ~= nil then
         self.filename = filename
     end
     self.sql = Sql(self.filename)
-    self.sql:set_path(path)
 
     return self
 end})

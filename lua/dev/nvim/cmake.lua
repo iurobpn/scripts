@@ -1,6 +1,6 @@
 local Path = require("plenary.path")
 local lfs = require'lfs'
-local fs = require'dev.lua.fs'
+local fs = require'utils.fs'
 local json = require "dkjson"  -- dkjson for JSON parsing
 local utils = require('utils')
 local pprint = utils.pprint

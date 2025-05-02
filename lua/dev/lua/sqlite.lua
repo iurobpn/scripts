@@ -71,18 +71,6 @@ function Sql:query_n(cmd)
 
 end
 
-function Sql:set_path(path_dir)
-    if self.filename == '' then
-        error('No filename set')
-        return
-    end
-    if self.filename:sub(1,1) == '/' then
-        return
-    end
-    print('Setting path to ' .. path_dir .. 'with filename ' .. self.filename)
-    self.filename = path_dir .. self.filename
-end
-
 function Sql:query(query)
     -- Get the last inserted task_id
     local cursor = self.conn:execute(query)

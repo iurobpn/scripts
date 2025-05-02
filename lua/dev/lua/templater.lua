@@ -1,5 +1,5 @@
 local templater = require 'lustache'
-local fs = require'dev.lua.fs'
+local fs = require'utils.fs'
 
 local M = {
     templater = templater,

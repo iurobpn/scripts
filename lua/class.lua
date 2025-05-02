@@ -7,7 +7,7 @@
 function _G.class(t, ...)
     local proto = {}
     for k, v in pairs(t) do
-        if k == 'new' or k == 'constructor' then
+        if k == 'new' then
             proto.__call = v
         end
         proto[k] = v
@@ -16,7 +16,7 @@ function _G.class(t, ...)
     args = args[1] or {}
 
     for k, v in pairs(args) do
-        if k == 'new' or k == 'constructor' then
+        if k == 'constructor' then
             proto.__call = v
         else
             proto[k] = v

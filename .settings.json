@@ -19,38 +19,6 @@
     "tables": {
         "qfloat": {
             "last_file": ""
-        },
-        "query_history": [
-            "jq '[ .[] | select((.status!=\"done\") and ((.tags[] == \"#today\") or (.tags[] == \"#important\") ) )  ] | sort_by(.due) | unique | sort_by(.due)'"
-        ],
-        "query_list": [
-            {
-                "description": "jq 'select by id'",
-                "inputs": [
-                    "id"
-                ],
-                "query": "[ .[] | select(.id == %d) ]"
-            },
-            {
-                "description": "select by tag with due date (undone)",
-                "inputs": [
-                    "tag"
-                ],
-                "query": "jq '[ .[] | select(.status != \"done\" and .due != null and .tags[] == \"%s\") ]'"
-            },
-            {
-                "description": "select by tag (undone)",
-                "inputs": [
-                    "tag"
-                ],
-                "query": "jq '[ .[] | select(.status != \"done\" and .tags[] == \"%s\") ]'"
-            },
-            {
-                "description": "select by tags #today or #important and sort by due date",
-                "inputs": [
-                ],
-                "query": "jq '[ .[] | select((.status!=\"done\" and .due!=null) and ((.tags[] == \"#today\") and (.tags[] == \"#important\") )) ] | sort_by(.due) '"
-            }
-        ]
+        }
     }
 }

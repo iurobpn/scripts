@@ -2,7 +2,6 @@ local utils = {
     fn = require('utils.fn'),
 }
 
-local json = require('cjson')
 local insp = require'inspect'
 
 local fmt = string.format

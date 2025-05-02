@@ -1,7 +1,6 @@
 local json = require('cjson')
 local tbl = require('tbl')
 local utils = require('utils')
-local fs = require('dev.lua.fs')
 
 Project = {
     root_priority = {'main_root', 'git', 'root_files'},
@@ -20,10 +19,10 @@ Project = {
 
 local mt = {}
 function mt:__call()
-    if vim.g.proj_roots then
+    if vim ~= nil and vim.g.proj_roots then
         Project.roots_files = vim.g.proj_root_files
     end
-    if vim.g.proj_root_priority then
+    if vim ~= nil and vim.g.proj_root_priority then
         Project.root_priority = vim.g.proj_root_priority
     end
     for _, root in ipairs(Project.root_priority) do
@@ -48,10 +47,10 @@ function Project.init()
     end
     Project.root_dir = Project.find_root()
     if not Project.root_dir then
-        vim.notify('Project root directory not found')
+        print('Project root directory not found')
         return
     else
-        vim.notify('Project root directory: ' .. Project.root_dir)
+        print('Project root directory: ' .. Project.root_dir)
         vim.g.root_dir = Project.root_dir
     end
 
@@ -150,7 +149,7 @@ function Project.find_root.root_files(file_list)
         for _, file in ipairs(file_list) do
             local root_path = current_dir .. '/' .. file
 
-            if fs.file_exists(root_path) then
+            if require'utils.fs'.file_exists(root_path) then
                 lfs.chdir(cdir)
                 return current_dir:gsub('\n', '')
             end

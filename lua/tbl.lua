@@ -1,7 +1,3 @@
-local utils = require('utils')
-local json = require('cjson')
-local list = require('dev.lua.list')
-
 local M = {}
 
 M.remove = function(tbl, key)
@@ -40,7 +36,7 @@ M.flatten = function(tbl, d)
     for _, v in pairs(tbl) do
         if type(v) == 'table' then
             local inner = M.flatten(v, d-1)
-            res = list.extend(res, inner)
+            res = require'utils.list'.extend(res, inner)
         else
             table.insert(res, v)
         end
