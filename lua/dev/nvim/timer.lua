@@ -558,9 +558,6 @@ vim.api.nvim_create_user_command("Countdown", function(opts)
     end
 end, { nargs = "*" , complete = countdown.complete })
 
--- vim.api.nvim_create_user_command('Task', function(args)
---     timer_plugin.TaskCommand(args)
--- end, { nargs = '*', complete = timer_plugin.complete_task_command })
 
 vim.api.nvim_create_user_command('ShowLogs', function()
     timer_plugin.ShowLogs()
