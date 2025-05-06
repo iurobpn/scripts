@@ -8,7 +8,7 @@ function vf
     if test -z "$dir"
         set -e dir
     end
-    fd . -u -tf $dir |  sed -e "s#^\./(.*)##g" | fzf --multi $FZF_DEFAULT_OPTIONS --bind "enter:become(nvim {+})" --preview "bat --style=numbers --color=always {}" --preview-window "60%,wrap"
+    fd . --hidden -tf $dir |  sed -e "s#^\./(.*)##g" | fzf --multi $FZF_DEFAULT_OPTIONS --bind "enter:become(nvim {+})" --preview "bat --style=numbers --color=always {}" --preview-window "60%,wrap"
 end
 
 function frg

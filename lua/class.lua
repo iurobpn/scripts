@@ -4,7 +4,7 @@
 ---@param t table
 ---@param ... any
 ---@return table
-function _G.class(t, ...)
+function _G.class2(t, ...)
     local proto = {}
     for k, v in pairs(t) do
         if k == 'new' then
@@ -36,6 +36,42 @@ function _G.class(t, ...)
     end
 
     setmetatable(t,proto)
+
+    return t
+end
+
+--- class generator
+---@param t table
+---@param ... any
+---@return table
+function _G.class(t, opts)
+    t = t or {}
+    for k, v in pairs(t) do
+        if k == 'new' then
+            t.__call = v
+        end
+    end
+    
+    opts = opts or {}
+    for k, v in pairs(opts) do
+        if k == 'constructor' or k == 'new' then
+            t.__call = v
+        else
+            t[k] = v
+        end
+    end
+
+    t.__index = t
+
+    if t.__call == nil then
+        t.__call = function(obj)
+            obj = obj or {}
+            setmetatable(obj,t)
+            return obj
+        end
+    end
+
+    setmetatable(t, t)
 
     return t
 end
