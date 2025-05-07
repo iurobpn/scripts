@@ -11,6 +11,14 @@ function vf
     fd . --hidden -tf --exclude=.git $dir |  sed -e "s#^\./(.*)##g" | fzf --multi $FZF_DEFAULT_OPTIONS --bind "enter:become(nvim {+})" --preview "bat --style=numbers --color=always {}" --preview-window "60%,wrap"
 end
 
+function lgf
+    gita ll 2> /dev/null | \
+        awk '!/\[\$?\]/' | \
+        fzf --tmux $FZF_DEFAULT_OPTIONS --ansi | \
+        cut -d" " -f1 | \
+        xargs -n1 gita lg 2> /dev/null
+end
+
 function frg
     set rg_prefix "rg --column --line-number --no-heading --color=always --smart-case";
     fzf --bind "start:reload:$rg_prefix {q}" \
