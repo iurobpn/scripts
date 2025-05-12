@@ -1,9 +1,22 @@
 -- run commands on tmux/zellij panes
 -- Usage: :Run <command> -- float
 -- Usage: :Run tab <command> -- new tab
+local function run(cmd)
+    -- Execute the command and capture the output
+    local handle = io.popen(cmd)
+    if not handle then
+        print("Failed to execute command: " .. cmd)
+        return false
+    end
+    local result = handle:read("*a")
+    handle:close()
+
+    -- Return the output, trimming any trailing newlines
+    return result --:gsub("%s+$", "")
+end
 
 local M = {}
-M.options = {
+local zellij_options = {
     'float',
     'close-on-exit',
     'right',
@@ -13,6 +26,25 @@ M.options = {
     'in-place',
     'start-suspended'
 }
+local tmux_options = {
+}
+
+-- include directions for new panes
+function M.tmux_run(opts)
+    if type(opts) == 'string' then
+        opts = {args = opts}
+        opts.fargs = vim.split(opts.args, ' ')
+    end
+    local z_opts = {cmd = '', args = '', win_type = 'pane', dir = 'left'}
+    -- z_opts.args = ' --floating'
+    -- the arguments before a '--' are options for the command
+    -- if no '--' is present, the command is assumed to be a pane command
+    local cmd = 'tmux display-popup "'  .. opts.args .. '"'
+    print('Running command: ' .. cmd)
+
+    local status, msg = run(cmd)
+    return status, msg
+end
 -- include directions for new panes
 function M.zellij_run(opts)
     if type(opts) == 'string' then
@@ -52,7 +84,7 @@ function M.zellij_run(opts)
     local cmd = 'zellij run ' .. z_opts.args .. ' -- ' .. z_opts.cmd
     print('Running command: ' .. cmd)
 
-    local status, msg = M.run(cmd)
+    local status, msg = run(cmd)
     -- local st = vim.inspect(status)
     -- local msg = vim.inspect(err)
 
@@ -61,6 +93,7 @@ function M.zellij_run(opts)
     -- else
     --     print('Error running with err: ' .. st .. ' msg: ' .. msg)
     -- end
+
     return status, msg
 end
 
@@ -74,22 +107,29 @@ function M.input_complete(arg_lead, _, _)
     return table.concat(opt, ' ')
 end
 
-function M.complete(arg_lead, _, _)
+function M.zellij_complete(arg_lead, _, _)
     -- These are the valid completions for the command
     -- Return all options that start with the current argument lead
     return vim.tbl_filter(function(option)
         return vim.startswith(option, arg_lead)
-    end, M.options)
+    end, M.zellij_options)
+end
+function M.tmux_complete(arg_lead, _, _)
+    -- These are the valid completions for the command
+    -- Return all options that start with the current argument lead
+    return vim.tbl_filter(function(option)
+        return vim.startswith(option, arg_lead)
+    end, M.tmux_options)
 end
 
 M.ask_run = function()
     vim.ui.input(
         {
             prompt = "Run command: ",
-            completion = 'lua,runner.complete',
+            completion = 'lua,runner.zellij_complete',
         },
         function(args)
-            vim.cmd('ZellijRun ' .. args)
+            vim.cmd('Run ' .. args)
         end)
     -- vim.cmd('ZellijRun ' .. args)
 end
@@ -106,28 +146,28 @@ vim.api.nvim_create_user_command("ZellijRun",
         desc = 'run a command with zellij in the current pane or a new pane (float or aside)'
     })
 
+vim.api.nvim_create_user_command("TmuxRun",
+    function(opts)
+        M.tmux_run(opts)
+    end,
+    {
+        nargs = "+",
+        complete = M.tmux_complete,
+        bang = true,
+        desc = 'run a command in a tmux popup'
+    })
 vim.api.nvim_set_keymap('n',
     '<F5>',
-    ':ZellijRun ',
+    ':TmuxRun ',
     {
         noremap = true,
         silent = true,
         desc = 'run a command using zellij run and options'
     })
 -- vim.ui.select()
-
-function M.run(cmd)
-    -- Execute the command and capture the output
-    local handle = io.popen(cmd)
-    if not handle then
-        print("Failed to execute command: " .. cmd)
-        return false
-    end
-    local result = handle:read("*a")
-    handle:close()
-
-    -- Return the output, trimming any trailing newlines
-    return result --:gsub("%s+$", "")
+function M.run(opts)
+    M.tmux_run(opts)
 end
+
 
 return M

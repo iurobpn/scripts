@@ -109,12 +109,12 @@ end
 
 M.clean = function()
     local cmd = 'cmake --build --target clean --preset ' .. M.current.config.configure.name
-    runner.zellij_run(cmd)
+    runner.run(cmd)
 end
 
 M.reset = function()
     local cmd = "~/git/nmpc-obs/cpp/scripts/reset_conan.fish"
-    runner.zellij_run(cmd)
+    runner.run(cmd)
 end
 
 -- Command selection function
@@ -227,7 +227,7 @@ M.configure = function()
     local cmd = 'cmake --preset ' .. M.current.config.configure.name
     vim.notify('cmd: ' .. cmd)
 
-    runner.zellij_run(cmd)
+    runner.run(cmd)
 end
 
 M.build = function()
@@ -242,7 +242,6 @@ M.build = function()
     cmd = cmd .. ' --preset ' .. M.current.config.configure.name
     vim.notify('cmd: ' .. cmd)
     vim.cmd('set makeprg ' .. cmd)
-    -- runner.zellij_run(cmd)
 end
 
 M.debug = function()
@@ -251,7 +250,7 @@ M.debug = function()
     end
 
     local cmd = 'gdb ' .. M.current.config.configure.build_dir .. '/' .. M.current.targets[1]
-    runner.zellij_run(cmd)
+    runner.run(cmd)
 end
 M.run = function()
     if M.current.targets == nil or #M.current.targets == 0 then
@@ -259,7 +258,7 @@ M.run = function()
     end
 
     local cmd = M.current.config.configure.build_dir .. '/' .. M.current.targets[1]
-    runner.zellij_run(cmd)
+    runner.run(cmd)
 end
 
 M.cmake_get_all = function()
