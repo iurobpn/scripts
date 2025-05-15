@@ -9,7 +9,15 @@ M.remove = function(tbl, key)
     end
 end
 
-M.contains = function(tbl, val)
+M.contains = function(tbl, key)
+    for k, _ in pairs(tbl) do
+        if k == key then
+            return true
+        end
+    end
+    return false
+end
+M.contains_val = function(tbl, val)
     for _, v in pairs(tbl) do
         if v == val then
             return true
