@@ -999,12 +999,12 @@ vim.api.nvim_create_user_command("Win",
 
 
 -- create mappings for the move functions
-vim.api.nvim_set_keymap('n', '<C-k>', ':Win snap_up<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-j>', ':Win snap_down<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-l>', ':Win snap_right<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', '<C-h>', ':Win snap_left<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'º', ':Win toggle_fullscreen<CR>', { noremap = true, silent = true })
-vim.api.nvim_set_keymap('n', 'Ç', ':Win toggle<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', '<C-k>', ':Win snap_up<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', '<C-j>', ':Win snap_down<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', '<C-l>', ':Win snap_right<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', '<C-h>', ':Win snap_left<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', 'º', ':Win toggle_fullscreen<CR>', { noremap = true, silent = true })
+-- vim.api.nvim_set_keymap('n', 'Ç', ':Win toggle<CR>', { noremap = true, silent = true })
 
 
 local M = {
