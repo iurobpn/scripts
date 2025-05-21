@@ -50,7 +50,7 @@ local Window = {
             -- keys = 'q',
             -- cmd = ':lua Window.close()<CR>',
             -- opts = { noremap = true, silent = true }
-        },
+            },
         i = {},
         v = {},
     },
@@ -97,7 +97,8 @@ local Window = {
 }
 --------------------------------
 
-function Window.new(self,...)
+function Window.new(...)
+    local self = {}
     local opts = { ... }
     opts = opts[1]
     if opts then
@@ -940,6 +941,7 @@ Window.command = function(args)
     end
     if cmd == 'open' then
         local win = Window()
+        print('win open: ' .. require'inspect'.inspect(win))
         win:open()
     elseif cmd == 'close' then
         local win = Window.get_win()

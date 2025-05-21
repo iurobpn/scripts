@@ -114,9 +114,10 @@ function Log:set_file(filename)
 end
 Log.Level = Level
 
-Log = class(Log,
+Log = _G.class(Log,
     {
-        constructor = function(obj, module, filename)
+        constructor = function(module, filename)
+            local obj = {}
             if module then
                 obj.module = module
             end

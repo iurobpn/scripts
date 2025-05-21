@@ -26,9 +26,10 @@ local Timer = {
 --     return self
 -- end
 
-Timer = class(Timer,
+Timer = _G.class(Timer,
     {
-        constructor = function(self, ip, port, name)
+        constructor = function(ip, port, name)
+            local self = {}
             local mod_color = require('gruvbox-term').bright_blue
             self.name = name or Timer.name
             self.ip = ip or Timer.ip

@@ -34,9 +34,10 @@ function Thread.join(self)
     -- print("Thread joined.")
 end
 
-Thread = class(Thread,
+Thread = _G.class(Thread,
     {
-        constructor = function(obj, func)
+        constructor = function(func)
+            local obj = {}
             if func then
                 obj.func = func
             end

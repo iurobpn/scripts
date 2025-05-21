@@ -29,7 +29,7 @@ local Word = {
     examples = {}
 }
 
-Word = class(Word)
+Word = _G.class(Word)
 
 
 M.new_lang = function(name)

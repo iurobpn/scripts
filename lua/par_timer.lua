@@ -11,7 +11,7 @@ local Timer = {
     timers = {},
     timer_id = 0,
 }
-Timer = class(Timer)
+Timer = _G.class(Timer)
 
 if not Timer then
     print('Timer is nil')

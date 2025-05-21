@@ -304,7 +304,7 @@ call setpos("'a", save_a_mark)
 --
 --os.difftime
 
-timer.Timer = class(Timer)
+timer.Timer = _G.class(Timer)
 
 function timer.test()
     local t = Timer()

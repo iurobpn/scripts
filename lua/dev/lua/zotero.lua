@@ -47,14 +47,17 @@ local Module = {
     Zotero = M
 }
 
-M = class(M, {constructor = function(self, filename)
-    if filename ~= nil then
-        self.filename = filename
-    end
-    self.sql = Sql(self.filename)
+M = _G.class(M, {
+    constructor = function(filename)
+        local self = {}
+        if filename ~= nil then
+            self.filename = filename
+        end
+        self.sql = Sql(self.filename)
 
-    return self
-end})
+        return self
+    end
+})
 
 -- Inspect the database
 -- inspect_database()

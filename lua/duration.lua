@@ -81,10 +81,10 @@ function Duration.to_string(self)
     return s
 end
 
-Duration = class(Duration,
+Duration = _G.class(Duration,
     {
-        constructor = function(obj, type, tf, ti, unit)
-            obj = obj or {}
+        constructor = function(tf, ti, unit)
+            obj = {}
             obj.unit = unit
             if ti and tf then
                 obj.dt = tf - ti

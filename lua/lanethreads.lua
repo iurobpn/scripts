@@ -30,9 +30,10 @@ function M.Thread.join(self)
     -- print("Thread joined.")
 end
 
-Threads = class(M.Thread,
+Threads = _G.class(M.Thread,
     {
-        constructor = function(obj,func)
+        constructor = function(func)
+            local obj = {}
             obj.func = func
             return obj
         end

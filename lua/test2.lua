@@ -6,7 +6,7 @@ Foo = {
     name = 'asd',
     idade = 10
 }
-Foo = class(Foo)
+Foo = _G.class(Foo)
 
 
 foo =Foo()

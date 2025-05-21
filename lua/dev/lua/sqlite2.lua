@@ -74,7 +74,8 @@ local M = {
     Sql = Sql
 }
 
-Sql = class(Sql, {constructor = function(self, filename)
+Sql = _G.class(Sql, {constructor = function(filename)
+    local self = {}
     self.filename = filename
     return self
 end})

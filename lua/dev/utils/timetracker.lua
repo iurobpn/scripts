@@ -2,12 +2,13 @@ local fn = require("utils.fn")
 
 local TimeTracker = {}
 
-function TimeTracker:new(options)
-  options = options or {}
-  self.__index = self
-  self:__set_start_time()
+function TimeTracker.new(options)
+    local self = {}
+    options = options or {}
+    self.__index = self
+    self:__set_start_time()
 
-  return setmetatable(options, self)
+    return setmetatable(options, self)
 end
 
 function TimeTracker:open(cmd, args)
@@ -200,7 +201,7 @@ function TimeTracker:__set_options()
   end
 end
 
-local timetracker = TimeTracker:new()
+local timetracker = TimeTracker.new()
 
 vim.api.nvim_create_user_command("TimeTrackerStart", function(opts)
   timetracker:start(opts.args)

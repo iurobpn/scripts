@@ -19,10 +19,10 @@ function Socket:bind(ip, port)
     self.log:log("Binding to " .. self.ip .. ":" .. self.port)
 end
 
-Socket = class(Socket,
+Socket = _G.class(Socket,
     {
-        constructor = function(self, ip, port, timeout, color)
-
+        constructor = function(ip, port, timeout, color)
+            local self = {}
             self.ip = ip or Socket.ip
             self.port = port or Socket.port
             self.timeout = timeout or Socket.timeout

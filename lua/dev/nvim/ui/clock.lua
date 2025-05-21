@@ -2,7 +2,6 @@ local views = require('dev.nvim.ui.views')
 local Clock = {
     window = nil
 }
--- Clock = class(Clock)
 
 function Clock.update(buf, t_period)
     if not buf then

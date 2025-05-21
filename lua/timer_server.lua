@@ -54,7 +54,8 @@ local Server = {
     unit = "s"
 }
 
-Server = class(Server, function(self, ip, port, time_start, name, log_file)
+Server = _G.class(Server, function(ip, port, time_start, name, log_file)
+    local self = {}
     local mod_color = require('gruvbox-term').bright_orange
 
     if ip then
@@ -96,14 +97,13 @@ TimerData = {
     unit = "s"
 }
 -- mode, start_time, elapsed_time, duration, paused, running, unit)
-TimerData = class(TimerData, 
+TimerData = _G.class(TimerData, 
     {
-        constructor = function(self, ...)
-            if not arg then
-                arg = {}
-                return
-            end
-            local targs = arg
+        constructor = function(...)
+            local self = {}
+            local opt = {...}
+            opt = opt[1] or {}
+            local targs = opt
             if targs.timer then
                 targs = targs.timer
             end

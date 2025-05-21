@@ -45,12 +45,14 @@ M.Thread = {
     thread = M.ffi.new("pthread_t[1]")
     -- pipe = pipe
 }
-Thread =class(M.Thread, 
+Thread = _G.class(M.Thread, 
     {
-    constructor = function(obj,func)
-    obj.func = func
-    return obj
-end})
+        constructor = function(func)
+            local obj = {}
+            obj.func = func
+            return obj
+        end
+    })
 -- function M.Thread.__call(func)
 --     local self = setmetatable({func = func, {__index = M.Thread})
 --     return self
