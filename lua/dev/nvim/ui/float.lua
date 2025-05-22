@@ -383,8 +383,8 @@ function Window:open(filename, linenr)
             if not Buffer.is_valid(self.buf) then
                 Buffer.set_value(self.buf, 'modifiable', true)
                 -- vim.api.nvim_set_option_value('modifiable', true, { buf = self.buf })
-                Buffer.set_lines(self.buf, self.content)
             end
+            Buffer.set_lines(self.buf, self.content)
         end
     end
 
