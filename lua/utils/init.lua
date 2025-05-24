@@ -22,7 +22,6 @@ function utils.print_table(...)
     for k,v in pairs({...}) do
         print('key: ' .. k .. ': ' .. insp.inspect(v))
     end
-    -- print(inspect(t,{depth=3}))
 end
 
 function utils.pprint(obj,s,...)

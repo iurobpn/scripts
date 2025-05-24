@@ -177,7 +177,11 @@ function Window:config(...)
     local opts = { ... }
     opts = opts[1]
     if opts then
-        tbl.merge(self, opts)
+        for k, v in pairs(opts) do
+            if k ~= 'maps' then
+                self[k] = v
+            end
+        end
     end
 end
 

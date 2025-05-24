@@ -10,8 +10,8 @@ function views.messages()
     local win = views.minimal()
     -- get the messages from nvim
 
-    local output = vim.api.nvim_exec2('messages', {output = true})
-    local messages = output.output
+    local out = vim.api.nvim_exec2('messages', {output = true})
+    local messages = out.output
     if type(messages) == 'string' then
         messages = vim.split(messages, '\n')
     end
@@ -25,7 +25,6 @@ function views.messages()
             options = {
                 buffer = {
                     modifiable = false,
-
                 }
             }
         })
