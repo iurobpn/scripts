@@ -4,18 +4,20 @@ local utils = require('utils')
 -- Helper function to check if a file exists
 local M = {}
 
-function M.file_exists(filename)
-    if type(filename) ~= 'string' then
-        vim.notify('Filename must be a string', vim.log.levels.ERROR)
+function M.file_exists(fname)
+    if type(fname) ~= 'string' then
+        print('Filename must be a string', vim.log.levels.ERROR)
         return false
     end
-    local file = io.open(filename, "r")
-    if file then
-        file:close()
-        return true
-    else
+    local fd = io.popen('stat ' .. fname .. ' 2>&1 /dev/null')
+    if fd == nil then
         return false
     end
+    local out = fd:read('*a')
+    if out:find('No such file or directory') then
+        return false
+    end
+    return true
 end
 
 -- get current file in vim/neovim
