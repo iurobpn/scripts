@@ -2,15 +2,15 @@
 local timer_plugin = {
     filename = "tasks_pl.json",
 }
-local module = 'tasks'
+-- local module = 'tasks'
 local res, err = pcall(require, module)
 if not res then
     print("Error loading module: " .. module)
     print("Error: " .. err)
     return
 end
-local tasks_plugin = require(module)
-require'tasks.timelog'
+-- local tasks_plugin = require(module)
+-- require'tasks.timelog'
 -- Global variables to manage the timer and window
 local countdown = {
     win = nil,
