@@ -15,7 +15,10 @@ else
     # Otherwise, set the VIRTIO_WIN_ISO variable to an empty string
     WIN_INST=0
     VIRTIO_WIN_ISO=""
+    DRIVE=virtio
 fi
+SHARED_DIR=-virtfs local,path=shared,mount_tag=shared,security_model=mapped-xattr
+SHARED_CMD=sudo mount -t 9p -o trans=virtio,version=9p2000.L shared /mnt/shared
 # if [ "$1" == "-ide" ]; then
 #     # If the first argument is -ide, set the if=ide option for the drive
 #     DRIVE=ide
@@ -42,7 +45,8 @@ fi
 # Check if the ISO_FILE has been provided
 if [ $# -ge 3 ]; then
     ISO_FILE=$3
-    OPTS="-cdrom $ISO_FILE"
+    OPTS="-cdrom $ISO_FILE -boot order=b \
+        -boot once=d"
 else
     OPTS=""
 fi
@@ -50,16 +54,17 @@ fi
 [ -z $IMAGE ] && echo "DRIVE_FILE is empty" && exit 1
 [ -z $ISO_FILE ] && echo "ISO_FILE is empty"
 echo "Starting QEMU with RAM: $RAM, Drive: $IMAGE, ISO: $ISO_FILE"
+echo "Using drive format: $FORMAT"
 qemurun() {
     qemu-system-amd64 \
         -enable-kvm \
         -m $RAM \
-	-cpu max \
-	-smp 8 \
+        -cpu max \
+        -smp 8 \
         -drive file=$IMAGE,if=$DRIVE,format=$FORMAT \
+        $OPTS \
         -netdev user,id=net0,hostfwd=tcp::2222-:22 \
         -device virtio-net-pci,netdev=net0 \
-        $OPTS \
         -display sdl
 }
 
@@ -80,9 +85,10 @@ qemuwin () {
 # else
     # Otherwise, use the default Linux setup
     # echo "Starting QEMU with Linux setup"
-    qemurun
+    # qemurun
 # fi
 
+qemurun
 # windows installation process
 # first run
 # `qemuwin 16G win.img win.iso`
