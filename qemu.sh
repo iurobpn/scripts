@@ -61,6 +61,7 @@ qemurun() {
         -m $RAM \
         -cpu max \
         -smp 8 \
+        -accel=kvm \
         -drive file=$IMAGE,if=$DRIVE,format=$FORMAT \
         $OPTS \
         -netdev user,id=net0,hostfwd=tcp::2222-:22 \
