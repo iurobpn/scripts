@@ -17,8 +17,8 @@ else
     VIRTIO_WIN_ISO=""
     DRIVE=virtio
 fi
-SHARED_DIR=-virtfs local,path=shared,mount_tag=shared,security_model=mapped-xattr
-SHARED_CMD=sudo mount -t 9p -o trans=virtio,version=9p2000.L shared /mnt/shared
+#SHARED_DIR=-virtfs local,path=shared,mount_tag=shared,security_model=mapped-xattr
+#SHARED_CMD=sudo mount -t 9p -o trans=virtio,version=9p2000.L shared /mnt/shared
 # if [ "$1" == "-ide" ]; then
 #     # If the first argument is -ide, set the if=ide option for the drive
 #     DRIVE=ide
@@ -56,29 +56,29 @@ fi
 echo "Starting QEMU with RAM: $RAM, Drive: $IMAGE, ISO: $ISO_FILE"
 echo "Using drive format: $FORMAT"
 qemurun() {
-    qemu-system-amd64 \
+    qemu-system-x86_64 \
         -enable-kvm \
         -m $RAM \
         -cpu max \
         -smp 8 \
-        -accel=kvm \
         -drive file=$IMAGE,if=$DRIVE,format=$FORMAT \
         $OPTS \
         -netdev user,id=net0,hostfwd=tcp::2222-:22 \
         -device virtio-net-pci,netdev=net0 \
         -display sdl
+        # -accel=kvm \
 }
 
-qemuwin () {
-    qemu-system-x86_64 \
-        -enable-kvm \
-        -m $RAM \
-        -drive file=$IMAGE,if=ide,format=raw \
-        $OPTS \
-        -netdev user,id=net0,hostfwd=tcp::2222-:22 \
-        -device virtio-net-pci,netdev=net0 \
-        -display sdl
-}
+# qemuwin () {
+#     qemu-system-x86_64 \
+#         -enable-kvm \
+#         -m $RAM \
+#         -drive file=$IMAGE,if=ide,format=raw \
+#         $OPTS \
+#         -netdev user,id=net0,hostfwd=tcp::2222-:22 \
+#         -device virtio-net-pci,netdev=net0 \
+#         -display sdl
+# }
 
 # if [ $WIN_INST -eq 1 ]; then
 #     echo "Starting QEMU with Windows setup"
