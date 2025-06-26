@@ -96,9 +96,12 @@ end
 -- cmake --build . --target myexe
 -- cmake --build . --target myexe --config Release
 M.get_configs = function(source_dir)
+    if source_dir == nil or source_dir == '' then
+        return
+    end
     local configs = {}
     local presets = M.decode(M.get_preset_file(source_dir))
-    if presets == nil then
+    if presets == nil or presets.include == nil then
         return
     end
 
