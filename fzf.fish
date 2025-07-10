@@ -27,6 +27,7 @@ function frg
     --ansi --disabled \
     --height=50% --layout=reverse
 end
+
 function frg2
 # 1. Search for text in files using Ripgrep
 # 2. Interactively restart Ripgrep with reload action
