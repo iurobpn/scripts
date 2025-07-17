@@ -1,3 +1,0 @@
-luasocket
-luasec
-luasqlite-sqlite3
