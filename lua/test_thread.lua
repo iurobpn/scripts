@@ -1,5 +1,5 @@
 local Thread = require 'thread'.Thread
-local utils = require 'utils'
+local utils = require 'katu.utils'
 -- local function test_thread()
 local thread = Thread(function()
     local time = require('time')

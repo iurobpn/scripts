@@ -1,6 +1,6 @@
 -- local inspect = require("inspect")
 require('time')
-require('utils')
+require('katu.utils')
 local json = require('dkjson')
 require'class'
 
@@ -268,7 +268,7 @@ function Server:start(ip, port, mode, time_start, duration, func, ...)
     self.timer[id].start_time = time_start
 
     -- local inspect = require('inspect')
-    require'utils'
+    require'katu.utils'
     -- self.log:trace(time_start)
     self:config(id)
     self.socket = assert(luasocket.bind(ip, port))

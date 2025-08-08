@@ -1,5 +1,5 @@
-local utils = require'utils'
-local parser = require'dev.lua.tasks.parser'
+local utils = require'katu.utils'
+local parser = require'katu.lua.tasks.parser'
 
 
 local task = "- [ ] [[Master's Paper]] Write the introduction [id:: 1] #paper #writing"
